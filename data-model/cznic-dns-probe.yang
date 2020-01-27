@@ -279,6 +279,54 @@ module cznic-dns-probe {
                     "Selection of packets to be stored in PCAP files.";
             }
         }
+
+        container export-location {
+            description
+                "Configuration of the location for the storage of the exported
+                DNS records (local, remote).";
+
+            leaf location {
+                type enumeration {
+                    enum local {
+                        description
+                            "Store exported data to local files";
+                    }
+
+                    enum remote {
+                        description
+                            "Send exported data directly to a remote location";
+                    }
+                }
+
+                default local;
+
+                description
+                    "Location for the storage of the exported DNS records.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
+            leaf remote-ip-version {
+                type inet:ip-version;
+                default unknown;
+                description
+                    "IP version of the IP address for remote export.";
+            }
+
+            leaf remote-ip-address {
+                type inet:ip-address-no-zone;
+                description
+                    "IP address for remote export of the DNS records.";
+            }
+
+            leaf remote-port {
+                type inet:port-number;
+                default 6378;
+                description
+                    "Transport protocol port number for remote export of the DNS records.";
+            }
+        }
     }
 
     container statistics {
