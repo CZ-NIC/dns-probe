@@ -102,6 +102,10 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
         {SYSCONF_CFG_ROOT "/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
         {SYSCONF_CFG_ROOT "/dns-port",                           m_cfg.dns_port},
+        {SYSCONF_CFG_ROOT "/export-location/location",           m_cfg.export_location},
+        {SYSCONF_CFG_ROOT "/export-location/remote-ip-version",  m_cfg.export_ip_version},
+        {SYSCONF_CFG_ROOT "/export-location/remote-ip-address",  m_cfg.export_ip},
+        {SYSCONF_CFG_ROOT "/export-location/remote-port",        m_cfg.export_port},
 }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     try {

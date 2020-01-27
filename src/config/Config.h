@@ -53,5 +53,10 @@ namespace DDP {
         ConfigBitfield<23> cdns_fields; //!< Fields which will be part of CDNS file
         ConfigItem<uint64_t> cdns_records_per_block; //!< Number of records in one block in CDNS file
         ConfigItem<uint64_t> cdns_blocks_per_file; //!< Number of blocks in CDNS file
+
+        ConfigItem<ExportLocation> export_location; //!< Location for the exported DNS records
+        ConfigItem<ExportIpVersion> export_ip_version; //!< Version of the IP address for remote export
+        ConfigItem<std::string> export_ip; //!< IP address for remote export of DNS records
+        ConfigItem<uint16_t> export_port; //!< Transport protocol port for remote export of DNS records
     };
 }

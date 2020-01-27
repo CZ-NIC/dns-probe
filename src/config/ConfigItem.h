@@ -284,6 +284,136 @@ namespace DDP {
     };
 
     /**
+     * Specialized implementation for DDP::ExportLocation as config item.
+     */
+    template<>
+    class ConfigItem<ExportLocation> : public ConfigItemBase
+    {
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        [[nodiscard]] ExportLocation value() const { return m_value; }
+
+        bool validate(const std::any& value) const override
+        {
+            try {
+                auto str_value = std::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "LOCAL" || str_value == "REMOTE";
+            } catch(...) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo
+         */
+        void from_sysrepo(const std::any& value) override
+        {
+            auto str_value = std::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if (str_value == "LOCAL")
+                m_value = ExportLocation::LOCAL;
+            else if (str_value == "REMOTE")
+                m_value = ExportLocation::REMOTE;
+            else
+                throw std::invalid_argument("Invalid argument for ExportLocation");
+        }
+
+        /**
+         * Implicit conversion to ExportLocation.
+         * @return Saved value.
+         */
+        operator ExportLocation() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == ExportLocation::LOCAL)
+                return {"LOCAL"};
+            else
+                return {"REMOTE"};
+        }
+
+    protected:
+        ExportLocation m_value{ExportLocation::LOCAL}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::ExportIpVersion as config item.
+     */
+    template<>
+    class ConfigItem<ExportIpVersion> : public ConfigItemBase
+    {
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        [[nodiscard]] ExportIpVersion value() const { return m_value; }
+
+        bool validate(const std::any& value) const override
+        {
+            try {
+                auto str_value = std::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "UNKNOWN" || str_value == "IPV4" || str_value == "IPV6";
+            } catch (...) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo.
+         */
+        void from_sysrepo(const std::any& value) override
+        {
+            auto str_value = std::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if (str_value == "UNKNOWN")
+                m_value = ExportIpVersion::UNKNOWN;
+            else if (str_value == "IPV4")
+                m_value = ExportIpVersion::IPV4;
+            else if (str_value == "IPV6")
+                m_value = ExportIpVersion::IPV6;
+            else
+                throw std::invalid_argument("Invalid argument for ExportIpVersion: " + str_value);
+        }
+
+        /**
+         * Implicit conversion to ExportIpVersion.
+         * @return Saved value.
+         */
+        operator ExportIpVersion() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == ExportIpVersion::IPV4)
+                return {"IPv4"};
+            else if (m_value == ExportIpVersion::IPV6)
+                return {"IPv6"};
+            else
+                return {"UNKNOWN"};
+        }
+
+    protected:
+        ExportIpVersion m_value{ExportIpVersion::UNKNOWN}; //!< Saved value.
+    };
+
+    /**
      * Specialized implementation for std::bitset as config item.
      */
     template<size_t size>

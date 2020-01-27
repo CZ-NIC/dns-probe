@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <sys/socket.h>
 #include <string>
 
 namespace DDP {
@@ -35,6 +36,23 @@ namespace DDP {
     enum class ExportFormat : uint8_t {
         PARQUET, //!< Parquet export format.
         CDNS //!< CDMS export format.
+    };
+
+    /**
+     * Available locations for exported DNS records
+     */
+    enum class ExportLocation : uint8_t {
+        LOCAL, //!< Store exported data to local files
+        REMOTE //!< Send exported data directly to remote location
+    };
+
+    /**
+     * Version of the IP address for remote export
+     */
+    enum class ExportIpVersion : uint8_t {
+        UNKNOWN = 0, //!< No IP address version specified
+        IPV4 = AF_INET, //!< Indicates IPv4 address
+        IPV6 = AF_INET6 //!< Indicates IPv6 address
     };
 
     /**
