@@ -108,9 +108,7 @@ if (DPDK_BACKEND)
     install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-dpdk)
 endif ()
 
-if (INSTALL_YANG_MODULE)
-    install(CODE "execute_process(COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang)")
-endif()
+add_custom_target(install_module COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang)
 
 add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/Uninstall.cmake")
 
