@@ -82,7 +82,7 @@ endif ()
 
 # Settings for DPDK version
 if (DPDK_BACKEND)
-    find_package(DPDK)
+    find_package(DPDK REQUIRED)
 
     file(GLOB DPDK_HEADERS CONFIGURE_DEPENDS src/dpdk/*.h)
     file(GLOB DPDK_SOURCES CONFIGURE_DEPENDS src/dpdk/*.cpp)
