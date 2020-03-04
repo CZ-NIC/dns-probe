@@ -1,0 +1,122 @@
+cmake_minimum_required(VERSION 3.13)
+project("DNS Probe")
+
+set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
+set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
+set(DPDK_LEGACY_MEM OFF CACHE BOOL "Enable legacy memory management for DPDK")
+set(BUILD_TESTING OFF CACHE BOOL "Enable build testing binaries")
+set(INSTALL_YANG_MODULE ON CACHE BOOL "Install YANG module to Sysrepo datastore during dns-probe's installation")
+
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+## Find required libraries
+find_package(Threads REQUIRED)
+find_package(PCAP REQUIRED)
+find_package(Arrow REQUIRED)
+find_package(Parquet REQUIRED)
+find_package(CDNS REQUIRED)
+find_package(Sysrepo REQUIRED)
+
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-msse4 SSE4_FLAG)
+if (NOT SSE4_FLAG)
+    message(FATAL_ERROR "SSE4 is required for compilation!")
+endif ()
+
+# Common library for all backends
+file(GLOB PROBE_HEADERS CONFIGURE_DEPENDS src/core/Probe.h
+        src/core/*.h
+        src/communication/*.h
+        src/config/*.h
+        src/export/*.h
+        src/platform/*.h
+        src/utils/*.h
+        )
+
+file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
+        src/communication/*.cpp
+        src/config/*.cpp
+        src/core/*.cpp
+        src/export/*.cpp
+        src/platform/*.cpp
+        src/utils/*.cpp
+        )
+
+add_library(DNSProbe INTERFACE)
+target_link_libraries(DNSProbe INTERFACE PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads Sysrepo::Sysrepo CDNS::CDNS)
+target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
+target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_options(DNSProbe INTERFACE -msse4)
+
+# Add warning flags
+function(set_warning param)
+    check_cxx_compiler_flag(-W${param} WARNING_${param})
+    if (WARNING_${param})
+        target_compile_options(DNSProbe INTERFACE -W${param})
+    endif ()
+endfunction()
+
+set_warning(all)
+set_warning(extra)
+set_warning(no-address-of-packed-member)
+
+include(GNUInstallDirs)
+
+# Settings for AF Packet version
+if (AF_PACKET_BACKEND)
+    file(GLOB AF_PACKET_HEADERS CONFIGURE_DEPENDS src/non-dpdk/*.h)
+    file(GLOB AF_PACKET_SOURCES CONFIGURE_DEPENDS src/non-dpdk/*.cpp)
+
+    set(AF_FILES ${AF_PACKET_HEADERS} ${AF_PACKET_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES})
+    add_executable(dns-probe-af src/application/dp.cpp ${AF_FILES})
+    target_link_libraries(dns-probe-af PUBLIC DNSProbe)
+    install(TARGETS dns-probe-af RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+    set(BACKEND af)
+    configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.py ${CMAKE_BINARY_DIR}/dp-af)
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-af DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-af)
+endif ()
+
+# Settings for DPDK version
+if (DPDK_BACKEND)
+    find_package(DPDK)
+
+    file(GLOB DPDK_HEADERS CONFIGURE_DEPENDS src/dpdk/*.h)
+    file(GLOB DPDK_SOURCES CONFIGURE_DEPENDS src/dpdk/*.cpp)
+
+    set(DPDK_FILES ${DPDK_HEADERS} ${DPDK_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES})
+    add_executable(dns-probe-dpdk src/application/ddp.cpp ${DPDK_FILES})
+    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe DPDK::DPDK)
+    target_compile_definitions(dns-probe-dpdk PUBLIC USE_DPDK)
+
+    if (DPDK_LEGACY_MEM)
+        target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
+    endif ()
+
+
+    install(TARGETS dns-probe-dpdk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+    set(BACKEND dpdk)
+    configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.py ${CMAKE_BINARY_DIR}/dp-dpdk)
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-dpdk DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+    configure_file(${CMAKE_SOURCE_DIR}/src/application/ddp-bind.py ${CMAKE_BINARY_DIR}/ddp-bind)
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/ddp-bind DESTINATION ${CMAKE_INSTALL_BINDIR})
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-dpdk)
+endif ()
+
+if (INSTALL_YANG_MODULE)
+    install(CODE "execute_process(COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang)")
+endif()
+
+add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/Uninstall.cmake")
+
+#Add tests
+enable_testing()
+if (BUILD_TESTING)
+    add_subdirectory(tests/gtests)
+endif ()
+
