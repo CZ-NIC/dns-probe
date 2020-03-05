@@ -6,7 +6,6 @@ set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
 set(DPDK_LEGACY_MEM OFF CACHE BOOL "Enable legacy memory management for DPDK")
 set(BUILD_TESTING OFF CACHE BOOL "Enable build testing binaries")
 set(BUILD_DOC ON CACHE BOOL "Generate Doxygen documentation")
-set(INSTALL_YANG_MODULE ON CACHE BOOL "Install YANG module to Sysrepo datastore during dns-probe's installation")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 17)
@@ -78,6 +77,8 @@ if (AF_PACKET_BACKEND)
 
     set(BACKEND af)
     configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.py ${CMAKE_BINARY_DIR}/dp-af)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dns-probe-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dns-probe-af.1)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dp-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dp-af.1)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-af DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-af)
 endif ()
@@ -106,9 +107,15 @@ if (DPDK_BACKEND)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-dpdk DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     configure_file(${CMAKE_SOURCE_DIR}/src/application/ddp-bind.py ${CMAKE_BINARY_DIR}/ddp-bind)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dns-probe-dpdk.1.in ${CMAKE_BINARY_DIR}/doc/man/dns-probe-dpdk.1)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dp-dpdk.1.in ${CMAKE_BINARY_DIR}/doc/man/dp-dpdk.1)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/ddp-bind.1.in ${CMAKE_BINARY_DIR}/doc/man/ddp-bind.1)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/ddp-bind DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-dpdk)
 endif ()
+
+file(GLOB MAN_PAGES ${CMAKE_BINARY_DIR}/doc/man/*)
+install(FILES ${MAN_PAGES} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 add_custom_target(install_module COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang)
 
