@@ -80,7 +80,7 @@ if (AF_PACKET_BACKEND)
     configure_file(${CMAKE_SOURCE_DIR}/doc/man/dns-probe-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dns-probe-af.1)
     configure_file(${CMAKE_SOURCE_DIR}/doc/man/dp-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dp-af.1)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-af DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-af)
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af)
 endif ()
 
 # Settings for DPDK version
@@ -111,7 +111,7 @@ if (DPDK_BACKEND)
     configure_file(${CMAKE_SOURCE_DIR}/doc/man/dp-dpdk.1.in ${CMAKE_BINARY_DIR}/doc/man/dp-dpdk.1)
     configure_file(${CMAKE_SOURCE_DIR}/doc/man/ddp-bind.1.in ${CMAKE_BINARY_DIR}/doc/man/ddp-bind.1)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/ddp-bind DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-dpdk)
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk)
 endif ()
 
 file(GLOB MAN_PAGES ${CMAKE_BINARY_DIR}/doc/man/*)
