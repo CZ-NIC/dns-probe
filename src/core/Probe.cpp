@@ -185,13 +185,13 @@ void DDP::Probe::init(const Arguments& args)
         };
         m_aggregated_timer = &m_poll.emplace<Timer<decltype(cb)>>(cb);
 
-        if (m_cfg.pcap_rot_timeout.value() > 0) {
+        if (m_cfg.file_rot_timeout.value() > 0) {
             auto sender = [this]() {
                 for (auto& link : m_comm_links) {
                     link.second.config_endpoint().send(Message(Message::Type::ROTATE_OUTPUT));
                 }
             };
-            m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.pcap_rot_timeout.value() * 1000);
+            m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.file_rot_timeout.value() * 1000);
         }
 
         m_initialized = true;

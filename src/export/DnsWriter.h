@@ -95,11 +95,11 @@ namespace DDP {
             }
             std::string counter = "_" + std::to_string(m_filename_counter);
             std::string full_sufix = sufix.empty() ? "" : ("." + sufix);
-            std::string filename = m_cfg.pcap_prefix.value() + std::string(time) + m_id + inv + counter + full_sufix;
+            std::string filename = m_cfg.file_prefix.value() + std::string(time) + m_id + inv + counter + full_sufix;
 
             struct stat buffer;
             if (stat((filename + m_sufix).c_str(), &buffer) == 0) {
-                return m_cfg.pcap_prefix.value() + std::string(time) + m_id + inv + "_" +
+                return m_cfg.file_prefix.value() + std::string(time) + m_id + inv + "_" +
                     std::to_string(++m_filename_counter) + full_sufix;
             } else {
                 if (m_filename_counter == 0) {
@@ -107,7 +107,7 @@ namespace DDP {
                 }
                 else {
                     m_filename_counter = 0;
-                    return m_cfg.pcap_prefix.value() + std::string(time) + m_id + inv + "_" +
+                    return m_cfg.file_prefix.value() + std::string(time) + m_id + inv + "_" +
                         std::to_string(m_filename_counter) + full_sufix;
                 }
             }
