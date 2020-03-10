@@ -210,22 +210,38 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
     Logger logger("Probe");
 
     auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue) {
-        Worker w(m_cfg, stats, m_export_rings[worker], m_comm_links[worker].worker_endpoint(),
-                 *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
-                 m_cfg.match_qname, worker);
-        Logger logger("Worker");
-        logger.debug() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
-        w.run();
-        logger.debug() << "Worker on lcore " << ThreadManager::current_lcore() << " stopped.";
+        try {
+            Worker w(m_cfg, stats, m_export_rings[worker], m_comm_links[worker].worker_endpoint(),
+                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
+                    m_cfg.match_qname, worker);
+            Logger logger("Worker");
+            logger.debug() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
+            w.run();
+            logger.debug() << "Worker on lcore " << ThreadManager::current_lcore() << " stopped.";
+        }
+        catch (std::exception& e) {
+            Logger("Worker").error() << "Worker on core " << worker << " crashed. Cause: " << e.what();
+            m_comm_links[worker].worker_endpoint().send(Message(Message::Type::STOP));
+            return -1;
+        }
+
         return 0;
     };
 
     auto exporter_runner = [this](unsigned exporter, Statistics& stats) {
-        Exporter p(m_cfg, stats, m_export_rings, m_comm_links[exporter].worker_endpoint(), exporter);
-        Logger logger("Worker");
-        logger.debug() << "Starting exporter on lcore " << ThreadManager::current_lcore() << ".";
-        p.run();
-        logger.debug() << "Exporter on lcore " << ThreadManager::current_lcore() << " stopped.";
+        try {
+            Exporter p(m_cfg, stats, m_export_rings, m_comm_links[exporter].worker_endpoint(), exporter);
+            Logger logger("Worker");
+            logger.debug() << "Starting exporter on lcore " << ThreadManager::current_lcore() << ".";
+            p.run();
+            logger.debug() << "Exporter on lcore " << ThreadManager::current_lcore() << " stopped.";
+            }
+        catch (std::exception& e) {
+            Logger("ExportWorker").error() << "Export worker on core " << exporter << " crashed. Cause: " << e.what();
+            m_comm_links[exporter].worker_endpoint().send(Message(Message::Type::STOP));
+            return -1;
+        }
+
         return 0;
     };
 

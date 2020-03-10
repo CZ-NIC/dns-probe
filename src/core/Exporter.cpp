@@ -85,7 +85,7 @@ int DDP::Exporter::run()
         }
     }
     catch (std::exception& e) {
-        Logger("ExportWorker").error() << "Export worker on core " << m_process_id << " crashed.";
+        Logger("ExportWorker").error() << "Export worker on core " << m_process_id << " crashed. Cause: " << e.what();
         m_comm_link.send(Message(Message::Type::STOP));
         return -1;
     }
