@@ -92,6 +92,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/transaction-table/match-qname",      m_cfg.match_qname},
         {SYSCONF_CFG_ROOT "/tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
         {SYSCONF_CFG_ROOT "/tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
+        {SYSCONF_CFG_ROOT "/export/export-dir",                  m_cfg.target_directory},
         {SYSCONF_CFG_ROOT "/export/file-name-prefix",            m_cfg.file_prefix},
         {SYSCONF_CFG_ROOT "/export/timeout",                     m_cfg.file_rot_timeout},
         {SYSCONF_CFG_ROOT "/export/file-size-limit",             m_cfg.file_rot_size},
@@ -232,8 +233,7 @@ int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session sessi
     return SR_ERR_OK;
 }
 
-int
-DDP::ConfigSysrepo::SysrepoCallback::rpc(sysrepo::S_Session session [[maybe_unused]],
+int DDP::ConfigSysrepo::SysrepoCallback::rpc(sysrepo::S_Session session [[maybe_unused]],
                                          const char* op_path [[maybe_unused]],
                                          const sysrepo::S_Vals input [[maybe_unused]],
                                          sr_event_t event [[maybe_unused]],

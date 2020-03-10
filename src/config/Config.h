@@ -42,6 +42,7 @@ namespace DDP {
         ConfigItem<uint32_t> tcp_ct_size; //!< Maximal concurrent tracking TCP connections
         ConfigItem<uint64_t> tcp_ct_timeout; //!< Timeout of TCP connection
 
+        ConfigItem<std::string> target_directory; //!< Directory for exported data
         ConfigItem<std::string> file_prefix; //!< Exported file prefix name
         ConfigItem<uint32_t> file_rot_timeout; //!< Exported file rotation timeout in seconds
         ConfigItem<uint64_t> file_rot_size; //!< Exported file size limit in MB

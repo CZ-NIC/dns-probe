@@ -64,6 +64,16 @@ module cznic-dns-probe {
             description
                 "Configuration for exporting records";
 
+            leaf export-dir {
+                type string;
+                default ".";
+                description
+                    "Directory for exported data.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
             leaf export-format {
                 type enumeration {
                     enum cdns {
