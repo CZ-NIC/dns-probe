@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <cstdio>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <parquet/arrow/reader.h>
@@ -63,7 +64,8 @@ namespace DDP {
                 return 0;
 
             m_filename = filename("parquet", false);
-            auto res = arrow::io::FileOutputStream::Open(m_filename);
+            std::string full_name = m_filename + ".part";
+            auto res = arrow::io::FileOutputStream::Open(full_name);
             PARQUET_THROW_NOT_OK(res);
             std::shared_ptr<arrow::io::FileOutputStream> outfile = res.ValueOrDie();
 
@@ -77,6 +79,9 @@ namespace DDP {
                 PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows()));
 
             outfile->Close();
+            if (std::rename(full_name.c_str(), m_filename.c_str()))
+                throw std::runtime_error("Couldn't rename the output file!");
+
             chmod(m_filename.c_str(), 0666);
 
             return item->num_rows();
