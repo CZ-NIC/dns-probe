@@ -17,8 +17,10 @@
 
 #include "CdnsWriter.h"
 
-DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id), m_writer(nullptr),
-                                                                m_bytes_written(0), m_blocks_written(0)
+DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id,
+                                                                cfg.file_compression.value() ? ".gz" : ""),
+                                                                m_writer(nullptr), m_bytes_written(0),
+                                                                m_blocks_written(0)
 {
     CDNS::FilePreamble fp;
 
@@ -28,7 +30,11 @@ DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, p
                    cfg.cdns_fields.value());
 
     m_filename = filename("cdns", false);
-    m_writer = new CDNS::CdnsExporter(fp, m_filename, CDNS::CborOutputCompression::NO_COMPRESSION);
+    if (m_cfg.file_compression.value())
+        m_writer = new CDNS::CdnsExporter(fp, m_filename, CDNS::CborOutputCompression::GZIP);
+    else
+        m_writer = new CDNS::CdnsExporter(fp, m_filename, CDNS::CborOutputCompression::NO_COMPRESSION);
+
     m_filename += m_sufix;
 }
 

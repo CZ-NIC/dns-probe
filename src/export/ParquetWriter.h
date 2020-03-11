@@ -36,7 +36,8 @@ namespace DDP {
          * @param cfg Configuration of the output
          * @param process_id Process ID used for generating names of the output files
          */
-        explicit ParquetWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id) {}
+        explicit ParquetWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id),
+                                                                   m_compress(cfg.file_compression.value()) {}
 
         /**
          * @brief Write Arrow table to output
@@ -70,7 +71,11 @@ namespace DDP {
             propsBuilder.compression(parquet::Compression::GZIP);
             auto props = propsBuilder.build();
 
-            PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows()));
+            if (m_compress)
+                PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows(), props));
+            else
+                PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows()));
+
             outfile->Close();
             chmod(m_filename.c_str(), 0666);
 
@@ -82,5 +87,8 @@ namespace DDP {
          * Does nothing because Parquet creates a new output for each arrow Table anyway.
          */
         void rotate_output() override {}
+
+        private:
+        bool m_compress;
     };
 }

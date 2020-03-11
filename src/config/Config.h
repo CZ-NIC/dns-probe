@@ -46,6 +46,7 @@ namespace DDP {
         ConfigItem<std::string> file_prefix; //!< Exported file prefix name
         ConfigItem<uint32_t> file_rot_timeout; //!< Exported file rotation timeout in seconds
         ConfigItem<uint64_t> file_rot_size; //!< Exported file size limit in MB
+        ConfigItem<bool> file_compression; //!< Enable GZIP compression for exported files
         ConfigItem<PcapExportCfg> pcap_export; //!< Define what will be in exported PCAPs
         ConfigItem<bool> raw_pcap; //!< Defines if input PCAP file is without ethernet headers
 

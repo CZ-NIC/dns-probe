@@ -197,6 +197,18 @@ module cznic-dns-probe {
                     The value of 0 (default) means no size-based rotation.";
             }
 
+            leaf file-compression {
+                type boolean;
+                default "true";
+                description
+                    "If this flag is true, the exported Parquet or C-DNS files will be
+                    compressed with GZIP. C-DNS will be compressed explicitly with .gz sufix.
+                    Parquet files will be compressed internally due to the nature of the format.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
             leaf pcap-export {
                 type enumeration {
                     enum all {

@@ -96,6 +96,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/export/file-name-prefix",            m_cfg.file_prefix},
         {SYSCONF_CFG_ROOT "/export/timeout",                     m_cfg.file_rot_timeout},
         {SYSCONF_CFG_ROOT "/export/file-size-limit",             m_cfg.file_rot_size},
+        {SYSCONF_CFG_ROOT "/export/file-compression",            m_cfg.file_compression},
         {SYSCONF_CFG_ROOT "/export/pcap-export",                 m_cfg.pcap_export},
         {SYSCONF_CFG_ROOT "/export/export-format",               m_cfg.export_format},
         {SYSCONF_CFG_ROOT "/export/parquet-records-per-file",    m_cfg.parquet_records},
