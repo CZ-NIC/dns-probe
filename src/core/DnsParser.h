@@ -58,6 +58,16 @@ namespace DDP {
     };
 
     /**
+     * @brief Exception thrown if non-DNS packet is encountered in DNS Parser
+     */
+    class NonDnsException : public std::runtime_error
+    {
+    public:
+        explicit NonDnsException( const std::string& what_arg ) : std::runtime_error(what_arg) {}
+        explicit NonDnsException( const char* what_arg ) : std::runtime_error(what_arg) {}
+    };
+
+    /**
      * @brief This class performs parsing of incoming packets
      */
 

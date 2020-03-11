@@ -317,7 +317,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l2(const DDP::MemView<uint8_t>& pkt,
     auto eth_header = reinterpret_cast<const ether_header*>(pkt.ptr());
     if (!(eth_header->ether_type & ETHER_TYPE_IPV4 || eth_header->ether_type & ETHER_TYPE_IPV6)) {
         put_back_record(record);
-        throw DnsParseException("L3 layer doesn't contain IPv4/IPv6 header.");
+        throw NonDnsException("L3 layer doesn't contain IPv4/IPv6 header.");
     }
 
     return pkt.offset(sizeof(ether_header));
@@ -342,7 +342,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l3(const DDP::MemView<uint8_t>& pkt,
     }
     else {
         put_back_record(record);
-        throw DnsParseException("L3 layer doesn't contain IPv4/IPv6 header.");
+        throw NonDnsException("L3 layer doesn't contain IPv4/IPv6 header.");
     }
 }
 
@@ -379,7 +379,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
             break;
         default:
             put_back_record(record);
-            throw DnsParseException("Unsupported L4 layer.");
+            throw NonDnsException("Unsupported L4 layer.");
     }
     return pkt.offset(end);
 }
@@ -417,7 +417,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
             break;
         default:
             put_back_record(record);
-            throw DnsParseException("Unsupported L4 layer.");
+            throw NonDnsException("Unsupported L4 layer.");
     }
     return pkt.offset(end);
 }
@@ -437,7 +437,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& 
 
     if (src_port != m_dns_port && dst_port != m_dns_port) {
         put_back_record(record);
-        throw DnsParseException("Packet doesn't contain DNS UDP port.");
+        throw NonDnsException("Packet doesn't contain DNS UDP port.");
     }
 
     record.m_port[static_cast<int>(record.m_client_index)] = src_port;
@@ -470,7 +470,7 @@ bool DDP::DnsParser::parse_l4_tcp(const DDP::MemView<uint8_t>& pkt, DDP::DnsReco
 
     if (src_port != m_dns_port && dst_port != m_dns_port) {
         put_back_record(record);
-        throw DnsParseException("Packet doesn't contain DNS TCP port.");
+        throw NonDnsException("Packet doesn't contain DNS TCP port.");
     }
 
     record.m_port[static_cast<int>(record.m_client_index)] = src_port;

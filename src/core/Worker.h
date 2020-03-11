@@ -47,6 +47,7 @@ namespace DDP {
         WORKER_OK = 0,
         WORKER_PARSE_ERROR,
         WORKER_EXPORT_ERROR,
+        WORKER_NON_DNS_PACKET,
     };
 
     class Worker : public Process {
