@@ -381,7 +381,13 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
             put_back_record(record);
             throw NonDnsException("Unsupported L4 layer.");
     }
-    return pkt.offset(end);
+
+    if (ntohs(ipv4_header->tot_len) > pkt.count()) {
+        put_back_record(record);
+        throw DnsParseException("Packet is shorter than IPv4 header claims.");
+    }
+
+    return MemView<uint8_t>(pkt.offset(end).ptr(), ntohs(ipv4_header->tot_len) - end);
 }
 
 DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
@@ -419,7 +425,13 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
             put_back_record(record);
             throw NonDnsException("Unsupported L4 layer.");
     }
-    return pkt.offset(end);
+
+    if ((ntohs(ipv6_header->ip6_ctlun.ip6_un1.ip6_un1_plen) + end) > pkt.count()) {
+        put_back_record(record);
+        throw DnsParseException("Packet is shorter than IPv6 header claims");
+    }
+
+    return MemView<uint8_t>(pkt.offset(end).ptr(), ntohs(ipv6_header->ip6_ctlun.ip6_un1.ip6_un1_plen));
 }
 
 DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)

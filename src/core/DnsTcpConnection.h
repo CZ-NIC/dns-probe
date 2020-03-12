@@ -165,19 +165,16 @@ namespace DDP {
             return m_hash;
         }
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
         /**
          * @brief Match packet to this TCP connection
          * @param m TCP hash of given packet
          * @param match_qname unused parameter, MUST be here because of TransactionTable interface
-         * @return
+         * @return TRUE if packet belongs to this TCP connection, FALSE otherwise
          */
-        bool match(DnsTcpConnection& m, bool match_qname) const
+        bool match(DnsTcpConnection& m, bool match_qname [[maybe_unused]]) const
         {
             return m_hash == m.m_hash;
         }
-#pragma GCC diagnostic pop
 
         TcpConnectionState get_state()
         {
@@ -198,16 +195,16 @@ namespace DDP {
         /**
          * @brief Insert TCP segment given in packet into given connection side's reorder buffer
          * @param packet Packet containing TCP segment for insertion to reorder buffer
+         * @param segment View of TCP segment in the packet
          * @param conn_side Connection side
          * @param seq Sequence number of TCP segment
          * @param offset Offset to start of unparsed data in TCP segment
-         * @param segment_size Size of the TCP segment in packet
          * @throw std::bad_alloc From calling new TcpSegment
          * @return TRUE if first hole in reorder buffer was filled and buffer should be parsed,
          * FALSE otherwise
          */
-        bool insert_segment(const Packet& packet, uint8_t conn_side, uint32_t seq, uint32_t offset,
-                            uint32_t segment_size);
+        bool insert_segment(const Packet& packet, const MemView<uint8_t>& segment, uint8_t conn_side,
+                            uint32_t seq, uint32_t offset);
 
         /**
          * @brief Remove first segment in reorder buffer of given TCP connection's side

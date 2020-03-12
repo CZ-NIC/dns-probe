@@ -317,7 +317,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
         if (m_buffer_head[conn_side] == nullptr) {
             if (seg_len < 2) {
                 try {
-                    insert_segment(packet, conn_side, pkt_seq, 0, seg_len);
+                    insert_segment(packet, segment, conn_side, pkt_seq, 0);
                     m_unparsed_msg[conn_side] = 0;
                     m_next_seq[conn_side] = pkt_seq + seg_len;
                 }
@@ -346,7 +346,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
             // 1b)
             else if ((uint32_t)(len + 2) > seg_len) {
                 try {
-                    insert_segment(packet, conn_side, pkt_seq, 0, seg_len);
+                    insert_segment(packet, segment, conn_side, pkt_seq, 0);
                     m_unparsed_msg[conn_side] = (len + 2) - seg_len;
                     m_next_seq[conn_side] = pkt_seq + seg_len;
                 }
@@ -404,11 +404,11 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                     try {
                         // 2-byte DNS msg length field split between 2 packets
                         if (split) {
-                            insert_segment(packet, conn_side, pkt_seq, seg_len - seg_len_left, seg_len);
+                            insert_segment(packet, segment, conn_side, pkt_seq, seg_len - seg_len_left);
                             m_unparsed_msg[conn_side] = 0;
                         }
                         else {
-                            insert_segment(packet, conn_side, pkt_seq, seg_len - (seg_len_left + 2), seg_len);
+                            insert_segment(packet, segment, conn_side, pkt_seq, seg_len - (seg_len_left + 2));
                             m_unparsed_msg[conn_side] = len - seg_len_left;
                         }
                     }
@@ -426,7 +426,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
         else {
             bool filled_first;
             try {
-                filled_first = insert_segment(packet, conn_side, pkt_seq, 0, seg_len);
+                filled_first = insert_segment(packet, segment, conn_side, pkt_seq, 0);
             }
             catch (std::exception& e) {
                 Logger("DNSoverTCP").debug() << "Couldn't insert packet into reorder buffer";
@@ -667,7 +667,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
     }
     else {
         try {
-            insert_segment(packet, conn_side, pkt_seq, 0, seg_len);
+            insert_segment(packet, segment, conn_side, pkt_seq, 0);
         }
         catch (std::exception& e) {
             Logger("DNSoverTCP").debug() << "Couldn't insert packet into reorder buffer";
@@ -700,14 +700,14 @@ void DDP::DnsTcpConnection::clear_buffers()
     m_buffer_tail[SERVER] = nullptr;
 }
 
-bool DDP::DnsTcpConnection::insert_segment(const Packet& packet, uint8_t conn_side, uint32_t seq,
-                                            uint32_t offset, uint32_t segment_size)
+bool DDP::DnsTcpConnection::insert_segment(const Packet& packet, const MemView<uint8_t>& segment, uint8_t conn_side,
+                                           uint32_t seq, uint32_t offset)
 {
     bool ret = false;
-    TcpSegmentInfo segment;
-    segment.seq_number = seq;
-    segment.segment_size = segment_size;
-    segment.offset = offset;
+    TcpSegmentInfo seg_info;
+    seg_info.seq_number = seq;
+    seg_info.segment_size = segment.count();
+    seg_info.offset = offset;
     TcpSegmentInfo tail;
     if (m_buffer_tail[conn_side] != nullptr) {
         tail = m_buffer_tail[conn_side]->info();
@@ -715,9 +715,9 @@ bool DDP::DnsTcpConnection::insert_segment(const Packet& packet, uint8_t conn_si
 
     // Empty buffer, just insert segment
     if (m_buffer_tail[conn_side] == nullptr) {
-        segment.next = nullptr;
-        segment.prev = nullptr;
-        m_buffer_head[conn_side] = m_buffer_tail[conn_side] = new TcpSegment(segment, packet);
+        seg_info.next = nullptr;
+        seg_info.prev = nullptr;
+        m_buffer_head[conn_side] = m_buffer_tail[conn_side] = new TcpSegment(seg_info, packet, segment);
     }
     // Same sequence number as tail segment, drop packet
     else if (tail.seq_number == seq) {
@@ -725,15 +725,15 @@ bool DDP::DnsTcpConnection::insert_segment(const Packet& packet, uint8_t conn_si
     }
     // Segment is the new tail
     else if ((tail.seq_number < seq) || ((tail.seq_number > m_isn[conn_side]) && (seq < m_isn[conn_side]))) {
-        segment.next = nullptr;
-        segment.prev = m_buffer_tail[conn_side];
-        m_buffer_tail[conn_side]->info().next = new TcpSegment(segment, packet);
+        seg_info.next = nullptr;
+        seg_info.prev = m_buffer_tail[conn_side];
+        m_buffer_tail[conn_side]->info().next = new TcpSegment(seg_info, packet, segment);
         m_buffer_tail[conn_side] = m_buffer_tail[conn_side]->info().next;
-        if ((seq == m_next_seq[conn_side]) && (segment.segment_size >= m_unparsed_msg[conn_side])) {
+        if ((seq == m_next_seq[conn_side]) && (seg_info.segment_size >= m_unparsed_msg[conn_side])) {
             ret = true;
         }
         else if (seq == m_next_seq[conn_side]) {
-            m_unparsed_msg[conn_side] = m_unparsed_msg[conn_side] - segment.segment_size;
+            m_unparsed_msg[conn_side] = m_unparsed_msg[conn_side] - seg_info.segment_size;
         }
     }
     // Segment belongs somewhere inside the buffer before the tail
@@ -750,15 +750,15 @@ bool DDP::DnsTcpConnection::insert_segment(const Packet& packet, uint8_t conn_si
             tmp_info = &tmp->info();
         }
 
-        segment.prev = tmp_info->prev;
-        segment.next = tmp;
-        tmp_info->prev = new TcpSegment(segment, packet);
+        seg_info.prev = tmp_info->prev;
+        seg_info.next = tmp;
+        tmp_info->prev = new TcpSegment(seg_info, packet, segment);
 
-        if (segment.prev == nullptr) {
+        if (seg_info.prev == nullptr) {
             m_buffer_head[conn_side] = tmp_info->prev;
         }
         else {
-            segment.prev->info().next = tmp_info->prev;
+            seg_info.prev->info().next = tmp_info->prev;
         }
 
         if (seq == m_next_seq[conn_side]) {
