@@ -335,4 +335,80 @@ namespace DDP {
     protected:
         Type m_value{0x0}; //!< Saved value.
     };
+
+    /**
+     * Specialized implementation for DDP::IpEncryption as config item.
+     */
+    template<>
+    class ConfigItem<IpEncryption> : public ConfigItemBase
+    {
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        [[nodiscard]] IpEncryption value() const { return m_value; }
+
+        bool validate(const std::any& value) const override
+        {
+            try {
+                auto str_value = std::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "AES" || str_value == "BLOWFISH" || str_value == "MD5" || str_value == "SHA1";
+            } catch (...) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo.
+         */
+        void from_sysrepo(const std::any& value) override
+        {
+            auto str_value = std::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if(str_value == "AES")
+                m_value = IpEncryption::AES;
+            else if(str_value == "BLOWFISH")
+                m_value = IpEncryption::BLOWFISH;
+            else if(str_value == "MD5")
+                m_value = IpEncryption::MD5;
+            else if(str_value == "SHA1")
+                m_value = IpEncryption::SHA1;
+            else
+                throw std::invalid_argument("Invalid argument for IpEncryption");
+        }
+
+        /**
+         * Implicit conversion to IpEncryption.
+         * @return Saved value.
+         */
+        operator IpEncryption() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == IpEncryption::NONE)
+                return {"NONE"};
+            else if (m_value == IpEncryption::AES)
+                return {"AES"};
+            else if (m_value == IpEncryption::BLOWFISH)
+                return {"BLOWFISH"};
+            else if (m_value == IpEncryption::MD5)
+                return {"MD5"};
+            else if (m_value == IpEncryption::SHA1)
+                return {"SHA1"};
+            else
+                return {"NONE"};
+        }
+
+
+    protected:
+        IpEncryption m_value{IpEncryption::NONE}; //!< Saved value.
+    };
 }

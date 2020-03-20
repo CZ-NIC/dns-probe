@@ -234,6 +234,70 @@ module cznic-dns-probe {
             }
         }
 
+        container ip-anonymization {
+            description
+                "Configuration of source IP anonymization in exported data.";
+
+            leaf anonymize-ip {
+                type boolean;
+                default "false";
+                description
+                    "If this flag is true, source IP addresses in exported data will be anonymized
+                    using Crypto-PAn prefix-preserving algorithm.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
+            leaf encryption {
+                type enumeration {
+                    enum aes {
+                        description
+                            "AES encryption algorithm.";
+                    }
+
+                    enum blowfish {
+                        description
+                            "Blowfish encryption algorithm.";
+                    }
+
+                    enum md5 {
+                        description
+                            "MD5 hash function.";
+                    }
+
+                    enum sha1 {
+                        description
+                            "SHA1 hash function.";
+                    }
+                }
+
+                default "aes";
+                description
+                    "Encryption algorithm to be used during anonymization of source IP addresses if enabled.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
+            leaf key-path {
+                type string;
+                default "key.cryptopant";
+                description
+                    "Path (including file's name) to the file with encryption key that is to be used
+                    for source IP anonymization if enabled.
+
+                    The key needs to be compatible with the encryption algorithm set in the 'encryption'
+                    option above. User should generate the key using 'scramble_ips' tool intalled by
+                    the cryptopANT dependency like this:
+
+                    scramble_ips --newkey --type=<encryption> <key_file>
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+        }
+
         container transaction-table {
             description
                 "Configuration of transaction table parameters.";

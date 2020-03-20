@@ -87,6 +87,7 @@ static std::any conv_sysrepo_data(libyang::S_Data_Node data)
 
 DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_map{
         {SYSCONF_CFG_ROOT "/coremask",                           m_cfg.coremask},
+        {SYSCONF_CFG_ROOT "/dns-port",                           m_cfg.dns_port},
         {SYSCONF_CFG_ROOT "/transaction-table/max-transactions", m_cfg.tt_size},
         {SYSCONF_CFG_ROOT "/transaction-table/query-timeout",    m_cfg.tt_timeout},
         {SYSCONF_CFG_ROOT "/transaction-table/match-qname",      m_cfg.match_qname},
@@ -103,7 +104,9 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/export/cdns-fields",                 m_cfg.cdns_fields},
         {SYSCONF_CFG_ROOT "/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
         {SYSCONF_CFG_ROOT "/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
-        {SYSCONF_CFG_ROOT "/dns-port",                           m_cfg.dns_port},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/encryption",        m_cfg.ip_encryption},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/key-path",          m_cfg.ip_enc_key},
 }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     try {
