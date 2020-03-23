@@ -31,10 +31,9 @@ namespace DDP {
         public:
         /**
          * @brief Constructor creates new C-DNS block configured for given C-DNS fields
-         * @param fields Bit field indicating which C-DNS fields to export
-         * @param records_per_block Maximum number of DNS records per one C-DNS block
+         * @param cfg Object witch configuration options
          */
-        CdnsExport(std::bitset<23> fields, uint64_t records_per_block);
+        CdnsExport(Config& cfg);
 
         /**
          * @brief Store DNS record into C-DNS block

@@ -26,8 +26,8 @@
 
 #include "ParquetExport.h"
 
-DDP::ParquetExport::ParquetExport(uint64_t records_limit)
-                                  : DnsExport(), m_records_limit(records_limit)
+DDP::ParquetExport::ParquetExport(Config& cfg)
+                                  : DnsExport(cfg), m_records_limit(cfg.parquet_records.value())
 {
     m_DnsSchema = arrow::schema({arrow::field("id", arrow::int32()),
                                 arrow::field("unixtime", arrow::int64()),
@@ -90,6 +90,12 @@ DDP::ParquetExport::ParquetExport(uint64_t records_limit)
                                 arrow::field("dns_res_len", arrow::int32()),
                                 arrow::field("server_location", arrow::utf8())
     });
+
+    if (m_anonymize_ip) {
+        if (scramble_init_from_file(m_ip_enc_key.c_str(), static_cast<scramble_crypt_t>(m_ip_encryption),
+            static_cast<scramble_crypt_t>(m_ip_encryption), nullptr) != 0)
+            throw std::runtime_error("Couldn't initialize source IP anonymization!");
+    }
 }
 
 std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
@@ -137,17 +143,23 @@ std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     // Source IP address
     int buf_len = record.m_addr_family == DDP::DnsRecord::AddrFamily::IP4 ? INET_ADDRSTRLEN + 4 : INET6_ADDRSTRLEN + 4;
     char addrBuf[buf_len];
-    const in6_addr& addr = record.client_address();
+    in6_addr* addr = record.client_address();
     int ipv = record.m_addr_family == DDP::DnsRecord::AddrFamily::IP4 ? AF_INET : AF_INET6;
-    inet_ntop(ipv, &addr, addrBuf, sizeof(addrBuf));
+    if (m_anonymize_ip) {
+        if (ipv == AF_INET)
+            *reinterpret_cast<uint32_t*>(addr) = scramble_ip4(*reinterpret_cast<uint32_t*>(addr), 0);
+        else
+            scramble_ip6(addr, 0);
+    }
+    inet_ntop(ipv, addr, addrBuf, sizeof(addrBuf));
     PARQUET_THROW_NOT_OK(Src.Append(addrBuf, strlen(addrBuf)));
 
     // Source port
     PARQUET_THROW_NOT_OK(SrcPort.Append(record.client_port()));
 
     // Destination IP address
-    const in6_addr& srv_addr = record.server_address();
-    inet_ntop(ipv, &srv_addr, addrBuf, sizeof(addrBuf));
+    in6_addr* srv_addr = record.server_address();
+    inet_ntop(ipv, srv_addr, addrBuf, sizeof(addrBuf));
     PARQUET_THROW_NOT_OK(Dst.Append(addrBuf, strlen(addrBuf)));
 
     // Destination port

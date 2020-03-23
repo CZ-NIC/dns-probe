@@ -17,15 +17,21 @@
 
 #include "CdnsExport.h"
 
-DDP::CdnsExport::CdnsExport(std::bitset<23> fields, uint64_t records_per_block)
-    : DnsExport(), m_fields(fields), m_parameters()
+DDP::CdnsExport::CdnsExport(Config& cfg)
+    : DnsExport(cfg), m_fields(cfg.cdns_fields.value()), m_parameters()
 {
-    m_parameters.storage_parameters.max_block_items = records_per_block;
+    m_parameters.storage_parameters.max_block_items = cfg.cdns_records_per_block.value();
     set_cdns_hints(m_parameters.storage_parameters.storage_hints.query_response_hints,
                    m_parameters.storage_parameters.storage_hints.query_response_signature_hints,
-                   fields);
+                   m_fields);
 
     m_block = std::make_shared<CDNS::CdnsBlock>(CDNS::CdnsBlock(m_parameters, 0));
+
+    if (m_anonymize_ip) {
+        if (scramble_init_from_file(m_ip_enc_key.c_str(), static_cast<scramble_crypt_t>(m_ip_encryption),
+            static_cast<scramble_crypt_t>(m_ip_encryption), nullptr) != 0)
+            throw std::runtime_error("Couldn't initialize source IP anonymization!");
+    }
 }
 
 std::any DDP::CdnsExport::buffer_record(DnsRecord& record)
@@ -68,22 +74,26 @@ std::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     }
 
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_ADDRESS)]) {
-        const in6_addr& addr = record.client_address();
-        if (record.m_addr_family == DnsRecord::AddrFamily::IP4)
-            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 4));
-        else if (record.m_addr_family == DnsRecord::AddrFamily::IP6)
-            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 16));
+        in6_addr* addr = record.client_address();
+        if (record.m_addr_family == DnsRecord::AddrFamily::IP4) {
+            *reinterpret_cast<uint32_t*>(addr) = scramble_ip4(*reinterpret_cast<uint32_t*>(addr), 0);
+            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 4));
+        }
+        else if (record.m_addr_family == DnsRecord::AddrFamily::IP6) {
+            scramble_ip6(addr, 0);
+            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 16));
+        }
     }
 
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_PORT)])
         qr.client_port = record.client_port();
 
     if (m_fields[static_cast<uint32_t>(CDNSField::SERVER_ADDRESS)]) {
-        const in6_addr& addr = record.server_address();
+        in6_addr* addr = record.server_address();
         if (record.m_addr_family == DnsRecord::AddrFamily::IP4)
-            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 4));
+            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 4));
         else if (record.m_addr_family == DnsRecord::AddrFamily::IP6)
-            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 16));
+            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 16));
 
         qrs_filled = true;
     }

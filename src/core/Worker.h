@@ -89,9 +89,9 @@ namespace DDP {
                 m_process_id(process_id)
         {
             if (cfg.export_format.value() == ExportFormat::PARQUET)
-                m_exporter = new ParquetExport(cfg.parquet_records.value());
+                m_exporter = new ParquetExport(cfg);
             else
-                m_exporter = new CdnsExport(cfg.cdns_fields.value(), cfg.cdns_records_per_block.value());
+                m_exporter = new CdnsExport(cfg);
         }
 
         /**

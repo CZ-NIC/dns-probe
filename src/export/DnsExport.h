@@ -21,6 +21,7 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <cryptopANT.h>
 
 #include "core/DnsRecord.h"
 #include "core/Statistics.h"
@@ -38,7 +39,9 @@ namespace DDP {
     class DnsExport
     {
     public:
-        explicit DnsExport() {}
+        explicit DnsExport(Config& cfg) : m_anonymize_ip(cfg.anonymize_ip.value()),
+                                          m_ip_encryption(cfg.ip_encryption.value()),
+                                          m_ip_enc_key(cfg.ip_enc_key.value()) {}
 
         virtual ~DnsExport() {};
 
@@ -67,5 +70,10 @@ namespace DDP {
          * @param cfg New configuration
          */
         virtual void update_configuration(Config& cfg) = 0;
+
+    protected:
+        bool m_anonymize_ip;
+        IpEncryption m_ip_encryption;
+        std::string m_ip_enc_key;
     };
 }

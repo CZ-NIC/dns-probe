@@ -68,10 +68,9 @@ namespace DDP {
 
         /**
          * @brief Constructor creates Parquet file schema
-         * @param records_limit Maximum number of DNS records in one parquet file
-         * @param process_id Process identifier, used in generation of parquet file's name
+         * @param cfg Object with configuration options
          */
-        explicit ParquetExport(uint64_t records_limit);
+        explicit ParquetExport(Config& cfg);
 
         /**
          * @brief Store DNS record into arrow columns.
