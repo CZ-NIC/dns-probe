@@ -38,6 +38,7 @@ This project has following required dependencies:
 * [Arrow 0.16.0](https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz)
 * [CDNS](https://gitlab.labs.nic.cz/knot/c-dns)
 * [libPCAP](https://www.tcpdump.org/)
+* [cryptopANT](https://ant.isi.edu/software/cryptopANT/cryptopANT-1.2.1.tar.gz)
 
 For DPDK backend the DNS probe also requires installed DPDK framework:
 * [DPDK 19.11](http://fast.dpdk.org/rel/dpdk-19.11.tar.xz)
@@ -147,6 +148,19 @@ make install
 cd "$DEP_DIR"
 ```
 
+### cryptopANT
+Library used for optional anonymization of source IP addresses in exported data using Crypto-PAn prefix-preserving algorithm.
+
+```shell
+curl -L https://ant.isi.edu/software/cryptopANT/cryptopANT-1.2.1.tar.gz > dl/cryptopant.tgz
+mkdir build/cryptopant
+tar -xf dl/cryptopant.tgz -C build/cryptopant --strip-components=1
+cd build/cryptopant
+./configure
+make -j
+make install DESTDIR="$DEP_DIR" # Remove `DESTDIR="$DEP_DIR"` if you want to install CMake into /usr/local
+cd "$DEP_DIR"
+```
 
 ### DPDK
 DPDK framework is required only when the DPDK backend is enabled in compilation process of the DNS Probe.
