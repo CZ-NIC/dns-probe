@@ -117,18 +117,18 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
 
     auto tree = m_sysrepo_session->get_data(SYSCONF_CFG_ROOT);
 
-    for (auto&&[xpath, cfg]: m_path_map) {
+    for (auto&& item : m_path_map) {
         try {
-            auto val = tree->find_path(xpath.c_str())->data()[0];
+            auto val = tree->find_path(item.first.c_str())->data()[0];
 
             if (val) {
-                m_logger.debug() << "Setting new value for " << xpath << " (old value: " << cfg.string() << ")";
-                cfg.from_sysrepo(conv_sysrepo_data(val));
-                m_logger.debug() << "New value for " << xpath << " is " << cfg.string();
+                m_logger.debug() << "Setting new value for " << item.first << " (old value: " << item.second.string() << ")";
+                item.second.from_sysrepo(conv_sysrepo_data(val));
+                m_logger.debug() << "New value for " << item.first << " is " << item.second.string();
             } else
-                m_logger.warning() << "Config for path '" << xpath << "' not found!";
+                m_logger.warning() << "Config for path '" << item.first << "' not found!";
         } catch (sysrepo::sysrepo_exception& e) {
-            m_logger.warning() << "Getting config for path '" << xpath << "' failed! (" << e.what() << ")";
+            m_logger.warning() << "Getting config for path '" << item.first << "' failed! (" << e.what() << ")";
         }
     }
 
@@ -227,8 +227,8 @@ int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session sessi
 
     parent.reset(new libyang::Data_Node(ctx, SYSCONF_STATS_ROOT, nullptr, LYD_ANYDATA_CONSTSTRING, 0));
 
-    for (auto&&[name, val]: stats_map) {
-        libyang::S_Data_Node element(new libyang::Data_Node(parent, mod, name.c_str(), val.c_str()));
+    for (auto&& item : stats_map) {
+        libyang::S_Data_Node element(new libyang::Data_Node(parent, mod, item.first.c_str(), item.second.c_str()));
     }
 
     return SR_ERR_OK;
