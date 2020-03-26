@@ -44,7 +44,7 @@ namespace DDP {
         public:
             CoreCache() : m_cache{}, m_unused_pos(0) {}
 
-            [[nodiscard]] T* get() { return m_unused_pos ? m_cache[--m_unused_pos] : nullptr; }
+            T* get() { return m_unused_pos ? m_cache[--m_unused_pos] : nullptr; }
 
             bool put(T* item)
             {
@@ -88,7 +88,7 @@ namespace DDP {
          * @return Reference to newly constructed object.
          */
         template<typename... Args>
-        [[nodiscard]] T& get_impl(Args&& ...args)
+        T& get_impl(Args&& ...args)
         {
             T* space = nullptr;
 

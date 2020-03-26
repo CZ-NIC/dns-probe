@@ -95,7 +95,7 @@ namespace DDP {
          * Provides text representation of the saved value.
          * @return String containing text representation of the value.
          */
-        [[nodiscard]] std::string string() const override
+        std::string string() const override
         {
             std::stringstream str;
             str << m_value;
@@ -117,7 +117,7 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] PcapExportCfg value() const { return m_value; }
+        PcapExportCfg value() const { return m_value; }
 
         bool validate(const boost::any& value) const override
         {
@@ -184,7 +184,7 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] ExportFormat value() const { return m_value; }
+        ExportFormat value() const { return m_value; }
 
         bool validate(const boost::any& value) const override
         {
@@ -251,7 +251,7 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] Type value() const { return m_value; }
+        Type value() const { return m_value; }
 
         /**
          * Save value from sysrepo.
@@ -296,7 +296,7 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] Type value() const { return m_value; }
+        Type value() const { return m_value; }
 
         /**
          * Save value from sysrepo.

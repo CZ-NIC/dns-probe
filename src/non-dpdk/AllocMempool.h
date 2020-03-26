@@ -53,7 +53,7 @@ namespace DDP {
          * @return Reference to newly constructed object.
          */
         template<typename... Args>
-        [[nodiscard]] T& get_impl(Args&& ...args)
+        T& get_impl(Args&& ...args)
         {
             try {
                 return *new T(std::forward<Args>(args)...);

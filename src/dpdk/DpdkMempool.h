@@ -68,7 +68,7 @@ namespace DDP {
          * @return Reference to newly constructed object.
          */
         template<typename... Args>
-        [[nodiscard]] T& get_impl(Args&& ...args)
+        T& get_impl(Args&& ...args)
         {
             void* space = nullptr;
             if (auto ret = rte_mempool_get(m_mempool, &space); ret == 0) {
