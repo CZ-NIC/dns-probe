@@ -21,7 +21,7 @@
 #include <vector>
 #include <cstdint>
 #include <thread>
-#include <optional>
+#include <boost/optional.hpp>
 #include <atomic>
 
 #include "RingFwdDecl.h"
@@ -271,7 +271,7 @@ namespace DDP {
          * Read item from ring.
          * @return Optional containing read item. If the ring was empty then optional is also empty.
          */
-        std::optional<T> pop()
+        boost::optional<T> pop()
         {
             RingDiscardItemCtx ctx(*this);
             if (ctx.valid()) {
