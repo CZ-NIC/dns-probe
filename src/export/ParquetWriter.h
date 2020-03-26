@@ -46,11 +46,11 @@ namespace DDP {
          * @throw ::parquet::ParquetException
          * @return Number of DNS records written to output
          */
-        int64_t write(std::any item) override {
+        int64_t write(boost::any item) override {
             if (item.type() != typeid(std::shared_ptr<arrow::Table>))
                 return 0;
 
-            return write(std::any_cast<std::shared_ptr<arrow::Table>>(item));
+            return write(boost::any_cast<std::shared_ptr<arrow::Table>>(item));
         }
 
         /**

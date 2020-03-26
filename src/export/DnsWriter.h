@@ -59,7 +59,7 @@ namespace DDP {
          * @param item Item with DNS records ready for export to output
          * @return Number of DNS records written to output
          */
-        virtual int64_t write(std::any item) = 0;
+        virtual int64_t write(boost::any item) = 0;
 
         /**
          * @brief Close current output and open a new one

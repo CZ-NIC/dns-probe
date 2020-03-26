@@ -92,7 +92,7 @@ DDP::ParquetExport::ParquetExport(uint64_t records_limit)
     });
 }
 
-std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
+boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
 {
     // DNS ID
     PARQUET_THROW_NOT_OK(ID.Append(record.m_id));
@@ -229,7 +229,7 @@ std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
         // EDNS DNSSEC DAU
         auto find_dau = edns_map.find(EDNSOptions::DNSSEC_DAU);
         if (find_dau != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsDnssecDau.Append(std::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_DAU])));
+            PARQUET_THROW_NOT_OK(EdnsDnssecDau.Append(boost::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_DAU])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsDnssecDau.Append(""));
@@ -238,7 +238,7 @@ std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
         // EDNS DNSSEC DHU
         auto find_dhu = edns_map.find(EDNSOptions::DNSSEC_DHU);
         if (find_dhu != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsDnssecDhu.Append(std::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_DHU])));
+            PARQUET_THROW_NOT_OK(EdnsDnssecDhu.Append(boost::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_DHU])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsDnssecDhu.Append(""));
@@ -247,7 +247,7 @@ std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
         // EDNS DNSSEC N3U
         auto find_n3u = edns_map.find(EDNSOptions::DNSSEC_N3U);
         if (find_n3u != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(std::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_N3U])));
+            PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(boost::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_N3U])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(""));
@@ -270,7 +270,7 @@ std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
         // EDNS NSID
         auto find = edns_map.find(EDNSOptions::NSID);
         if (find != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsNSID.Append(std::any_cast<std::string>(edns_map[EDNSOptions::NSID])));
+            PARQUET_THROW_NOT_OK(EdnsNSID.Append(boost::any_cast<std::string>(edns_map[EDNSOptions::NSID])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsNSID.Append(""));
@@ -513,9 +513,9 @@ void DDP::ParquetExport::write_leftovers(ParquetWriter& writer, Statistics& stat
     stats.exported_records += table->num_rows();
 }
 
-std::unordered_map<DDP::ParquetExport::EDNSOptions, std::any> DDP::ParquetExport::parse_edns_options(const uint8_t* ptr, uint16_t size)
+std::unordered_map<DDP::ParquetExport::EDNSOptions, boost::any> DDP::ParquetExport::parse_edns_options(const uint8_t* ptr, uint16_t size)
 {
-    std::unordered_map<EDNSOptions, std::any> ret;
+    std::unordered_map<EDNSOptions, boost::any> ret;
     uint16_t parsed = 0;
 
     while (parsed < size) {

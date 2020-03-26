@@ -176,7 +176,7 @@ namespace DDP {
         std::unique_ptr<CommLink> m_log_link; //!< Communication for sending log messages.
         std::unique_ptr<Mempool<DnsRecord>> m_dns_record_mempool; //!< Mempool for DNS records.
         std::unique_ptr<Mempool<DnsTcpConnection>> m_tcp_connection_mempool; //!< Mempool for TCP connections.
-        std::unordered_map<unsigned, std::unique_ptr<Ring<std::any>>> m_export_rings; //!< Rings for sending data from workers to exporter.
+        std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>> m_export_rings; //!< Rings for sending data from workers to exporter.
 
         std::vector<Statistics> m_stats; //!< Statistics structure for workers. One item in vector per worker.
         AggregatedStatistics m_aggregated_stats; //!< Aggregated statistics from workers.

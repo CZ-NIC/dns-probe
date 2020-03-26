@@ -28,7 +28,7 @@ DDP::CdnsExport::CdnsExport(std::bitset<23> fields, uint64_t records_per_block)
     m_block = std::make_shared<CDNS::CdnsBlock>(CDNS::CdnsBlock(m_parameters, 0));
 }
 
-std::any DDP::CdnsExport::buffer_record(DnsRecord& record)
+boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
 {
     CDNS::QueryResponse qr;
     CDNS::QueryResponseSignature qrs;

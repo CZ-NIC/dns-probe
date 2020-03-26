@@ -51,7 +51,7 @@ namespace DDP {
          * @param process_id Process identifier, used in generation of exported file's names
          */
         Exporter(Config& cfg, Statistics& stats,
-                 std::unordered_map<unsigned, std::unique_ptr<Ring<std::any>>>& rings,
+                 std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>>& rings,
                  CommLink::CommLinkWorkerEP& comm_link, unsigned process_id);
 
         /**
@@ -71,7 +71,7 @@ namespace DDP {
          * @param worker_id Number of the ring in m_received_worker_mark vector
          * @return If successful EXPORTER_OK, otherwise corresponding error code
          */
-        ExporterRetCode dequeue(std::unique_ptr<Ring<std::any>>& ring, unsigned worker_id);
+        ExporterRetCode dequeue(std::unique_ptr<Ring<boost::any>>& ring, unsigned worker_id);
 
         /**
          * @brief Update dynamic configuration
@@ -84,7 +84,7 @@ namespace DDP {
         private:
         DnsWriter* m_writer;
         unsigned m_process_id;
-        std::unordered_map<unsigned, std::unique_ptr<Ring<std::any>>>& m_export_rings;
+        std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>>& m_export_rings;
 
         bool m_rotation_in_progress;
         std::vector<bool> m_received_worker_mark;

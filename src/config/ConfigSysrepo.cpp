@@ -19,7 +19,7 @@
 #include <libyang/Libyang.hpp>
 
 #include <stdexcept>
-#include <any>
+#include <boost/any.hpp>
 #include <utility>
 
 #include "core/Probe.h"
@@ -40,7 +40,7 @@
 #define SYSCONF_CFG_ROOT "/" SYSCONF_MODULE ":" SYSCONF_CFG_CONTAINER
 #define SYSCONF_STATS_ROOT "/" SYSCONF_MODULE ":" SYSCONF_STATISTICS_CONTAINER
 
-static std::any conv_sysrepo_data(libyang::S_Data_Node data)
+static boost::any conv_sysrepo_data(libyang::S_Data_Node data)
 {
     libyang::Data_Node_Leaf_List leaf(std::move(data));
     auto value = leaf.value();

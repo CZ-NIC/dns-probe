@@ -164,7 +164,7 @@ void DDP::Probe::init(const Arguments& args)
         auto workers = m_thread_manager->slave_lcores();
         workers.erase(workers.begin());
         for (auto worker : workers) {
-            m_export_rings[worker] = std::make_unique<Ring<std::any>>(4, RING::SINGLE_PRODUCER);
+            m_export_rings[worker] = std::make_unique<Ring<boost::any>>(4, RING::SINGLE_PRODUCER);
 
             if (!m_export_rings[worker])
                 throw std::runtime_error("Couldn't initialize export rings!");

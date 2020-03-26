@@ -22,7 +22,7 @@
 #include "Probe.h"
 
 DDP::Exporter::Exporter(DDP::Config& cfg, DDP::Statistics& stats,
-                        std::unordered_map<unsigned int, std::unique_ptr<Ring<std::any>>>& rings,
+                        std::unordered_map<unsigned int, std::unique_ptr<Ring<boost::any>>>& rings,
                         DDP::CommLink::CommLinkWorkerEP& comm_link, unsigned process_id) :
         Process(cfg, stats, comm_link),
         m_writer(nullptr),
@@ -93,7 +93,7 @@ int DDP::Exporter::run()
     return 0;
 }
 
-DDP::ExporterRetCode DDP::Exporter::dequeue(std::unique_ptr<Ring<std::any>>& ring, unsigned worker_id) {
+DDP::ExporterRetCode DDP::Exporter::dequeue(std::unique_ptr<Ring<boost::any>>& ring, unsigned worker_id) {
     try {
         // dequeue from ring buffer
         auto item = ring->pop();
@@ -104,7 +104,7 @@ DDP::ExporterRetCode DDP::Exporter::dequeue(std::unique_ptr<Ring<std::any>>& rin
             if (item.value().type() == typeid(uint64_t)) {
                 m_rotation_in_progress = true;
                 m_received_worker_mark[worker_id] = true;
-                m_current_mark = std::any_cast<uint64_t>(item.value());
+                m_current_mark = boost::any_cast<uint64_t>(item.value());
                 m_mark_count++;
             }
             // Item with DNS records received
