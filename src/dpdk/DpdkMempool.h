@@ -54,8 +54,7 @@ namespace DDP {
          */
         virtual ~DPDKMempool() noexcept
         {
-            rte_mempool_obj_iter(m_mempool, [](rte_mempool* mp [[maybe_unused]], void* opaque [[maybe_unused]],
-                                               void* obj[[maybe_unused]], unsigned obj_idx [[maybe_unused]]) {
+            rte_mempool_obj_iter(m_mempool, [](rte_mempool*, void*, void* obj, unsigned) {
                 reinterpret_cast<T*>(obj)->~T();
             }, nullptr);
             rte_mempool_free(m_mempool);

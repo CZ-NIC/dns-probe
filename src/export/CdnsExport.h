@@ -77,7 +77,7 @@ namespace DDP {
          * @brief Update export configuration (nothing is done here)
          * @param cfg New configuration
          */
-        void update_configuration(Config& cfg [[maybe_unused]]) override {}
+        void update_configuration(Config&) override {}
 
         private:
         std::shared_ptr<CDNS::CdnsBlock> m_block;

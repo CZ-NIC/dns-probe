@@ -102,7 +102,7 @@ namespace DDP {
          * Constructor has no effect.
          * @param name Kept only for compatibility.
          */
-        explicit EntryAssembler(const char* name) {}
+        explicit EntryAssembler(const char*) {}
 
         /**
          * Optimize out debug messages.
@@ -111,7 +111,7 @@ namespace DDP {
          * @return Reference to itself so it can be used for another concatenation.
          */
         template<typename T>
-        EntryAssembler& operator<<([[maybe_unused]] T&& msg)
+        EntryAssembler& operator<<(T&&)
         {
             return *this;
         }

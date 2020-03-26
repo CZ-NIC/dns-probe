@@ -171,7 +171,7 @@ namespace DDP {
          * @param match_qname unused parameter, MUST be here because of TransactionTable interface
          * @return TRUE if packet belongs to this TCP connection, FALSE otherwise
          */
-        bool match(DnsTcpConnection& m, bool match_qname [[maybe_unused]]) const
+        bool match(DnsTcpConnection& m, bool) const
         {
             return m_hash == m.m_hash;
         }

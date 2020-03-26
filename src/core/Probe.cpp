@@ -309,7 +309,7 @@ DDP::AggregatedStatistics DDP::Probe::statistics()
     return m_aggregated_stats;
 }
 
-void DDP::Probe::worker_stopped(unsigned lcore [[maybe_unused]])
+void DDP::Probe::worker_stopped(unsigned)
 {
     m_stopped_workers++;
     if(m_stopped_workers == slaves_cnt() - 1)

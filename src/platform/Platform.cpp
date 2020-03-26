@@ -24,7 +24,9 @@
 #include <rte_lcore.h>
 #endif
 
-void DDP::init_platform(const DDP::Arguments& args [[maybe_unused]], const Config& cfg [[maybe_unused]])
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void DDP::init_platform(const DDP::Arguments& args, const Config& cfg)
 {
 #ifdef USE_DPDK
     std::stringstream conv;
@@ -71,3 +73,4 @@ void DDP::init_platform(const DDP::Arguments& args [[maybe_unused]], const Confi
     }
 #endif
 }
+#pragma GCC diagnostic pop

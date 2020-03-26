@@ -59,7 +59,7 @@ namespace DDP {
          * @param value Checked valued from sysrepo.
          * @return True if value is valid otherwise false.
          */
-        virtual bool validate( [[maybe_unused]] const boost::any& value) const { return true; }
+        virtual bool validate(const boost::any&) const { return true; }
     };
 
     /**

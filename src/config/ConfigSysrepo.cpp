@@ -163,11 +163,11 @@ void DDP::ConfigSysrepo::hup()
 }
 
 int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session session,
-                                                       const char* module_name [[maybe_unused]],
-                                                       const char* xpath [[maybe_unused]],
+                                                       const char*,
+                                                       const char*,
                                                        sr_event_t event,
-                                                       uint32_t request_id [[maybe_unused]],
-                                                       void* private_data [[maybe_unused]])
+                                                       uint32_t,
+                                                       void*)
 {
     auto it = session->get_changes_iter("//.");
 
@@ -200,12 +200,12 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
 }
 
 int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session session,
-                                                        const char* module_name [[maybe_unused]],
-                                                        const char* path [[maybe_unused]],
-                                                        const char* request_xpath [[maybe_unused]],
-                                                        uint32_t request_id [[maybe_unused]],
-                                                        libyang::S_Data_Node& parent [[maybe_unused]],
-                                                        void* private_data [[maybe_unused]])
+                                                        const char* module_name,
+                                                        const char*,
+                                                        const char*,
+                                                        uint32_t,
+                                                        libyang::S_Data_Node& parent,
+                                                        void*)
 {
     auto stats = DDP::Probe::getInstance().statistics();
 
@@ -234,13 +234,13 @@ int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session sessi
     return SR_ERR_OK;
 }
 
-int DDP::ConfigSysrepo::SysrepoCallback::rpc(sysrepo::S_Session session [[maybe_unused]],
-                                         const char* op_path [[maybe_unused]],
-                                         const sysrepo::S_Vals input [[maybe_unused]],
-                                         sr_event_t event [[maybe_unused]],
-                                         uint32_t request_id [[maybe_unused]],
-                                         sysrepo::S_Vals_Holder output [[maybe_unused]],
-                                         void* private_data [[maybe_unused]])
+int DDP::ConfigSysrepo::SysrepoCallback::rpc(sysrepo::S_Session,
+                                         const char*,
+                                         const sysrepo::S_Vals,
+                                         sr_event_t,
+                                         uint32_t,
+                                         sysrepo::S_Vals_Holder,
+                                         void*)
 {
     m_cfg.m_logger.info() << "Received request to restart.";
     Probe::getInstance().stop(true);

@@ -67,7 +67,7 @@ namespace DDP {
          * @param name Unused (keep to conform interface with DPDK mempool).
          * @throw MempoolException
          */
-        explicit HeapMempool(unsigned elements, const char* name [[maybe_unused]]) :
+        explicit HeapMempool(unsigned elements, const char*) :
                 m_mempool(std::make_unique<char[]>(elements * sizeof(T))),
                 m_mempool_fields(elements, RING::MULTI_PRODUCER | RING::MULTI_CONSUMER),
                 m_core_cache(Probe::getInstance().thread_manager().count())
