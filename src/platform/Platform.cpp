@@ -59,7 +59,7 @@ void DDP::init_platform(const DDP::Arguments& args, const Config& cfg)
 
     std::vector<char*> argv_char;
     for(auto& arg: argv) {
-        argv_char.push_back(arg.data());
+        argv_char.push_back(const_cast<char*>(arg.data()));
     }
 
     std::cerr << "Running EAL with parameters: ";

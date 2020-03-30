@@ -16,6 +16,8 @@
  */
 
 #include <iostream>
+#include <utility>
+#include <tuple>
 
 #include <getopt.h>
 
@@ -174,7 +176,9 @@ void DDP::Probe::init(const Arguments& args)
 
         // Creates communication channels for workers
         for (auto slave: m_thread_manager->slave_lcores()) {
-            auto cl = m_comm_links.try_emplace(slave);
+            auto cl = m_comm_links.emplace(std::piecewise_construct,
+                                           std::forward_as_tuple(slave),
+                                           std::forward_as_tuple(32, true));
             m_poll.emplace<CommLinkProxy>(cl.first->second.config_endpoint());
             m_stats.emplace_back();
         }

@@ -26,6 +26,8 @@
 
 #include "ParquetExport.h"
 
+constexpr char DDP::ParquetExport::DIGITS[];
+
 DDP::ParquetExport::ParquetExport(uint64_t records_limit)
                                   : DnsExport(), m_records_limit(records_limit)
 {
