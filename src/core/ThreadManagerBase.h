@@ -89,7 +89,7 @@ namespace DDP {
         {
             check_slave_lcore_id(lcore);
 
-            static_assert(std::is_same<std::invoke_result_t<CB, Args...>, int>::value,
+            static_assert(std::is_same<decltype(f(args...)), int>::value,
                           "Core function has to return int!");
 
             static_cast<T*>(this)->run_on_thread_impl(lcore, std::forward<CB>(f), std::forward<Args>(args)...);
@@ -105,7 +105,7 @@ namespace DDP {
         template<typename CB, typename... Args>
         void run_on_all(CB&& f, Args&& ... args)
         {
-            static_assert(std::is_same<std::invoke_result_t<CB, Args...>, int>::value,
+            static_assert(std::is_same<decltype(f(args...)), int>::value,
                           "Core function has to return int!");
 
             static_cast<T*>(this)->run_on_thread_impl(std::forward<CB>(f), std::forward<Args>(args)...);

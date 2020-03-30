@@ -106,7 +106,6 @@ namespace DDP {
 
                 pthread_attr_t pthread_attr;
                 pthread_attr_init(&pthread_attr);
-                auto clean_pthread_attr = Finally([&pthread_attr](){pthread_attr_destroy(&pthread_attr);});
                 auto pthread_op = pthread_attr_setaffinity_np(&pthread_attr, sizeof(cpu_set_t), &cpuset);
                 if(pthread_op < 0)
                     throw std::runtime_error("Cannot set affinity for new thread!");
@@ -130,6 +129,7 @@ namespace DDP {
 
                 thread.running = true;
                 thread.pthread = pthread;
+                pthread_attr_destroy(&pthread_attr);
             };
 
             CCallback(pthread_wrapper, f, std::forward<Args>(args)...);
