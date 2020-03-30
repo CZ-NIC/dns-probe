@@ -71,7 +71,8 @@ namespace DDP {
         T& get_impl(Args&& ...args)
         {
             void* space = nullptr;
-            if (auto ret = rte_mempool_get(m_mempool, &space); ret == 0) {
+            auto ret = rte_mempool_get(m_mempool, &space);
+            if (ret == 0) {
                 try {
                     auto obj = new(space) T(std::forward<Args>(args)...);
                     return *obj;
