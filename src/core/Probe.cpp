@@ -123,7 +123,7 @@ void DDP::Probe::print_help(const char* app)
     }
 
     std::string interface;
-    if constexpr (BACKEND == PacketBackend::Socket)
+    if (BACKEND == PacketBackend::Socket)
         interface = "interface name e.g. eth0";
     else
         interface = "interface PCI ID e.g. 00:1f.6";

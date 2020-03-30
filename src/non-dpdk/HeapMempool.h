@@ -92,7 +92,7 @@ namespace DDP {
         {
             T* space = nullptr;
 
-            if constexpr (base_t::MEMPOOL_CACHE_SIZE > 0) {
+            if (base_t::MEMPOOL_CACHE_SIZE > 0) {
                 space = m_core_cache[ThreadManager::index()].get();
             }
 
@@ -116,7 +116,7 @@ namespace DDP {
         {
             obj->~T();
 
-            if constexpr (base_t::MEMPOOL_CACHE_SIZE > 0) {
+            if (base_t::MEMPOOL_CACHE_SIZE > 0) {
                 if (!m_core_cache[ThreadManager::index()].put(obj)) {
                     m_mempool_fields.emplace(obj);
                 }

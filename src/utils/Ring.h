@@ -86,7 +86,7 @@ namespace DDP {
 
                 if (ring.is_multi_producer()) {
                     while (!ring.m_producer_head.compare_exchange_weak(m_item_pos, m_new_item_pos)) {
-                        if constexpr (yield)
+                        if (yield)
                             std::this_thread::yield();
 
                         m_new_item_pos = (m_item_pos + 1) & ring.size_mask();
@@ -125,7 +125,7 @@ namespace DDP {
 
                 if (m_ring.is_multi_producer()) {
                     while (m_ring.m_producer_tail.load() != m_item_pos) {
-                        if constexpr (yield)
+                        if (yield)
                             std::this_thread::yield();
                     }
                 }
@@ -161,7 +161,7 @@ namespace DDP {
 
                 if (ring.is_multi_consumer()) {
                     while (!ring.m_consumer_head.compare_exchange_weak(m_item_pos, m_new_item_pos)) {
-                        if constexpr (yield)
+                        if (yield)
                             std::this_thread::yield();
 
                         m_new_item_pos = (m_item_pos + 1) & ring.size_mask();
@@ -201,7 +201,7 @@ namespace DDP {
                 item().~T();
                 if (m_ring.is_multi_consumer()) {
                     while (m_ring.m_consumer_tail.load() != m_item_pos) {
-                        if constexpr (yield)
+                        if (yield)
                             std::this_thread::yield();
                     }
                 }
@@ -275,10 +275,10 @@ namespace DDP {
         {
             RingDiscardItemCtx ctx(*this);
             if (ctx.valid()) {
-                if constexpr (std::is_move_constructible<T>::value)
-                    return {std::move(ctx.item())};
+                if (std::is_move_constructible<T>::value)
+                    return T{std::move(ctx.item())};
                 else
-                    return {ctx.item()};
+                    return T{ctx.item()};
             } else {
                 return {};
             }
