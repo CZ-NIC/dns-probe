@@ -27,7 +27,7 @@ namespace DDP {
     namespace CCallbackInternal {
 
         /**
-         * Extract item from tuple and return moved/copyed value.
+         * Extract item from tuple and return moved/copied value.
          * @tparam I Position in tuple for item extraction.
          * @tparam T Type stored in tuple.
          * @param tuple Source tuple for extraction item.
@@ -36,15 +36,20 @@ namespace DDP {
         template<std::size_t I, typename T>
         decltype(auto) pass(T& tuple)
         {
-            using type = std::tuple_element_t<I, T>;
+            return std::get<I>(tuple);
+        }
 
-            if constexpr (std::is_reference<type>::value) {
-                return std::ref(std::get<I>(tuple));
-            } else if constexpr (std::is_move_constructible_v<type>) {
-                return std::move(std::get<I>(tuple));
-            } else {
-                return std::get<I>(tuple);
-            }
+        /**
+         * @brief Invoke given C++ callback with given parameters.
+         * @tparam F Type of C++ function.
+         * @tparam Args Type of given parameters.
+         * @param f Called C++ function.
+         * @param args Parameters for C++ function.
+         * @return Return value of called C++ function.
+         */
+        template <class F, class... Args>
+        auto invoke_impl(F&& f, Args&&... args) -> decltype(std::forward<F>(f)(std::forward<Args>(args)...)) {
+            return std::forward<F>(f)(std::forward<Args>(args)...);
         }
 
         /**
@@ -60,7 +65,7 @@ namespace DDP {
         template<typename F, typename T, std::size_t I0, std::size_t... I>
         auto invoke(F&& f, T&& t, std::index_sequence<I0, I...>)
         {
-            return std::invoke(std::forward<F>(f), pass<I>(t)...);
+            return invoke_impl(std::forward<F>(f), pass<I>(t)...);
         }
     }
 
@@ -88,7 +93,7 @@ namespace DDP {
             auto func = std::get<0>(*all_params);
 
             return CCallbackInternal::invoke(func, *all_params,
-                                             std::make_index_sequence<std::tuple_size_v<params_t>>{});
+                                             std::make_index_sequence<std::tuple_size<params_t>::value>{});
         };
 
         return cb(trampoline, params);
