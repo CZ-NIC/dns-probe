@@ -49,7 +49,7 @@ namespace DDP {
          */
         explicit EntryAssembler(const char* name) : m_msg()
         {
-            if constexpr (level == LogLevel::DEBUG) {
+            if (level == LogLevel::DEBUG) {
                 m_msg << "[DEBUG] ";
             } else if (level == LogLevel::INFO) {
                 m_msg << "[INFO] ";
@@ -62,6 +62,15 @@ namespace DDP {
             }
 
             m_msg << name << ": ";
+        }
+
+        /**
+         * @brief Move constructor. Moves the std::ostringstream member variable.
+         * @param other Source EntryAssembler
+         */
+        EntryAssembler(EntryAssembler&& other)
+        {
+            this->m_msg = std::move(other.m_msg);
         }
 
         /**
