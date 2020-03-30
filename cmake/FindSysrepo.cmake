@@ -1,4 +1,5 @@
-include(FindPkgConfig)
+find_package(PkgConfig REQUIRED)
+find_package(LibYang REQUIRED)
 
 set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
 unset(ENV{PKG_CONFIG_PATH})
@@ -12,8 +13,3 @@ pkg_search_module(SYSREPOCPP IMPORTED_TARGET sysrepo-cpp)
 set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_ENV}")
 
 find_package_handle_standard_args(Sysrepo DEFAULT_MSG SYSREPOCPP_FOUND)
-
-find_package(LibYang REQUIRED)
-
-add_library(Sysrepo::Sysrepo INTERFACE IMPORTED)
-target_link_libraries(Sysrepo::Sysrepo INTERFACE PkgConfig::SYSREPOCPP LibYang::LibYang)

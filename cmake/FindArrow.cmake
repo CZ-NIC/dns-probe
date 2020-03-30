@@ -1,4 +1,4 @@
-include(FindPkgConfig)
+find_package(PkgConfig REQUIRED)
 
 set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
 unset(ENV{PKG_CONFIG_PATH})
@@ -12,6 +12,3 @@ pkg_search_module(ARROW IMPORTED_TARGET arrow)
 set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_PATH}")
 
 find_package_handle_standard_args(Arrow DEFAULT_MSG ARROW_FOUND)
-
-add_library(Arrow::Arrow INTERFACE IMPORTED)
-target_link_libraries(Arrow::Arrow INTERFACE PkgConfig::ARROW)

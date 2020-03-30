@@ -1,4 +1,4 @@
-include(FindPkgConfig)
+find_package(PkgConfig REQUIRED)
 
 set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
 unset(ENV{PKG_CONFIG_PATH})
@@ -12,6 +12,3 @@ pkg_search_module(Dpdk IMPORTED_TARGET libdpdk)
 set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_PATH}")
 
 find_package_handle_standard_args(DPDK DEFAULT_MSG Dpdk_FOUND)
-
-add_library(DPDK::DPDK INTERFACE IMPORTED)
-target_link_libraries(DPDK::DPDK INTERFACE PkgConfig::Dpdk)

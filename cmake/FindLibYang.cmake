@@ -1,4 +1,4 @@
-include(FindPkgConfig)
+find_package(PkgConfig REQUIRED)
 
 set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
 unset(ENV{PKG_CONFIG_PATH})
@@ -12,7 +12,4 @@ pkg_search_module(LIBYANG IMPORTED_TARGET libyang)
 pkg_search_module(LIBYANGCPP IMPORTED_TARGET libyang-cpp)
 set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_ENV}")
 
-find_package_handle_standard_args(LibYang DEFAULT_MSG SYSREPO_FOUND)
-
-add_library(LibYang::LibYang INTERFACE IMPORTED)
-target_link_libraries(LibYang::LibYang INTERFACE PkgConfig::LIBYANG PkgConfig::LIBYANGCPP)
+find_package_handle_standard_args(LibYang DEFAULT_MSG LIBYANG_FOUND LIBYANGCPP_FOUND)

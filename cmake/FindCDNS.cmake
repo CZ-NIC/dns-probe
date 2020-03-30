@@ -1,4 +1,4 @@
-include(FindPkgConfig)
+find_package(PkgConfig REQUIRED)
 
 set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
 unset(ENV{PKG_CONFIG_PATH})
@@ -12,6 +12,3 @@ pkg_search_module(CDNS IMPORTED_TARGET cdns)
 set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_ENV}")
 
 find_package_handle_standard_args(CDNS DEFAULT_MSG CDNS_FOUND)
-
-add_library(CDNS::CDNS INTERFACE IMPORTED)
-target_link_libraries(CDNS::CDNS INTERFACE PkgConfig::CDNS)
