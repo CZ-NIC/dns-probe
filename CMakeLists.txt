@@ -95,13 +95,16 @@ if (DPDK_BACKEND)
 
     set(DPDK_FILES ${DPDK_HEADERS} ${DPDK_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES})
     add_executable(dns-probe-dpdk src/application/ddp.cpp ${DPDK_FILES})
-    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe PkgConfig::Dpdk)
+    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe PkgConfig::DPDK)
     target_compile_definitions(dns-probe-dpdk PUBLIC USE_DPDK)
 
     if (DPDK_LEGACY_MEM)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
     endif ()
 
+    if (DPDK_VERSION VERSION_LESS_EQUAL "18.02")
+        target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY)
+    endif()
 
     install(TARGETS dns-probe-dpdk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

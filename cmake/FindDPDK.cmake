@@ -8,7 +8,7 @@ foreach(PATH IN LISTS CMAKE_SYSTEM_PREFIX_PATH CMAKE_PREFIX_PATH)
 endforeach()
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OLD_PKGCFG_ENV}")
-pkg_search_module(Dpdk IMPORTED_TARGET libdpdk)
+pkg_search_module(DPDK IMPORTED_TARGET libdpdk)
 set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_PATH}")
 
-find_package_handle_standard_args(DPDK DEFAULT_MSG Dpdk_FOUND)
+find_package_handle_standard_args(DPDK REQUIRED_VARS DPDK_FOUND VERSION_VAR DPDK_VERSION)
