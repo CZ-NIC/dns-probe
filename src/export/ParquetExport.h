@@ -20,6 +20,7 @@
 #include <exception>
 #include <cstring>
 #include <functional>
+#include <unordered_map>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <arrow/api.h>
@@ -124,7 +125,7 @@ namespace DDP {
          * @throw EdnsParseException
          * @return Map containing all found and parsed EDNS options
          */
-        std::unordered_map<EDNSOptions, boost::any> parse_edns_options(const uint8_t* ptr, uint16_t size);
+        std::unordered_map<uint16_t, boost::any> parse_edns_options(const uint8_t* ptr, uint16_t size);
 
         /**
          * @brief Parse DNSSEC algorithm's list into comma separated values
