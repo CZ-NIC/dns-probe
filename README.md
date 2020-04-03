@@ -67,13 +67,13 @@ CMake is usually available through the package managers on any Linux system. It'
 version 3.13, otherwise compilation will fail.
 
 ```shell
-curl -Lhttps://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip > dl/cmake.tgz
+curl -L https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.tar.gz > dl/cmake.tgz
 mkdir build/cmake
 tar -xf dl/cmake.tgz -C build/cmake --strip-components=1
 cd build/cmake
-./bootstrap
+./bootstrap --parallel=4 --prefix="$DEP_DIR" # Remove `--prefix="$DEP_DIR"` if you want to install CMake into /usr/local
 make -j
-make install DESTDIR="$DEP_DIR" # Remove `DESTDIR="$DEP_DIR"` if you want to install CMake into /usr/local
+make install
 cd "$DEP_DIR"
 PATH="$DEP_DIR/bin;$PATH"
 ```
