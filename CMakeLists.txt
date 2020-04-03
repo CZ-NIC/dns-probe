@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.5)
 project("DNS Probe" VERSION 0.2.0)
 
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
@@ -17,6 +17,7 @@ find_package(PCAP REQUIRED)
 find_package(Arrow REQUIRED)
 find_package(Parquet REQUIRED)
 find_package(CDNS REQUIRED)
+find_package(LibYang REQUIRED)
 find_package(Sysrepo REQUIRED)
 find_package(Boost REQUIRED)
 find_package(Doxygen)
@@ -47,7 +48,7 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP PkgConfig::ARROW PkgConfig::PARQUET Threads::Threads PkgConfig::LIBYANG PkgConfig::LIBYANGCPP PkgConfig::SYSREPOCPP PkgConfig::CDNS)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYang::LibYangCpp Sysrepo::SysrepoCpp CDNS::CDNS)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
 target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 target_compile_options(DNSProbe INTERFACE -msse4)
@@ -95,14 +96,14 @@ if (DPDK_BACKEND)
 
     set(DPDK_FILES ${DPDK_HEADERS} ${DPDK_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES})
     add_executable(dns-probe-dpdk src/application/ddp.cpp ${DPDK_FILES})
-    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe PkgConfig::DPDK)
+    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe DPDK::DPDK)
     target_compile_definitions(dns-probe-dpdk PUBLIC USE_DPDK)
 
     if (DPDK_LEGACY_MEM)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
     endif ()
 
-    if (DPDK_VERSION VERSION_LESS_EQUAL "18.02")
+    if (DPDK_VERSION VERSION_LESS "18.05")
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY)
     endif()
 

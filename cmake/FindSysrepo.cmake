@@ -1,5 +1,4 @@
 find_package(PkgConfig REQUIRED)
-find_package(LibYang REQUIRED)
 
 set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
 unset(ENV{PKG_CONFIG_PATH})
@@ -9,7 +8,15 @@ foreach(PATH IN LISTS CMAKE_SYSTEM_PREFIX_PATH CMAKE_PREFIX_PATH)
 endforeach()
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OLD_PKGCFG_ENV}")
-pkg_search_module(SYSREPOCPP IMPORTED_TARGET sysrepo-cpp)
+pkg_search_module(SYSREPOCPP sysrepo-cpp)
 set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_ENV}")
 
 find_package_handle_standard_args(Sysrepo DEFAULT_MSG SYSREPOCPP_FOUND)
+
+if (SYSREPOCPP_FOUND)
+    add_library(Sysrepo::SysrepoCpp INTERFACE IMPORTED)
+    set_property(TARGET Sysrepo::SysrepoCpp PROPERTY INTERFACE_INCLUDE_DIRECTOIRES ${SYSREPOCPP_INCLUDE_DIR})
+    set_property(TARGET Sysrepo::SysrepoCpp PROPERTY INTERFACE_LINK_LIBRARIES ${SYSREPOCPP_LIBRARIES})
+    set_property(TARGET Sysrepo::SysrepoCpp PROPERTY INTERFACE_COMPILE_DEFINITIONS ${SYSREPOCPP_DEFINITIONS})
+    set_property(TARGET Sysrepo::SysrepoCpp PROPERTY INTERFACE_COMPILE_OPTIONS ${SYSREPOCPP_CFLAGS})
+endif()
