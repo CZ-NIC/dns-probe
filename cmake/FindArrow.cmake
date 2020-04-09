@@ -1,22 +1,2 @@
-find_package(PkgConfig REQUIRED)
-
-set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
-unset(ENV{PKG_CONFIG_PATH})
-
-foreach(PATH IN LISTS CMAKE_SYSTEM_PREFIX_PATH CMAKE_PREFIX_PATH)
-    set(ENV{PKG_CONFIG_PATH} "${PATH}/lib/pkgconfig:${PATH}/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-endforeach()
-
-set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OLD_PKGCFG_ENV}")
-pkg_search_module(ARROW arrow)
-set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_PATH}")
-
-find_package_handle_standard_args(Arrow DEFAULT_MSG ARROW_FOUND)
-
-if (ARROW_FOUND)
-    add_library(Arrow::Arrow INTERFACE IMPORTED)
-    set_property(TARGET Arrow::Arrow PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${ARROW_INCLUDE_DIRS})
-    set_property(TARGET Arrow::Arrow PROPERTY INTERFACE_LINK_LIBRARIES ${ARROW_LIBRARIES})
-    set_property(TARGET Arrow::Arrow PROPERTY INTERFACE_COMPILE_DEFINITIONS ${ARROW_DEFINITIONS})
-    set_property(TARGET Arrow::Arrow PROPERTY INTERFACE_COMPILE_OPTIONS ${ARROW_CFLAGS})
-endif()
+include(utils)
+FindLibrary(arrow Arrow)
