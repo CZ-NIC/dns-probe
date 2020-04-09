@@ -32,15 +32,15 @@ dynamic configuration items will be applied instantly after the modification.
 
 This project has following required dependencies:
 
-* [CMake 3.13+](https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip)
+* [CMake >= 3.5](https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip)
 * [Linux OS (kernel at least 3.11)](http://kernel.org)
 * [Sysrepo 1.4.2](https://github.com/sysrepo/sysrepo/archive/v1.4.2.tar.gz)
 * [Arrow 0.16.0](https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz)
-* [CDNS](https://gitlab.labs.nic.cz/knot/c-dns)
+* [C-DNS](https://gitlab.labs.nic.cz/knot/c-dns)
 * [libPCAP](https://www.tcpdump.org/)
 
 For DPDK backend the DNS probe also requires installed DPDK framework:
-* [DPDK 19.11](http://fast.dpdk.org/rel/dpdk-19.11.tar.xz)
+* [DPDK >= 16.11](http://fast.dpdk.org/rel/dpdk-19.11.tar.xz)
 ** Requires `libnuma-dev` and kernel headers installed
 
 
@@ -64,7 +64,7 @@ The `dp-dep` directory is also used as target to install all compiled packages.
 ### CMake
 
 CMake is usually available through the package managers on any Linux system. It's essential to have at least 
-version 3.13, otherwise compilation will fail.
+version 3.5, otherwise compilation will fail.
 
 ```shell
 curl -Lhttps://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip > dl/cmake.tgz
