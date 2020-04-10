@@ -74,8 +74,8 @@ namespace DDP {
 
 
 DDP::Probe::Probe() : m_initialized(false), m_running(false), m_poll(), m_cfg(), m_sysrepo(nullptr), m_aggregated_timer(nullptr),
-                      m_comm_links(), m_log_link(), m_dns_record_mempool(), m_export_rings(), m_stats(),
-                      m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
+                      m_comm_links(), m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(),
+                      m_stats(), m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
 
 DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 {
@@ -170,6 +170,8 @@ void DDP::Probe::init(const Arguments& args)
 
             if (!m_export_rings[worker])
                 throw std::runtime_error("Couldn't initialize export rings!");
+
+            m_factory_rings.emplace(worker, *m_export_rings[worker]);
         }
 
         m_poll.emplace<CommLinkProxy>(m_log_link->config_endpoint());
@@ -215,7 +217,7 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
 
     auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue) {
         try {
-            Worker w(m_cfg, stats, m_export_rings[worker], m_comm_links[worker].worker_endpoint(),
+            Worker w(m_cfg, stats, m_factory_rings.at(worker).get_poll_able_ring(), m_comm_links[worker].worker_endpoint(),
                     *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
                     m_cfg.match_qname, worker);
             Logger logger("Worker");
@@ -234,7 +236,7 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
 
     auto exporter_runner = [this](unsigned exporter, Statistics& stats) {
         try {
-            Exporter p(m_cfg, stats, m_export_rings, m_comm_links[exporter].worker_endpoint(), exporter);
+            Exporter p(m_cfg, stats, m_factory_rings, m_comm_links[exporter].worker_endpoint(), exporter);
             Logger logger("Worker");
             logger.debug() << "Starting exporter on lcore " << ThreadManager::current_lcore() << ".";
             p.run();

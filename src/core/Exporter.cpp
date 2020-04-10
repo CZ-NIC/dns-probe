@@ -24,14 +24,14 @@
 
 
 DDP::Exporter::Exporter(DDP::Config& cfg, DDP::Statistics& stats,
-                        std::unordered_map<unsigned int, std::unique_ptr<Ring<boost::any>>>& rings,
+                        std::unordered_map<unsigned, PollAbleRingFactory<boost::any>>& rings_factories,
                         DDP::CommLink::CommLinkEP& comm_link, unsigned process_id) :
         Process(cfg, stats, comm_link),
         m_writer(nullptr),
         m_process_id(process_id),
-        m_export_rings(rings),
+        m_export_rings_factories(rings_factories),
         m_rotation_in_progress(false),
-        m_received_worker_mark(rings.size(), false),
+        m_received_worker_mark(rings_factories.size(), false),
         m_current_mark(0),
         m_mark_count(0) {
     if (cfg.export_format.value() == ExportFormat::PARQUET) {
@@ -45,9 +45,10 @@ DDP::Exporter::Exporter(DDP::Config& cfg, DDP::Statistics& stats,
 DDP::Exporter::~Exporter()
 {
     int i = 0;
-    for (auto&& ring : m_export_rings) {
-        while (!ring.second->empty()) {
-            dequeue(*ring.second, i);
+    for (auto&& ring_factory : m_export_rings_factories) {
+        auto& ring = ring_factory.second.ring();
+        while (!ring.empty()) {
+            dequeue(ring, i);
         }
         i++;
     }
@@ -59,7 +60,7 @@ int DDP::Exporter::run()
 {
     try {
         int i = 0;
-        for(auto&& ring: m_export_rings)
+        for(auto&& ring_factory: m_export_rings_factories)
         {
             auto dequeue_cb = [this, i](Ring<boost::any>& ring){
                 // Try to dequeue item from ring
@@ -68,7 +69,7 @@ int DDP::Exporter::run()
                     dequeue(ring, i);
 
                 // Rotate output if marks from all rings have been received
-                if (m_mark_count == m_export_rings.size()) {
+                if (m_mark_count == m_export_rings_factories.size()) {
                     m_rotation_in_progress = false;
                     for (auto&& mark : m_received_worker_mark)
                         mark = false;
@@ -78,7 +79,7 @@ int DDP::Exporter::run()
                     Logger("Export").debug() << "Output file rotated";
                 }
             };
-            m_poll.emplace<PollAbleRing<boost::any, decltype(dequeue_cb)>>(*ring.second, dequeue_cb);
+            m_poll.emplace<PollAbleRing<boost::any, decltype(dequeue_cb)>>(ring_factory.second.get_poll_able_ring_cb(dequeue_cb));
             i++;
         }
         m_poll.loop();

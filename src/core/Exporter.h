@@ -51,7 +51,7 @@ namespace DDP {
          * @param process_id Process identifier, used in generation of exported file's names
          */
         Exporter(Config& cfg, Statistics& stats,
-                 std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>>& rings,
+                 std::unordered_map<unsigned, PollAbleRingFactory<boost::any>>& factory_rings,
                  CommLink::CommLinkEP& comm_link, unsigned process_id);
 
         /**
@@ -79,7 +79,7 @@ namespace DDP {
     private:
         DnsWriter* m_writer;
         unsigned m_process_id;
-        std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>>& m_export_rings;
+        std::unordered_map<unsigned, PollAbleRingFactory<boost::any>>& m_export_rings_factories;
 
         bool m_rotation_in_progress;
         std::vector<bool> m_received_worker_mark;

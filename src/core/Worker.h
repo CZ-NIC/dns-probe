@@ -32,7 +32,7 @@
 #include "export/CdnsExport.h"
 #include "export/CdnsWriter.h"
 #include "export/PcapWriter.h"
-#include "utils/Ring.h"
+#include "utils/PollAbleRing.h"
 #include "core/Statistics.h"
 #include "core/Port.h"
 
@@ -86,14 +86,14 @@ namespace DDP {
          * @throw std::invalid_argument From calling TransactionTable constructor
          * @throw DnsParserConstructor From calling DnsParser constructor
          */
-        Worker(Config& cfg, Statistics& stats, std::unique_ptr<Ring<boost::any>>& ring,
+        Worker(Config& cfg, Statistics& stats, PollAbleRing<boost::any> ring,
                CommLink::CommLinkEP& comm_link, Mempool<DnsRecord>& record_mempool,
                Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, std::vector<std::shared_ptr<DDP::Port>> ports,
                bool match_qname, unsigned process_id) :
                 Process(cfg, stats, comm_link),
                 m_record_mempool(record_mempool),
                 m_tcp_mempool(tcp_mempool),
-                m_export_ring(ring),
+                m_export_ring(std::move(ring)),
                 m_tt_timeout_count(0),
                 m_transaction_table(cfg.tt_size, cfg.tt_timeout,
                                     cfg.match_qname),
@@ -174,7 +174,7 @@ namespace DDP {
         template<typename T>
         void enqueue(T item) {
             try {
-                m_export_ring->push(std::move(item));
+                m_export_ring.push(std::move(item));
             }
             catch(std::exception& e) {
                 Logger("Export").debug() << "Export ring is full. Couldn't enqueue "
@@ -195,7 +195,7 @@ namespace DDP {
     private:
         Mempool<DnsRecord>& m_record_mempool; //!< Mempool used for saving records extracted from DNS packets.
         Mempool<DnsTcpConnection>& m_tcp_mempool; //!< Mempool used for tracking TCP connections.
-        std::unique_ptr<Ring<boost::any>>& m_export_ring; //!< Export ring used for delivering data to exporter.
+        PollAbleRing<boost::any> m_export_ring; //!< Export ring used for delivering data to exporter.
         uint32_t m_tt_timeout_count; //!< Currently processed packets before triggering timeout check.
         TransactionTable<DnsRecord> m_transaction_table; //!< Transaction table for records extracted from DNS packets.
         DnsParser m_parser; //!< DnsParser for creating records into transaction table.

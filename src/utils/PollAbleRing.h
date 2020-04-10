@@ -16,13 +16,17 @@
  */
 
 #pragma once
-
+#include <functional>
 #include <utils/Poll.h>
 #include <utils/Ring.h>
 #include <sys/eventfd.h>
 
+
 namespace DDP {
-    template<typename T, typename F> class PollAbleRing : public PollAble
+    template<typename T> class PollAbleRingFactory;
+
+    template<typename T, typename F = std::function<void(Ring<T>&)>>
+    class PollAbleRing : public PollAble
     {
     public:
         /**
@@ -30,26 +34,32 @@ namespace DDP {
          * @param size Maximal number of items in the ring.
          * @param flags Flags specifying if the ring is used by multiple producers and/or multiple consumers.
          */
-        PollAbleRing(Ring<T>& ring, F ready_cb) :
+        PollAbleRing(Ring<T>& ring, int fd, F ready_cb = [](Ring<T>&){}) :
             PollAble(PollEvents::READ),
             m_ring(ring),
             m_read_cb(std::move(ready_cb)),
-            m_eventfd(eventfd(0, EFD_NONBLOCK)) {}
+            m_fd(fd)
+            {}
 
 
         PollAbleRing(PollAbleRing&& other) noexcept :
             m_ring(other.m_ring),
             m_read_cb(std::move(other.m_read_cb)),
-            m_eventfd(std::move(other.m_eventfd)) {}
+            m_fd(other.m_fd) {}
+
+        PollAbleRing(const PollAbleRing& other) noexcept :
+                m_ring(other.m_ring),
+                m_read_cb(other.m_read_cb),
+                m_fd(other.m_fd) {}
 
         ~PollAbleRing() override = default;
 
-        int fd() override { return m_eventfd; }
+        int fd() override { return m_fd; }
 
         void ready_read() override
         {
             uint64_t buffer;
-            auto read = ::read(m_eventfd, &buffer, sizeof(uint64_t));
+            auto read = ::read(m_fd, &buffer, sizeof(uint64_t));
             if(read == EAGAIN)
                 return;
 
@@ -101,11 +111,34 @@ namespace DDP {
         void fire_event()
         {
             uint64_t buffer = 1;
-            ::write(m_eventfd, &buffer, sizeof(uint64_t));
+            ::write(m_fd, &buffer, sizeof(uint64_t));
         }
 
         Ring<T>& m_ring;
         F m_read_cb;
+        int m_fd;
+    };
+
+    template<typename T>
+    class PollAbleRingFactory {
+    public:
+        explicit PollAbleRingFactory(Ring<T>& ring) :
+            m_ring(ring),
+            m_eventfd(eventfd(0, EFD_NONBLOCK)) {}
+
+        Ring<T>& ring() { return m_ring; }
+        int fd() { return m_eventfd; }
+
+        auto get_poll_able_ring() { return PollAbleRing<T>(m_ring, m_eventfd); }
+
+        template<typename F>
+        auto get_poll_able_ring_cb(F&& read_cb)
+        {
+            return PollAbleRing<T, std::decay_t<F>>(m_ring, m_eventfd,std::forward<F>(read_cb));
+        }
+
+    private:
+        Ring<T>& m_ring;
         FileDescriptor m_eventfd;
     };
 }
