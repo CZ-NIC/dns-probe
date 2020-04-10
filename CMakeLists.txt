@@ -103,7 +103,7 @@ if (DPDK_BACKEND)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
     endif ()
 
-    if (DPDK_VERSION VERSION_LESS "18.05")
+    if (libdpdk_VERSION VERSION_LESS "18.05")
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY)
     endif()
 
