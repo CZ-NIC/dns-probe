@@ -16,13 +16,19 @@
  */
 
 #include <iostream>
+#include <sys/eventfd.h>
 #include "PcapPort.h"
 
-DDP::PCAPPort::PCAPPort(const char* port) : Port(1), m_handle(nullptr)
+DDP::PCAPPort::PCAPPort(const char* port, uint16_t num_queues) : Port(1), m_handle(nullptr)
 {
-    m_handle = pcap_open_offline(port, nullptr);
+    char err_buff[PCAP_ERRBUF_SIZE];
+    m_handle = pcap_open_offline(port, err_buff);
     if (m_handle == nullptr)
-        throw std::runtime_error("Cannot open PCAP file!");
+        throw std::runtime_error(std::string("Cannot open PCAP file: ") + std::string(err_buff));
+
+    for(unsigned i = 0; i < num_queues; i++) {
+        m_eventfds.emplace_back(::eventfd(1, 0));
+    }
 }
 
 uint16_t DDP::PCAPPort::read(Packet* batch, unsigned queue)
@@ -51,4 +57,13 @@ uint16_t DDP::PCAPPort::read(Packet* batch, unsigned queue)
     if(!rx_count)
         throw PortEOF();
     return rx_count;
+}
+
+std::vector<int> DDP::PCAPPort::fds()
+{
+    std::vector<int> fds;
+    for(auto&& fd: m_eventfds) {
+        fds.push_back(fd);
+    }
+    return fds;
 }

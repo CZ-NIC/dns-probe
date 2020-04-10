@@ -133,7 +133,7 @@ namespace DDP {
          * Provides access to communication link for sending log messages.
          * @return Endpoint for sending messages.
          */
-        CommLink::CommLinkWorkerEP& log_link() { return m_log_link->worker_endpoint(); }
+        CommLink::CommLinkEP& log_link() { return m_log_link->worker_endpoint(); }
 
         /**
          * @brief Get number of slave threads

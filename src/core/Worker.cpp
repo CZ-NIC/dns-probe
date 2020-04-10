@@ -16,80 +16,15 @@
  */
 
 #include "Worker.h"
+#include "utils/Poll.h"
 
 int DDP::Worker::run()
 {
     try {
-        std::size_t port_count = m_ports.size();
-        uint16_t rx_count = 0;
-        std::array<Packet, Port::BATCH_SIZE> pkts;
-
-        // Main worker loop
-        while (true) {
-            // Check communication queue for new message
-            auto ret = check_comm_link([this]() { this->update_configuration(this->m_cfg); });
-            if (ret == processState::BREAK) {
-                tt_cleanup();
-                break;
-            }
-            else if (ret == processState::ROTATE_OUTPUT) {
-                try {
-                    // Send currently buffered DNS records to exporter core
-                    auto block = m_exporter->rotate_export();
-                    if (!block.empty()) {
-                        if (block.type() == typeid(std::shared_ptr<arrow::Table>) &&
-                            boost::any_cast<std::shared_ptr<arrow::Table>>(block) != nullptr) {
-                            enqueue(block);
-                        }
-                        else if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
-                                    boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(block) != nullptr) {
-                            enqueue(block);
-                        }
-                    }
-
-                    // Send mark to exporter core
-                    enqueue(m_output_rotation_counter++);
-
-                    // Rotate PCAPs with all or invalid packets if enabled
-                    if (m_cfg.pcap_export.value() == PcapExportCfg::ALL)
-                        m_pcap_all.rotate_output();
-
-                    m_parser.rotate_invalid();
-                }
-                catch(std::exception& e) {
-                    Logger("Export").debug() << e.what();
-                }
-            }
-
-            // Process packet burst from both ports
-            for (std::size_t j = 0; j < port_count; j++) {
-                // Read batch of packets from port
-                try {
-                    rx_count = m_ports[j]->read(pkts.data(), m_lcore_queue);
-                } catch(PortEOF& e) {
-                    m_ports.erase(m_ports.begin() + j);
-                    port_count = m_ports.size();
-                    if(port_count == 0) {
-                        m_comm_link.send(MessageWorkerStopped(ThreadManager::current_lcore()));
-                        tt_cleanup();
-                        return 0;
-                    }
-                    break;
-                }
-                if (rx_count == 0) {
-                    continue;
-                }
-
-                // Process batch of packets
-                for (size_t k = 0; k < rx_count; k++) {
-                    process_packet(pkts[k]);
-                }
-
-                m_stats.packets += rx_count;
-                m_stats.active_tt_records = m_transaction_table.records();
-                m_ports[j]->free_packets(m_lcore_queue);
-            }
+        for(unsigned i = 0; i < m_ports.size(); i++) {
+            m_poll.emplace<PortPollAble>(*this, i);
         }
+        m_poll.loop();
     }
     catch (std::exception& e) {
         Logger("Worker").error() << "Worker on core " << m_process_id << " crashed. Cause: " << e.what();
@@ -265,4 +200,85 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
     }
 
     return ret;
+}
+
+void DDP::Worker::new_config(Config& cfg)
+{
+    m_cfg = cfg;
+    m_transaction_table.set_timeout(cfg.tt_timeout);
+    m_parser.update_configuration(cfg);
+    m_exporter->update_configuration(cfg);
+    m_pcap_all.update_configuration(cfg);
+}
+
+void DDP::Worker::rotate_output()
+{
+    try {
+        // Send currently buffered DNS records to exporter core
+        auto block = m_exporter->rotate_export();
+        if (!block.empty()) {
+            if (block.type() == typeid(std::shared_ptr<arrow::Table>) &&
+                boost::any_cast<std::shared_ptr<arrow::Table>>(block) != nullptr) {
+                enqueue(block);
+            }
+            else if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
+                     boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(block) != nullptr) {
+                enqueue(block);
+            }
+        }
+
+        // Send mark to exporter core
+        enqueue(m_output_rotation_counter++);
+
+        // Rotate PCAPs with all or invalid packets if enabled
+        if (m_cfg.pcap_export.value() == PcapExportCfg::ALL)
+            m_pcap_all.rotate_output();
+
+        m_parser.rotate_invalid();
+    }
+    catch(std::exception& e) {
+        Logger("Export").debug() << e.what();
+    }
+}
+
+void DDP::Worker::stop()
+{
+    tt_cleanup();
+    Process::stop();
+}
+
+void DDP::Worker::close_port(int pos)
+{
+    m_ports.erase(m_ports.begin() + pos);
+    if(m_ports.empty()) {
+        m_comm_link.send(MessageWorkerStopped(ThreadManager::current_lcore()));
+        tt_cleanup();
+        m_poll.disable();
+    }
+}
+
+void DDP::Worker::PortPollAble::ready_read() {
+    uint16_t rx_count = 0;
+    std::array<Packet, Port::BATCH_SIZE> pkts;
+    // Read batch of packets from port
+    try {
+        rx_count = m_port.read(pkts.data(), m_queue);
+    } catch(PortEOF& e) {
+        m_worker.close_port(m_port_pos);
+        poll()->unregister(*this);
+        return;
+    }
+
+    if (rx_count == 0) {
+        return;
+    }
+
+    // Process batch of packets
+    for (size_t k = 0; k < rx_count; k++) {
+        m_worker.process_packet(pkts[k]);
+    }
+
+    m_worker.m_stats.packets += rx_count;
+    m_worker.m_stats.active_tt_records = m_worker.m_transaction_table.records();
+    m_port.free_packets(m_queue);
 }

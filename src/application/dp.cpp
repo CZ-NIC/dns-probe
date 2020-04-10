@@ -66,7 +66,7 @@ int main(int argc, char** argv)
         }
 
         for (auto& port: arguments.args.pcaps) {
-            ready_ports.emplace_back(new DDP::PCAPPort(port.c_str()));
+            ready_ports.emplace_back(new DDP::PCAPPort(port.c_str(), runner.slaves_cnt() - 1));
         }
 
         // Set up signal handlers to print stats on exit

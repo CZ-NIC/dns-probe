@@ -35,7 +35,7 @@ namespace DDP {
     class CommLinkProxy : public PollAble
     {
     public:
-        explicit CommLinkProxy(CommLink::CommLinkConfigEP& ep) : m_ep(ep) {}
+        explicit CommLinkProxy(CommLink::CommLinkEP& ep) : m_ep(ep) {}
 
         int fd() override { return m_ep.fd(); };
 
@@ -68,7 +68,7 @@ namespace DDP {
         }
 
     private:
-        CommLink::CommLinkConfigEP& m_ep;
+        CommLink::CommLinkEP& m_ep;
     };
 }
 
@@ -130,7 +130,7 @@ void DDP::Probe::print_help(const char* app)
     else
         interface = "interface PCI ID e.g. 00:1f.6";
 
-    std::cout << std::endl << app << " "
+    std::cout << std::endl << app << std::endl
               << "\t-p PCAP      : input pcap files; parameter can repeat" << std::endl
               << "\t-i INTERFACE : " << interface << std::endl
               << "\t-r           : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl

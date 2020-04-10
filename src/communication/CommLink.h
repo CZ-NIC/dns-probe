@@ -43,14 +43,15 @@ namespace DDP {
         /**
          * Implementation for config endpoint allowing sending and receiving messages from config thread.
          */
-        class CommLinkConfigEP
+        class CommLinkEP
         {
         public:
             /**
              * Constructor
              * @param link Reference to main  DDP::CommLink owning this endpoint.
              */
-            explicit CommLinkConfigEP(CommLink& link) : m_cl_owner(link) {}
+            CommLinkEP(CommLink& link, int ep) :
+                m_cl_owner(link), m_read_ep(ep), m_write_ep((ep + 1) % 2) {}
 
             /**
              * Send given message to worker EP.
@@ -72,48 +73,15 @@ namespace DDP {
 
             /**
              * Provides file descriptor which can be used for select (and others) call. When the descriptor is ready for
-             * read then DDP::CommLink::CommLinkConfigEP::recv is rady to provide message.
+             * read then DDP::CommLink::CommLinkEP::recv is ready to provide message.
              * @return File descriptor for select
              */
-            int fd() { return m_cl_owner.m_event_fd; }
+            int fd() { return m_cl_owner.m_event_fd[m_read_ep]; }
 
         private:
             CommLink& m_cl_owner; //!<  Instance of DDP::CommLink owning instance of this class
-        };
-
-        /*
-         * Implementation for worker endpoint allowing sending and receiving messages from worker thread.
-         */
-        class CommLinkWorkerEP
-        {
-        public:
-
-            /**
-             * Constructor
-             * @param link Reference to main  DDP::CommLink owning this endpoint.
-             */
-            explicit CommLinkWorkerEP(CommLink& link) : m_cl_owner(link) {}
-
-            /**
-             * Send given message to config EP.
-             * @param msg Send message.
-             */
-            void send(Message& msg);
-
-            /**
-             * Send given message to config EP.
-             * @param msg Send message.
-             */
-            void send(Message&& msg) { send(msg); }
-
-            /**
-             * Receive message from worker. Receiving is non blocking.
-             * @return Received message from worker.
-             */
-            std::unique_ptr<Message> recv();
-
-        private:
-            CommLink& m_cl_owner; //!<  Instance of DDP::CommLink owning instance of this class
+            int m_read_ep;
+            int m_write_ep;
         };
 
         /**
@@ -147,31 +115,17 @@ namespace DDP {
          * Provides access to config endpoint instance
          * @return Config endpoint instance
          */
-        CommLinkConfigEP& config_endpoint() { return m_config_ep; }
+        CommLinkEP& config_endpoint() { return m_ep[0]; }
 
         /**
          * Provides access to worker endpoint instance
          * @return Worker endpoint instance
          */
-        CommLinkWorkerEP& worker_endpoint() { return m_worker_ep; }
+        CommLinkEP& worker_endpoint() { return m_ep[1]; }
 
     private:
-        /**
-         * Constants identifying correct ring from m_rings.
-         */
-        enum class RingDirection
-        {
-            TO_CONFIG = 0,
-            FROM_WORKER = 0,
-            TO_WORKER = 1,
-            FROM_CONFIG = 1,
-        };
-
-
         std::array<std::unique_ptr<Ring<DDP::Message*>>, 2> m_rings; //!< Rings used for sending messages
-        FileDescriptor m_event_fd; //!< File descriptor used for informing config endpoint about new messages
-
-        CommLinkWorkerEP m_worker_ep; //!< Worker endpoint
-        CommLinkConfigEP m_config_ep; //!< Config endpoint
+        std::array<FileDescriptor, 2> m_event_fd; //!< File descriptors used for informing about new messages
+        std::array<CommLinkEP, 2> m_ep; //!< Endpoints
     };
 }

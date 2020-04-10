@@ -41,7 +41,7 @@ namespace DDP {
      * @brief Class to read objects containing DNS records from ring buffer and write them to file
      */
     class Exporter : public Process {
-        public:
+    public:
         /**
          * @brief Exporter constructor. Sets up writer and all other necessary configuration
          * @param cfg Configuration
@@ -52,7 +52,7 @@ namespace DDP {
          */
         Exporter(Config& cfg, Statistics& stats,
                  std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>>& rings,
-                 CommLink::CommLinkWorkerEP& comm_link, unsigned process_id);
+                 CommLink::CommLinkEP& comm_link, unsigned process_id);
 
         /**
          * @brief Exporter destructor. Write everything currently in ring buffers before destruction
@@ -71,17 +71,12 @@ namespace DDP {
          * @param worker_id Number of the ring in m_received_worker_mark vector
          * @return If successful EXPORTER_OK, otherwise corresponding error code
          */
-        ExporterRetCode dequeue(std::unique_ptr<Ring<boost::any>>& ring, unsigned worker_id);
+        ExporterRetCode dequeue(Ring<boost::any>& ring, unsigned worker_id);
 
-        /**
-         * @brief Update dynamic configuration
-         * @param cfg New dynamic configuration
-         */
-        void update_configuration(Config& cfg) {
-            m_writer->update_configuration(cfg);
-        }
+    protected:
+        void new_config(Config& cfg) override;
 
-        private:
+    private:
         DnsWriter* m_writer;
         unsigned m_process_id;
         std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>>& m_export_rings;

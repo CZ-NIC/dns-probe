@@ -190,3 +190,12 @@ void DDP::AFPacketPort::free_packets(unsigned queue) {
         pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
     }
 }
+
+std::vector<int> DDP::AFPacketPort::fds()
+{
+    std::vector<int> ret;
+    for (auto&& info: m_info) {
+        ret.push_back(info.socket);
+    }
+    return ret;
+}

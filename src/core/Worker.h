@@ -51,6 +51,25 @@ namespace DDP {
     };
 
     class Worker : public Process {
+        class PortPollAble : public PollAble {
+        public:
+            PortPollAble(Worker& worker, int port_pos) :
+                    PollAble(PollEvents::READ),
+                    m_worker(worker),
+                    m_port(*m_worker.m_ports[port_pos]),
+                    m_port_pos(port_pos),
+                    m_queue(m_worker.m_lcore_queue) {}
+
+            void ready_read() override;
+
+            int fd() override { return m_port.fds()[m_queue]; }
+
+        private:
+            Worker& m_worker;
+            Port& m_port;
+            int m_port_pos;
+            unsigned m_queue;
+        };
     public:
         /**
          * @brief Constructor. Creates worker core object with packet processing loop
@@ -68,7 +87,7 @@ namespace DDP {
          * @throw DnsParserConstructor From calling DnsParser constructor
          */
         Worker(Config& cfg, Statistics& stats, std::unique_ptr<Ring<boost::any>>& ring,
-               CommLink::CommLinkWorkerEP& comm_link, Mempool<DnsRecord>& record_mempool,
+               CommLink::CommLinkEP& comm_link, Mempool<DnsRecord>& record_mempool,
                Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, std::vector<std::shared_ptr<DDP::Port>> ports,
                bool match_qname, unsigned process_id) :
                 Process(cfg, stats, comm_link),
@@ -137,18 +156,6 @@ namespace DDP {
         WorkerRetCode process_packet(const Packet& pkt);
 
         /**
-         * @brief Updated Probe's dynamic configuration
-         * @param cfg New dynamic configuration
-         */
-        void update_configuration(Config& cfg) {
-            m_cfg = cfg;
-            m_transaction_table.set_timeout(cfg.tt_timeout);
-            m_parser.update_configuration(cfg);
-            m_exporter->update_configuration(cfg);
-            m_pcap_all.update_configuration(cfg);
-        }
-
-        /**
          * @brief Clears everything from transaction table and sends all cleared DNS records for export
          */
         void tt_cleanup() {
@@ -174,6 +181,16 @@ namespace DDP {
                                             "export object on lcore " << m_process_id;
             }
         }
+
+    protected:
+        void stop() override;
+        /**
+         * @brief Updated Probe's dynamic configuration
+         * @param cfg New dynamic configuration
+         */
+        void new_config(Config& cfg) override;
+        void rotate_output() override;
+        void close_port(int pos);
 
     private:
         Mempool<DnsRecord>& m_record_mempool; //!< Mempool used for saving records extracted from DNS packets.
