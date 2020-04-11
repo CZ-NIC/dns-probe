@@ -79,7 +79,7 @@ namespace DDP {
     private:
         DnsWriter* m_writer;
         unsigned m_process_id;
-        std::unordered_map<unsigned, PollAbleRingFactory<boost::any>>& m_export_rings_factories;
+        std::vector<Ring<boost::any>*> m_rings;
 
         bool m_rotation_in_progress;
         std::vector<bool> m_received_worker_mark;
