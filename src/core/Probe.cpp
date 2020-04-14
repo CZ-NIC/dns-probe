@@ -171,7 +171,7 @@ void DDP::Probe::init(const Arguments& args)
             if (!m_export_rings[worker])
                 throw std::runtime_error("Couldn't initialize export rings!");
 
-            m_factory_rings.emplace(worker, *m_export_rings[worker]);
+            m_factory_rings.emplace(worker, PollAbleRingFactory<boost::any>(*m_export_rings[worker]));
         }
 
         m_poll.emplace<CommLinkProxy>(m_log_link->config_endpoint());
