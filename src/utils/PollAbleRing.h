@@ -124,7 +124,7 @@ namespace DDP {
     public:
         explicit PollAbleRingFactory(Ring<T>& ring) :
             m_ring(ring),
-            m_eventfd(eventfd(0, EFD_NONBLOCK)) {}
+            m_eventfd(eventfd(0, EFD_SEMAPHORE | EFD_NONBLOCK)) {}
 
         Ring<T>& ring() { return m_ring; }
         int fd() { return m_eventfd; }
