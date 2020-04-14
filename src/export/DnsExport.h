@@ -47,13 +47,13 @@ namespace DDP {
          * @param record DNS record to store
          * @return Structure to export or nullptr if there's nothing to export
          */
-        virtual std::any buffer_record(DnsRecord& record) = 0;
+        virtual boost::any buffer_record(DnsRecord& record) = 0;
 
         /**
          * @brief Rotate current export structure (export current one and start a new one)
-         * @return std::any Current structure to export
+         * @return boost::any Current structure to export
          */
-        virtual std::any rotate_export() = 0;
+        virtual boost::any rotate_export() = 0;
 
         /**
          * @brief Write currently buffered records into file on application exit

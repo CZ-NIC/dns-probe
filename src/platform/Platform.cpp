@@ -24,7 +24,9 @@
 #include <rte_lcore.h>
 #endif
 
-void DDP::init_platform(const DDP::Arguments& args [[maybe_unused]], const Config& cfg [[maybe_unused]])
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void DDP::init_platform(const DDP::Arguments& args, const Config& cfg)
 {
 #ifdef USE_DPDK
     std::stringstream conv;
@@ -57,7 +59,7 @@ void DDP::init_platform(const DDP::Arguments& args [[maybe_unused]], const Confi
 
     std::vector<char*> argv_char;
     for(auto& arg: argv) {
-        argv_char.push_back(arg.data());
+        argv_char.push_back(const_cast<char*>(arg.data()));
     }
 
     std::cerr << "Running EAL with parameters: ";
@@ -71,3 +73,4 @@ void DDP::init_platform(const DDP::Arguments& args [[maybe_unused]], const Confi
     }
 #endif
 }
+#pragma GCC diagnostic pop

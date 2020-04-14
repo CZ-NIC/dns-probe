@@ -24,7 +24,7 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
-#include <any>
+#include <boost/any.hpp>
 #include <type_traits>
 #include <sysrepo-cpp/Session.hpp>
 
@@ -42,11 +42,11 @@ namespace DDP {
     public:
         virtual ~ConfigItemBase() = default;
         /**
-         * Method used for extraction from sysrepo. Given value is passed as std::any. Actual implementation should
-         * convert std::any into appropriate type.
+         * Method used for extraction from sysrepo. Given value is passed as boost::any. Actual implementation should
+         * convert boost::any into appropriate type.
          * @param value Value from sysrepo.
          */
-        virtual void from_sysrepo(const std::any& value) = 0;
+        virtual void from_sysrepo(const boost::any& value) = 0;
 
         /**
          * Provides text representation of the saved value.
@@ -59,7 +59,7 @@ namespace DDP {
          * @param value Checked valued from sysrepo.
          * @return True if value is valid otherwise false.
          */
-        virtual bool validate( [[maybe_unused]] const std::any& value) const { return true; }
+        virtual bool validate(const boost::any&) const { return true; }
     };
 
     /**
@@ -80,9 +80,9 @@ namespace DDP {
          * Save value from sysrepo.
          * @param value Value from sysrepo.
          */
-        void from_sysrepo(const std::any& value) override
+        void from_sysrepo(const boost::any& value) override
         {
-            m_value = std::any_cast<Type>(value);
+            m_value = boost::any_cast<Type>(value);
         }
 
         /**
@@ -95,7 +95,7 @@ namespace DDP {
          * Provides text representation of the saved value.
          * @return String containing text representation of the value.
          */
-        [[nodiscard]] std::string string() const override
+        std::string string() const override
         {
             std::stringstream str;
             str << m_value;
@@ -117,12 +117,12 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] PcapExportCfg value() const { return m_value; }
+        PcapExportCfg value() const { return m_value; }
 
-        bool validate(const std::any& value) const override
+        bool validate(const boost::any& value) const override
         {
             try {
-                auto str_value = std::any_cast<std::string>(value);
+                auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "DISABLED" || str_value == "INVALID" || str_value == "ALL";
             } catch (...) {
@@ -134,9 +134,9 @@ namespace DDP {
          * Save value from sysrepo.
          * @param value Value from sysrepo.
          */
-        void from_sysrepo(const std::any& value) override
+        void from_sysrepo(const boost::any& value) override
         {
-            auto str_value = std::any_cast<std::string>(value);
+            auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
 
             if(str_value == "DISABLED")
@@ -184,12 +184,12 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] ExportFormat value() const { return m_value; }
+        ExportFormat value() const { return m_value; }
 
-        bool validate(const std::any& value) const override
+        bool validate(const boost::any& value) const override
         {
             try {
-                auto str_value = std::any_cast<std::string>(value);
+                auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "PARQUET" || str_value == "CDNS";
             } catch (...) {
@@ -201,9 +201,9 @@ namespace DDP {
          * Save value from sysrepo.
          * @param value Value from sysrepo.
          */
-        void from_sysrepo(const std::any& value) override
+        void from_sysrepo(const boost::any& value) override
         {
-            auto str_value = std::any_cast<std::string>(value);
+            auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
 
             if(str_value == "PARQUET")
@@ -251,15 +251,15 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] Type value() const { return m_value; }
+        Type value() const { return m_value; }
 
         /**
          * Save value from sysrepo.
          * @param value Value from sysrepo.
          */
-        void from_sysrepo(const std::any& value) override
+        void from_sysrepo(const boost::any& value) override
         {
-            m_value = std::any_cast<uint64_t>(value);
+            m_value = boost::any_cast<uint64_t>(value);
         }
 
         /**
@@ -296,15 +296,15 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] Type value() const { return m_value; }
+        Type value() const { return m_value; }
 
         /**
          * Save value from sysrepo.
          * @param value Value from sysrepo.
          */
-        void from_sysrepo(const std::any& value) override
+        void from_sysrepo(const boost::any& value) override
         {
-            auto bit_field = std::any_cast<std::vector<libyang::S_Type_Bit>>(value);
+            auto bit_field = boost::any_cast<std::vector<libyang::S_Type_Bit>>(value);
             if(bit_field.size() != size)
                 throw std::invalid_argument("Bitfield contains unexpected count of bits!");
 

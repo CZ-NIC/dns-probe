@@ -163,10 +163,7 @@ module cznic-dns-probe {
                 type uint64;
                 default 5000000;
                 description
-                    "Parquet records per file.
-
-                    This is a static configuration parameter that is applied
-                    only upon restarting the probe.";
+                    "Parquet records per file.";
             }
 
             leaf file-name-prefix {

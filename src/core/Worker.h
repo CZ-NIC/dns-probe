@@ -67,7 +67,7 @@ namespace DDP {
          * @throw std::invalid_argument From calling TransactionTable constructor
          * @throw DnsParserConstructor From calling DnsParser constructor
          */
-        Worker(Config& cfg, Statistics& stats, std::unique_ptr<Ring<std::any>>& ring,
+        Worker(Config& cfg, Statistics& stats, std::unique_ptr<Ring<boost::any>>& ring,
                CommLink::CommLinkWorkerEP& comm_link, Mempool<DnsRecord>& record_mempool,
                Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, std::vector<std::shared_ptr<DDP::Port>> ports,
                bool match_qname, unsigned process_id) :
@@ -178,7 +178,7 @@ namespace DDP {
     private:
         Mempool<DnsRecord>& m_record_mempool; //!< Mempool used for saving records extracted from DNS packets.
         Mempool<DnsTcpConnection>& m_tcp_mempool; //!< Mempool used for tracking TCP connections.
-        std::unique_ptr<Ring<std::any>>& m_export_ring; //!< Export ring used for delivering data to exporter.
+        std::unique_ptr<Ring<boost::any>>& m_export_ring; //!< Export ring used for delivering data to exporter.
         uint32_t m_tt_timeout_count; //!< Currently processed packets before triggering timeout check.
         TransactionTable<DnsRecord> m_transaction_table; //!< Transaction table for records extracted from DNS packets.
         DnsParser m_parser; //!< DnsParser for creating records into transaction table.

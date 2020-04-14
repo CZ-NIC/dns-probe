@@ -49,7 +49,7 @@ namespace DDP {
          */
         explicit EntryAssembler(const char* name) : m_msg()
         {
-            if constexpr (level == LogLevel::DEBUG) {
+            if (level == LogLevel::DEBUG) {
                 m_msg << "[DEBUG] ";
             } else if (level == LogLevel::INFO) {
                 m_msg << "[INFO] ";
@@ -62,6 +62,15 @@ namespace DDP {
             }
 
             m_msg << name << ": ";
+        }
+
+        /**
+         * @brief Move constructor. Moves the std::ostringstream member variable.
+         * @param other Source EntryAssembler
+         */
+        EntryAssembler(EntryAssembler&& other)
+        {
+            this->m_msg = std::move(other.m_msg);
         }
 
         /**
@@ -102,7 +111,7 @@ namespace DDP {
          * Constructor has no effect.
          * @param name Kept only for compatibility.
          */
-        explicit EntryAssembler(const char* name) {}
+        explicit EntryAssembler(const char*) {}
 
         /**
          * Optimize out debug messages.
@@ -111,7 +120,7 @@ namespace DDP {
          * @return Reference to itself so it can be used for another concatenation.
          */
         template<typename T>
-        EntryAssembler& operator<<([[maybe_unused]] T&& msg)
+        EntryAssembler& operator<<(T&&)
         {
             return *this;
         }

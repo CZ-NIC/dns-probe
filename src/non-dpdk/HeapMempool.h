@@ -44,7 +44,7 @@ namespace DDP {
         public:
             CoreCache() : m_cache{}, m_unused_pos(0) {}
 
-            [[nodiscard]] T* get() { return m_unused_pos ? m_cache[--m_unused_pos] : nullptr; }
+            T* get() { return m_unused_pos ? m_cache[--m_unused_pos] : nullptr; }
 
             bool put(T* item)
             {
@@ -67,7 +67,7 @@ namespace DDP {
          * @param name Unused (keep to conform interface with DPDK mempool).
          * @throw MempoolException
          */
-        explicit HeapMempool(unsigned elements, const char* name [[maybe_unused]]) :
+        explicit HeapMempool(unsigned elements, const char*) :
                 m_mempool(std::make_unique<char[]>(elements * sizeof(T))),
                 m_mempool_fields(elements, RING::MULTI_PRODUCER | RING::MULTI_CONSUMER),
                 m_core_cache(Probe::getInstance().thread_manager().count())
@@ -88,11 +88,11 @@ namespace DDP {
          * @return Reference to newly constructed object.
          */
         template<typename... Args>
-        [[nodiscard]] T& get_impl(Args&& ...args)
+        T& get_impl(Args&& ...args)
         {
             T* space = nullptr;
 
-            if constexpr (base_t::MEMPOOL_CACHE_SIZE > 0) {
+            if (base_t::MEMPOOL_CACHE_SIZE > 0) {
                 space = m_core_cache[ThreadManager::index()].get();
             }
 
@@ -116,7 +116,7 @@ namespace DDP {
         {
             obj->~T();
 
-            if constexpr (base_t::MEMPOOL_CACHE_SIZE > 0) {
+            if (base_t::MEMPOOL_CACHE_SIZE > 0) {
                 if (!m_core_cache[ThreadManager::index()].put(obj)) {
                     m_mempool_fields.emplace(obj);
                 }

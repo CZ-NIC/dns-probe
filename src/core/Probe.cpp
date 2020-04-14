@@ -16,6 +16,8 @@
  */
 
 #include <iostream>
+#include <utility>
+#include <tuple>
 
 #include <getopt.h>
 
@@ -123,7 +125,7 @@ void DDP::Probe::print_help(const char* app)
     }
 
     std::string interface;
-    if constexpr (BACKEND == PacketBackend::Socket)
+    if (BACKEND == PacketBackend::Socket)
         interface = "interface name e.g. eth0";
     else
         interface = "interface PCI ID e.g. 00:1f.6";
@@ -164,7 +166,7 @@ void DDP::Probe::init(const Arguments& args)
         auto workers = m_thread_manager->slave_lcores();
         workers.erase(workers.begin());
         for (auto worker : workers) {
-            m_export_rings[worker] = std::make_unique<Ring<std::any>>(4, RING::SINGLE_PRODUCER);
+            m_export_rings[worker] = std::make_unique<Ring<boost::any>>(4, RING::SINGLE_PRODUCER);
 
             if (!m_export_rings[worker])
                 throw std::runtime_error("Couldn't initialize export rings!");
@@ -174,7 +176,9 @@ void DDP::Probe::init(const Arguments& args)
 
         // Creates communication channels for workers
         for (auto slave: m_thread_manager->slave_lcores()) {
-            auto cl = m_comm_links.try_emplace(slave);
+            auto cl = m_comm_links.emplace(std::piecewise_construct,
+                                           std::forward_as_tuple(slave),
+                                           std::forward_as_tuple(32, true));
             m_poll.emplace<CommLinkProxy>(cl.first->second.config_endpoint());
             m_stats.emplace_back();
         }
@@ -309,7 +313,7 @@ DDP::AggregatedStatistics DDP::Probe::statistics()
     return m_aggregated_stats;
 }
 
-void DDP::Probe::worker_stopped(unsigned lcore [[maybe_unused]])
+void DDP::Probe::worker_stopped(unsigned)
 {
     m_stopped_workers++;
     if(m_stopped_workers == slaves_cnt() - 1)

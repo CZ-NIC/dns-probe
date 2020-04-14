@@ -279,7 +279,8 @@ namespace DDP {
                     return GateTT(*this, bucket[i]);
             }
 
-            if (auto free_item = find_free_item_bucket(bucket); free_item != nullptr) {
+            auto free_item = find_free_item_bucket(bucket);
+            if (free_item != nullptr) {
                 return GateTT(*this, *free_item);
             }
 

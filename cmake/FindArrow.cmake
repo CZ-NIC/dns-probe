@@ -1,17 +1,2 @@
-include(FindPkgConfig)
-
-set(OLD_PKGCFG_ENV $ENV{PKG_CONFIG_PATH})
-unset(ENV{PKG_CONFIG_PATH})
-
-foreach(PATH IN LISTS CMAKE_SYSTEM_PREFIX_PATH CMAKE_PREFIX_PATH)
-    set(ENV{PKG_CONFIG_PATH} "${PATH}/lib/pkgconfig:${PATH}/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}")
-endforeach()
-
-set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:${OLD_PKGCFG_ENV}")
-pkg_search_module(ARROW IMPORTED_TARGET arrow)
-set(ENV{PKG_CONFIG_PATH} "${OLD_PKGCFG_PATH}")
-
-find_package_handle_standard_args(Arrow DEFAULT_MSG ARROW_FOUND)
-
-add_library(Arrow::Arrow INTERFACE IMPORTED)
-target_link_libraries(Arrow::Arrow INTERFACE PkgConfig::ARROW)
+include(utils)
+FindLibrary(arrow Arrow)

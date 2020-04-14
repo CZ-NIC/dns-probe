@@ -58,7 +58,7 @@ namespace DDP {
          * @brief Free packets from the current batch (Does nothing)
          * @param queue RX queue from which the packets originate
          */
-        void free_packets([[maybe_unused]]unsigned queue) override {}
+        void free_packets(unsigned) override {}
     
     private:
         pcap_t* m_handle; //!< Handle used for libpcap calls.

@@ -57,7 +57,7 @@ namespace DDP {
          * @brief Free packets from the current batch (Does nothing)
          * @param queue RX queue from which the packets originate
          */
-        void free_packets([[maybe_unused]] unsigned queue) override {}
+        void free_packets(unsigned) override {}
 
     private:
         uint16_t m_port; //!< Associated physical port.

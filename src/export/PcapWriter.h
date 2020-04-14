@@ -51,11 +51,11 @@ namespace DDP {
          * @throw std::exception From calling create_file() during file rotation
          * @return Number of packets written to file
          */
-        int64_t write(std::any item) override {
+        int64_t write(boost::any item) override {
             if (item.type() != typeid(const Packet*))
                 return 0;
 
-            return write(std::any_cast<const Packet*>(item));
+            return write(boost::any_cast<const Packet*>(item));
         }
 
         /**

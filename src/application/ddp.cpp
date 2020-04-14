@@ -24,6 +24,7 @@
 #include <rte_ethdev.h>
 #include <rte_mbuf.h>
 #include <rte_mempool.h>
+#include <rte_errno.h>
 
 #include "core/Probe.h"
 #include "dpdk/DpdkPort.h"
@@ -62,7 +63,12 @@ int main(int argc, char** argv)
     try {
         // Port initialization
         std::set<uint16_t> ports;
+
+#ifndef DPDK_LEGACY
         for (uint16_t i = 0; i < rte_eth_dev_count_avail(); i++) {
+#else
+        for (uint16_t i = 0; i < rte_eth_dev_count(); i++) {
+#endif
                 ports.insert(i);
         }
 
@@ -79,7 +85,7 @@ int main(int argc, char** argv)
             rte_eth_dev_info info{};
             rte_eth_dev_info_get(port, &info);
 
-            if(strcmp(info.driver_name, "net_pcap") == 0)
+            if(strcmp(info.driver_name, "net_pcap") == 0 || strcmp(info.driver_name, "Pcap PMD") == 0)
                 ready_ports.emplace_back(new DDP::DPDKPcapPort(port, interface_mempool));
             else
                 ready_ports.emplace_back(new DDP::DPDKPort(port, runner.slaves_cnt() - 1, interface_mempool));

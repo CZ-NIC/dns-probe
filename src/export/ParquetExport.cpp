@@ -26,6 +26,8 @@
 
 #include "ParquetExport.h"
 
+constexpr char DDP::ParquetExport::DIGITS[];
+
 DDP::ParquetExport::ParquetExport(uint64_t records_limit)
                                   : DnsExport(), m_records_limit(records_limit)
 {
@@ -92,7 +94,7 @@ DDP::ParquetExport::ParquetExport(uint64_t records_limit)
     });
 }
 
-std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
+boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
 {
     // DNS ID
     PARQUET_THROW_NOT_OK(ID.Append(record.m_id));
@@ -227,27 +229,27 @@ std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
         auto edns_map = parse_edns_options(record.m_req_ednsRdata, record.m_req_ednsRdata_size);
 
         // EDNS DNSSEC DAU
-        auto find_dau = edns_map.find(EDNSOptions::DNSSEC_DAU);
+        auto find_dau = edns_map.find(static_cast<uint16_t>(EDNSOptions::DNSSEC_DAU));
         if (find_dau != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsDnssecDau.Append(std::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_DAU])));
+            PARQUET_THROW_NOT_OK(EdnsDnssecDau.Append(boost::any_cast<std::string>(edns_map[static_cast<uint16_t>(EDNSOptions::DNSSEC_DAU)])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsDnssecDau.Append(""));
         }
 
         // EDNS DNSSEC DHU
-        auto find_dhu = edns_map.find(EDNSOptions::DNSSEC_DHU);
+        auto find_dhu = edns_map.find(static_cast<uint16_t>(EDNSOptions::DNSSEC_DHU));
         if (find_dhu != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsDnssecDhu.Append(std::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_DHU])));
+            PARQUET_THROW_NOT_OK(EdnsDnssecDhu.Append(boost::any_cast<std::string>(edns_map[static_cast<uint16_t>(EDNSOptions::DNSSEC_DHU)])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsDnssecDhu.Append(""));
         }
 
         // EDNS DNSSEC N3U
-        auto find_n3u = edns_map.find(EDNSOptions::DNSSEC_N3U);
+        auto find_n3u = edns_map.find(static_cast<uint16_t>(EDNSOptions::DNSSEC_N3U));
         if (find_n3u != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(std::any_cast<std::string>(edns_map[EDNSOptions::DNSSEC_N3U])));
+            PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(boost::any_cast<std::string>(edns_map[static_cast<uint16_t>(EDNSOptions::DNSSEC_N3U)])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(""));
@@ -268,9 +270,9 @@ std::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
         auto edns_map = parse_edns_options(record.m_resp_ednsRdata, record.m_resp_ednsRdata_size);
 
         // EDNS NSID
-        auto find = edns_map.find(EDNSOptions::NSID);
+        auto find = edns_map.find(static_cast<uint16_t>(EDNSOptions::NSID));
         if (find != edns_map.end()) {
-            PARQUET_THROW_NOT_OK(EdnsNSID.Append(std::any_cast<std::string>(edns_map[EDNSOptions::NSID])));
+            PARQUET_THROW_NOT_OK(EdnsNSID.Append(boost::any_cast<std::string>(edns_map[static_cast<uint16_t>(EDNSOptions::NSID)])));
         }
         else {
             PARQUET_THROW_NOT_OK(EdnsNSID.Append(""));
@@ -513,9 +515,9 @@ void DDP::ParquetExport::write_leftovers(ParquetWriter& writer, Statistics& stat
     stats.exported_records += table->num_rows();
 }
 
-std::unordered_map<DDP::ParquetExport::EDNSOptions, std::any> DDP::ParquetExport::parse_edns_options(const uint8_t* ptr, uint16_t size)
+std::unordered_map<uint16_t, boost::any> DDP::ParquetExport::parse_edns_options(const uint8_t* ptr, uint16_t size)
 {
-    std::unordered_map<EDNSOptions, std::any> ret;
+    std::unordered_map<uint16_t, boost::any> ret;
     uint16_t parsed = 0;
 
     while (parsed < size) {
@@ -536,22 +538,22 @@ std::unordered_map<DDP::ParquetExport::EDNSOptions, std::any> DDP::ParquetExport
             switch (option) {
                 // parse NSID
                 case static_cast<uint16_t>(EDNSOptions::NSID):
-                    ret[EDNSOptions::NSID] = std::string(reinterpret_cast<const char*>(ptr), opt_len);
+                    ret[static_cast<uint16_t>(EDNSOptions::NSID)] = std::string(reinterpret_cast<const char*>(ptr), opt_len);
                     break;
 
                 // parse DNSSEC DAU algorithms list
                 case static_cast<uint16_t>(EDNSOptions::DNSSEC_DAU):
-                    ret[EDNSOptions::DNSSEC_DAU] = parse_dnssec_list(ptr, opt_len);
+                    ret[static_cast<uint16_t>(EDNSOptions::DNSSEC_DAU)] = parse_dnssec_list(ptr, opt_len);
                     break;
 
                 // parse DNSSEC DHU algorithms list
                 case static_cast<uint16_t>(EDNSOptions::DNSSEC_DHU):
-                    ret[EDNSOptions::DNSSEC_DHU] = parse_dnssec_list(ptr, opt_len);
+                    ret[static_cast<uint16_t>(EDNSOptions::DNSSEC_DHU)] = parse_dnssec_list(ptr, opt_len);
                     break;
 
                 // parse DNSSEC N3U algorithms list
                 case static_cast<uint16_t>(EDNSOptions::DNSSEC_N3U):
-                    ret[EDNSOptions::DNSSEC_N3U] = parse_dnssec_list(ptr, opt_len);
+                    ret[static_cast<uint16_t>(EDNSOptions::DNSSEC_N3U)] = parse_dnssec_list(ptr, opt_len);
                     break;
 
                 // TODO parse Client Subnet option

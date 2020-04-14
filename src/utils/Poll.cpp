@@ -47,15 +47,15 @@ void DDP::Poll::rebuild_poll_fds()
 {
     m_poll_fds.clear();
 
-    for (auto&&[fd, pollable] : m_pollables) {
+    for (auto&& pollable : m_pollables) {
         pollfd pfd{};
-        pfd.fd = fd;
+        pfd.fd = pollable.first;
         pfd.events = 0;
 
-        if(pollable->events() == PollEvents::READ)
+        if(pollable.second->events() == PollEvents::READ)
             pfd.events |= POLLIN;
 
-        if(pollable->events() == PollEvents::WRITE)
+        if(pollable.second->events() == PollEvents::WRITE)
             pfd.events |= POLLOUT;
 
         m_poll_fds.push_back(pfd);

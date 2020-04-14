@@ -63,6 +63,7 @@ namespace DDP {
 
             swap(packet1.m_buffer, packet2.m_buffer);
             swap(packet1.m_payload, packet2.m_payload);
+            swap(packet1.m_owner, packet2.m_owner);
         }
 
         /**

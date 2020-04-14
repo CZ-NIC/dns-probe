@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.13)
-project("DNS Probe" VERSION 0.2.0)
+cmake_minimum_required(VERSION 3.5)
+project("DNS Probe" VERSION 0.3.0)
 
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
@@ -8,7 +8,7 @@ set(BUILD_TESTING OFF CACHE BOOL "Enable build testing binaries")
 set(BUILD_DOC ON CACHE BOOL "Generate Doxygen documentation")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 ## Find required libraries
@@ -17,7 +17,9 @@ find_package(PCAP REQUIRED)
 find_package(Arrow REQUIRED)
 find_package(Parquet REQUIRED)
 find_package(CDNS REQUIRED)
-find_package(Sysrepo REQUIRED)
+find_package(LibYangCpp REQUIRED)
+find_package(SysrepoCpp REQUIRED)
+find_package(Boost REQUIRED)
 find_package(Doxygen)
 
 include(CheckCXXCompilerFlag)
@@ -46,9 +48,9 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads Sysrepo::Sysrepo CDNS::CDNS)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp CDNS::CDNS)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
-target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 target_compile_options(DNSProbe INTERFACE -msse4)
 
 # Add warning flags
@@ -101,6 +103,9 @@ if (DPDK_BACKEND)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
     endif ()
 
+    if (libdpdk_VERSION VERSION_LESS "18.05")
+        target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY)
+    endif()
 
     install(TARGETS dns-probe-dpdk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

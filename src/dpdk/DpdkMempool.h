@@ -54,8 +54,7 @@ namespace DDP {
          */
         virtual ~DPDKMempool() noexcept
         {
-            rte_mempool_obj_iter(m_mempool, [](rte_mempool* mp [[maybe_unused]], void* opaque [[maybe_unused]],
-                                               void* obj[[maybe_unused]], unsigned obj_idx [[maybe_unused]]) {
+            rte_mempool_obj_iter(m_mempool, [](rte_mempool*, void*, void* obj, unsigned) {
                 reinterpret_cast<T*>(obj)->~T();
             }, nullptr);
             rte_mempool_free(m_mempool);
@@ -69,10 +68,11 @@ namespace DDP {
          * @return Reference to newly constructed object.
          */
         template<typename... Args>
-        [[nodiscard]] T& get_impl(Args&& ...args)
+        T& get_impl(Args&& ...args)
         {
             void* space = nullptr;
-            if (auto ret = rte_mempool_get(m_mempool, &space); ret == 0) {
+            auto ret = rte_mempool_get(m_mempool, &space);
+            if (ret == 0) {
                 try {
                     auto obj = new(space) T(std::forward<Args>(args)...);
                     return *obj;
