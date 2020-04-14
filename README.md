@@ -34,6 +34,7 @@ This project has following required dependencies:
 
 * [CMake >= 3.5](https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip)
 * [Linux OS (kernel at least 3.11)](http://kernel.org)
+* [Boost](https://www.boost.org/)
 * [Sysrepo 1.4.2](https://github.com/sysrepo/sysrepo/archive/v1.4.2.tar.gz)
 * [Arrow 0.16.0](https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz)
 * [C-DNS](https://gitlab.labs.nic.cz/knot/c-dns)
