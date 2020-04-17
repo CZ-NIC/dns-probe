@@ -73,9 +73,10 @@ namespace DDP {
 }
 
 
-DDP::Probe::Probe() : m_initialized(false), m_running(false), m_poll(), m_cfg(), m_sysrepo(nullptr), m_aggregated_timer(nullptr),
-                      m_comm_links(), m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(),
-                      m_stats(), m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
+DDP::Probe::Probe() : m_initialized(false), m_running(false), m_poll(), m_cfg(), m_sysrepo(nullptr),
+                      m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(), m_log_link(),
+                      m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
+                      m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
 
 DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 {
@@ -197,7 +198,7 @@ void DDP::Probe::init(const Arguments& args)
                     link.second.config_endpoint().send(Message(Message::Type::ROTATE_OUTPUT));
                 }
             };
-            m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.file_rot_timeout.value() * 1000);
+            m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
         }
 
         m_initialized = true;
@@ -265,6 +266,8 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
     logger.debug() << "Slave threads started.";
 
     m_aggregated_timer->arm(1000);
+    if (m_output_timer)
+        m_output_timer->arm(m_cfg.file_rot_timeout.value() * 1000);
 
     m_running = true;
     m_poll.enable();
@@ -304,8 +307,28 @@ void DDP::Probe::stop(bool restart)
 
 void DDP::Probe::update_config()
 {
+    // Send new config to all slave threads
     for (auto& link : m_comm_links) {
         link.second.config_endpoint().send(MessageNewConfig(m_cfg));
+    }
+
+    // Update output rotation timer if changed
+    if (m_output_timer && (m_output_timer->get_interval() / 1000 != m_cfg.file_rot_timeout.value())) {
+        m_output_timer->disarm();
+        if (m_cfg.file_rot_timeout.value() > 0) {
+            for (auto& link : m_comm_links) {
+                link.second.config_endpoint().send(Message(Message::Type::ROTATE_OUTPUT));
+            }
+            m_output_timer->arm(m_cfg.file_rot_timeout.value() * 1000);
+        }
+    }
+    else if (!m_output_timer && (m_cfg.file_rot_timeout.value() > 0)) {
+        auto sender = [this]() {
+            for (auto& link : m_comm_links) {
+                link.second.config_endpoint().send(Message(Message::Type::ROTATE_OUTPUT));
+            }
+        };
+        m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.file_rot_timeout.value() * 1000);
     }
 }
 

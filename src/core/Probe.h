@@ -171,6 +171,7 @@ namespace DDP {
         Config m_cfg; //!< Application configuration.
         ConfigSysrepo* m_sysrepo; //!< Sysrepo connection reference.
         TimerInterface* m_aggregated_timer; //!< Timer for automatic aggregating statistics and calculating qps.
+        TimerInterface* m_output_timer; //!< Timer for automatic rotation of output files
 
         std::unique_ptr<ThreadManager> m_thread_manager; //!< Thread manager for worker cores.
         std::unordered_map<unsigned, CommLink> m_comm_links; //!< Communication links between master core and workers.
