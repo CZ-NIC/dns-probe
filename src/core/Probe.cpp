@@ -18,6 +18,10 @@
 #include <iostream>
 #include <utility>
 #include <tuple>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
 
 #include <getopt.h>
 
@@ -56,7 +60,7 @@ namespace DDP {
                     break;
 
                 case Message::Type::LOG:
-                    std::cout << dynamic_cast<MessageLog*>(message.get())->msg.str();
+                    BOOST_LOG_TRIVIAL(info) << dynamic_cast<MessageLog*>(message.get())->msg.str();
                     break;
 
                 case Message::Type::WORKER_STOPPED:
@@ -83,8 +87,9 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     DDP::Arguments args{};
     args.app = argv[0];
     int opt;
+    bool logfile = false;
 
-    while ((opt = getopt(argc, argv, "hi:p:r")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rl:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -104,9 +109,26 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
                 args.raw_pcap = true;
                 break;
 
+            case 'l':
+                boost::log::add_file_log(
+                    boost::log::keywords::file_name = optarg,
+                    boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
+                );
+                boost::log::add_common_attributes();
+                logfile = true;
+                break;
+
             default:
                 throw std::invalid_argument("Invalid arguments");
         }
+    }
+
+    if (!logfile) {
+        boost::log::add_console_log(
+            std::cout,
+            boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
+        );
+        boost::log::add_common_attributes();
     }
 
     if (!args.exit) {
@@ -135,6 +157,7 @@ void DDP::Probe::print_help(const char* app)
               << "\t-p PCAP      : input pcap files; parameter can repeat" << std::endl
               << "\t-i INTERFACE : " << interface << std::endl
               << "\t-r           : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
+              << "\t-l LOGFILE   : redirect probe's logs to LOGFILE instead of standard error output" << std::endl
               << "\t-h           : this help message" << std::endl;
 }
 
@@ -286,7 +309,7 @@ void DDP::Probe::process_log_messages() const
 {
     std::unique_ptr<DDP::Message> message;
     while ((message = std::move(this->m_log_link->config_endpoint().recv())).get())
-        std::cout << dynamic_cast<DDP::MessageLog*>(message.get())->msg.str();
+        BOOST_LOG_TRIVIAL(info) << dynamic_cast<DDP::MessageLog*>(message.get())->msg.str();
 }
 
 void DDP::Probe::stop(bool restart)

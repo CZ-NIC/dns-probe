@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 #include <sys/mman.h>
 #include <iostream>
+#include <boost/log/trivial.hpp>
 
 #include "AfPacketPort.h"
 
@@ -158,7 +159,7 @@ uint16_t DDP::AFPacketPort::read(Packet* batch, unsigned queue)
                     rx_count++;
                 }
                 catch (std::exception& e) {
-                    std::cerr << "[WARNING] Packet: Unable to read packet data." << std::endl;
+                    BOOST_LOG_TRIVIAL(info) << "[WARNING] Packet: Unable to read packet data.";
                 }
 
                 ppd = reinterpret_cast<tpacket3_hdr*>(reinterpret_cast<uint8_t*>(ppd) + ppd->tp_next_offset);

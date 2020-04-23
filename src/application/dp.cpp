@@ -21,6 +21,7 @@
 #include <vector>
 #include <thread>
 #include <pthread.h>
+#include <boost/log/trivial.hpp>
 #include "core/Probe.h"
 #include "non-dpdk/PcapPort.h"
 #include "non-dpdk/AfPacketPort.h"
@@ -29,7 +30,7 @@ constexpr int PCAP_THREADS = 3;
 
 static void signal_handler(int signum)
 {
-    std::cout << "App exiting on signal " << signum << std::endl;
+    BOOST_LOG_TRIVIAL(info) << "App exiting on signal " << signum;
     DDP::Probe::getInstance().stop();
 }
 
@@ -40,7 +41,7 @@ int main(int argc, char** argv)
         arguments = DDP::Probe::process_args(argc, argv);
     } catch(std::invalid_argument& e) {
         DDP::Probe::print_help(argv[0]);
-        std::cout << e.what() << std::endl;
+        BOOST_LOG_TRIVIAL(error) << e.what();
         return 1;
     }
 
@@ -52,7 +53,7 @@ int main(int argc, char** argv)
     try {
         runner.init(arguments.args);
     } catch (std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl << "Probe init failed!" << std::endl;
+        BOOST_LOG_TRIVIAL(error) << "Error: " << e.what() << std::endl << "Probe init failed!";
         return 2;
     }
 
@@ -81,12 +82,12 @@ int main(int argc, char** argv)
         try {
             return static_cast<int>(runner.run(ready_ports));
         } catch (std::exception &e) {
-            std::cerr << "Uncaught exception: " << e.what() << std::endl;
+            BOOST_LOG_TRIVIAL(error) << "Uncaught exception: " << e.what();
             return 128;
         }
 
     } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        BOOST_LOG_TRIVIAL(error) << e.what();
         return 128;
     }
 }
