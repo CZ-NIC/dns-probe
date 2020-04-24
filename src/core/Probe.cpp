@@ -157,7 +157,7 @@ void DDP::Probe::print_help(const char* app)
               << "\t-p PCAP      : input pcap files; parameter can repeat" << std::endl
               << "\t-i INTERFACE : " << interface << std::endl
               << "\t-r           : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
-              << "\t-l LOGFILE   : redirect probe's logs to LOGFILE instead of standard error output" << std::endl
+              << "\t-l LOGFILE   : redirect probe's logs to LOGFILE instead of standard output" << std::endl
               << "\t-h           : this help message" << std::endl;
 }
 
