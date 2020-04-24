@@ -180,7 +180,7 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
                 if (event == SR_EV_DONE) {
                     m_cfg.m_logger.info() << "New configuration '" << node->path()
                                           << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
-                                          << " replacing '"
+                                          << "' replacing '"
                                           << cfg.string() << "'";
 
                     cfg.from_sysrepo(conv_sysrepo_data(node));

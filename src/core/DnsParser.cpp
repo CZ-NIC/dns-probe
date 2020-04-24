@@ -257,7 +257,7 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_e
                 }
             }
             catch (std::exception& e) {
-                Logger("EDNS").debug() << "Couldn't allocate memory for EDNS record";
+                Logger("EDNS").warning() << "Couldn't allocate memory for EDNS record";
                 return nullptr;
             }
         }

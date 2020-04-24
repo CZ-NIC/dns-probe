@@ -281,7 +281,7 @@ namespace DDP {
                     m_stats.exported_to_pcap += m_pcap_inv.write(&pkt);
             }
             catch (std::exception& e) {
-                Logger("PCAP").debug() << "Couldn't write invalid packet to PCAP file";
+                Logger("PCAP").warning() << "Couldn't write invalid packet to PCAP file";
             }
         }
 

@@ -245,9 +245,9 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
                     *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
                     m_cfg.match_qname, worker);
             Logger logger("Worker");
-            logger.debug() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
+            logger.info() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
             w.run();
-            logger.debug() << "Worker on lcore " << ThreadManager::current_lcore() << " stopped.";
+            logger.info() << "Worker on lcore " << ThreadManager::current_lcore() << " stopped.";
         }
         catch (std::exception& e) {
             Logger("Worker").error() << "Worker on core " << worker << " crashed. Cause: " << e.what();
@@ -261,13 +261,13 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
     auto exporter_runner = [this](unsigned exporter, Statistics& stats) {
         try {
             Exporter p(m_cfg, stats, m_factory_rings, m_comm_links[exporter].worker_endpoint(), exporter);
-            Logger logger("Worker");
-            logger.debug() << "Starting exporter on lcore " << ThreadManager::current_lcore() << ".";
+            Logger logger("Exporter");
+            logger.info() << "Starting exporter on lcore " << ThreadManager::current_lcore() << ".";
             p.run();
-            logger.debug() << "Exporter on lcore " << ThreadManager::current_lcore() << " stopped.";
+            logger.info() << "Exporter on lcore " << ThreadManager::current_lcore() << " stopped.";
             }
         catch (std::exception& e) {
-            Logger("ExportWorker").error() << "Export worker on core " << exporter << " crashed. Cause: " << e.what();
+            Logger("Exporter").error() << "Export worker on core " << exporter << " crashed. Cause: " << e.what();
             m_comm_links[exporter].worker_endpoint().send(Message(Message::Type::STOP));
             return -1;
         }
@@ -286,7 +286,7 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
         m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++);
     }
 
-    logger.debug() << "Slave threads started.";
+    logger.info() << "Slave threads started.";
 
     m_aggregated_timer->arm(1000);
     if (m_output_timer)
@@ -296,7 +296,7 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
     m_poll.enable();
     m_poll.loop();
 
-    logger.debug() << "Loop stopped. Waiting for workers to join.";
+    logger.info() << "Loop stopped. Waiting for workers to join.";
     process_log_messages();
 
     m_thread_manager->join_all_threads();
@@ -318,7 +318,7 @@ void DDP::Probe::stop(bool restart)
         return;
 
     //Send stop message to all workers
-    Logger("Probe").debug() << "Sending stop to slaves.";
+    Logger("Probe").info() << "Sending stop to slaves.";
     for (auto& link : m_comm_links) {
         link.second.config_endpoint().send(Message(Message::Type::STOP));
     }

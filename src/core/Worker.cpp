@@ -59,7 +59,7 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
             m_stats.exported_to_pcap += m_pcap_all.write(&pkt);
     }
     catch (std::exception& e) {
-        Logger("PCAP").debug() << "Couldn't write packet to PCAP file";
+        Logger("PCAP").warning() << "Couldn't write packet to PCAP file: " << e.what();
     }
 
     // Parse packet into DNS record.
@@ -182,7 +182,7 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
                     m_parser.export_invalid(pkt);
                 }
                 catch(std::exception& e) {
-                    Logger("Export").debug() << e.what();
+                    Logger("Export").warning() << "Buffering new DNS record failed: " << e.what();
                 }
 
                 DnsRecord* tmp = gate.operator->();
@@ -237,7 +237,7 @@ void DDP::Worker::rotate_output()
         m_parser.rotate_invalid();
     }
     catch(std::exception& e) {
-        Logger("Export").debug() << e.what();
+        Logger("Export").warning() << "Output rotation on worker " << m_process_id << "failed: " << e.what();
     }
 }
 

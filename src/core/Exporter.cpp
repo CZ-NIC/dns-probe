@@ -117,7 +117,7 @@ DDP::ExporterRetCode DDP::Exporter::dequeue(Ring<boost::any>& ring, unsigned wor
         }
     }
     catch(std::exception& e) {
-        Logger("Writer").debug() << "Couldn't write to file";
+        Logger("Writer").warning() << "Couldn't write to file: " << e.what();
         return ExporterRetCode::EXPORTER_WRITE_ERROR;
     }
 

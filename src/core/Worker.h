@@ -129,7 +129,7 @@ namespace DDP {
             }
             catch (std::exception& e) {
                 delete writer;
-                Logger("Export").debug() << "Couldn't write leftovers on worker " << m_process_id
+                Logger("Export").warning() << "Couldn't write leftovers on worker " << m_process_id
                                          << " (" << e.what() << ")";
             }
 
