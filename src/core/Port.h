@@ -63,6 +63,8 @@ namespace DDP {
          */
         virtual void free_packets(unsigned queue) = 0;
 
+        virtual std::vector<int> fds() {return {};}
+
     protected:
         uint16_t m_num_queues;
     };

@@ -24,6 +24,7 @@
 #include <rte_mempool.h>
 
 #include "core/Port.h"
+#include "utils/FileDescriptor.h"
 
 namespace DDP {
     using rte_mempool_t = std::unique_ptr<rte_mempool, std::function<void(rte_mempool*)>>;
@@ -53,6 +54,8 @@ namespace DDP {
          */
         uint16_t read(Packet* batch, unsigned queue) override;
 
+        std::vector<int> fds() override;
+
         /**
          * @brief Free packets from the current batch (Does nothing)
          * @param queue RX queue from which the packets originate
@@ -62,6 +65,7 @@ namespace DDP {
     private:
         uint16_t m_port; //!< Associated physical port.
         rte_mempool_t& m_mempool; //!< Associated mempool for receiving packets.
+        std::vector<FileDescriptor> m_fds;
 
         /**
          * @brief Check if DPDK port was successfuly initialized and is up

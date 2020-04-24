@@ -322,7 +322,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                     m_next_seq[conn_side] = pkt_seq + seg_len;
                 }
                 catch (std::exception& e) {
-                    Logger("DNSoverTCP").debug() << "Couldn't insert packet into reorder buffer";
+                    Logger("DNSoverTCP").warning() << "Couldn't insert packet into reorder buffer";
                 }
                 return false;
             }
@@ -351,7 +351,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                     m_next_seq[conn_side] = pkt_seq + seg_len;
                 }
                 catch(std::exception& e) {
-                    Logger("DNSoverTCP").debug() << "Couldn't insert packet into reorder buffer";
+                    Logger("DNSoverTCP").warning() << "Couldn't insert packet into reorder buffer";
                 }
                 return false;
             }
@@ -413,7 +413,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                         }
                     }
                     catch (std::exception& e) {
-                        Logger("DNSoverTCP").debug() << "Couldn't insert packet into reorder buffer";
+                        Logger("DNSoverTCP").warning() << "Couldn't insert packet into reorder buffer";
                         return true;
                     }
                 }
@@ -429,7 +429,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                 filled_first = insert_segment(packet, segment, conn_side, pkt_seq, 0);
             }
             catch (std::exception& e) {
-                Logger("DNSoverTCP").debug() << "Couldn't insert packet into reorder buffer";
+                Logger("DNSoverTCP").warning() << "Couldn't insert packet into reorder buffer";
                 return false;
             }
 
@@ -670,7 +670,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
             insert_segment(packet, segment, conn_side, pkt_seq, 0);
         }
         catch (std::exception& e) {
-            Logger("DNSoverTCP").debug() << "Couldn't insert packet into reorder buffer";
+            Logger("DNSoverTCP").warning() << "Couldn't insert packet into reorder buffer";
         }
         return false;
     }

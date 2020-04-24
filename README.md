@@ -212,7 +212,9 @@ The format of `<INTERFACE>` depends on used backend.
                      
         When the DPDK version is started with `ddp-bind` instead of `dp-dpdk` then `<INTERFACE>` is standard interface
         defined by kernel as in case of AF packet backend.
-         
+
+* `-l <LOGFILE>` - Redirects probe's logs to LOGFILE instead of standard output.
+
 * `-h` - Provides basic help.
 
 # DPDK backend

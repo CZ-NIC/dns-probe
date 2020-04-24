@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <pcap.h>
+#include <utils/FileDescriptor.h>
 #include "core/Port.h"
 
 namespace DDP {
@@ -35,12 +36,12 @@ namespace DDP {
          * @param batch_size Maximum number of packets to read from PCAP at once
          * @throw std::runtime_error
          */
-        explicit PCAPPort(const char* port);
+        explicit PCAPPort(const char* port, uint16_t num_queues);
 
         /**
          * @brief Destructor. Closes PCAP file.
          */
-        ~PCAPPort() { if (m_handle) pcap_close(m_handle); }
+        ~PCAPPort() override { if (m_handle) pcap_close(m_handle); }
 
         // Delete copy constructor and assignment operator
         PCAPPort(const PCAPPort&) = delete;
@@ -59,8 +60,11 @@ namespace DDP {
          * @param queue RX queue from which the packets originate
          */
         void free_packets(unsigned) override {}
-    
+
+        std::vector<int> fds() override;
+
     private:
         pcap_t* m_handle; //!< Handle used for libpcap calls.
+        std::vector<FileDescriptor> m_eventfds;
     };
 }

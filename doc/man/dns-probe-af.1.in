@@ -6,7 +6,7 @@
 \- DNS traffic monitoring probe with AF packet backend
 .SH SYNOPSIS
 .B dns-probe-af
-[-i <INTERFACE> | -p <PCAP>] [-r] [-h]
+[-i <INTERFACE> | -p <PCAP>] [-r] [-l <LOGFILE>] [-h]
 .SH DESCRIPTION
 .B dns-probe-af
 is a probe collecting records about DNS traffic in Parquet or C-DNS format.
@@ -19,6 +19,9 @@ Input PCAP file. Parameter can repeat.
 .TP
 .B -r
 Indicates RAW PCAPs as input. Can't be used together with -i parameter.
+.TP
+.B -l <LOGFILE>
+Redirects probe's logs to LOGFILE instead of standard output.
 .TP
 .B -h
 Print help message.

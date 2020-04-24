@@ -17,6 +17,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <sys/eventfd.h>
+#include <boost/log/trivial.hpp>
 
 #include <rte_ethdev.h>
 #include <rte_mbuf.h>
@@ -95,6 +97,14 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
         if (rte_eth_rx_queue_setup(port, i, nb_rxd, rte_eth_dev_socket_id(port), &rxq_conf,
                                    mbuf_mempool.get()) < 0)
             throw std::runtime_error("Cannot setup queue for RX");
+
+        int dummy = eventfd(0, EFD_SEMAPHORE | EFD_NONBLOCK);
+        if (dummy == -1)
+            throw std::runtime_error("Cannot setup queue for RX");
+
+        m_fds.push_back(FileDescriptor(dummy));
+        uint64_t buffer = 1;
+        ::write(dummy, &buffer, sizeof(uint64_t));
     }
 
     rte_eth_promiscuous_enable(port);
@@ -118,12 +128,23 @@ uint16_t DDP::DPDKPort::read(Packet* batch, unsigned queue)
             rte_pktmbuf_free(rx_buffer[i]);
         }
         catch (std::exception& e) {
-            std::cerr << "[WARNING] Packet: Unable to read packet data." << std::endl;
+            BOOST_LOG_TRIVIAL(info) << "[WARNING] Packet: Unable to read packet data.";
             err++;
         }
     }
 
+    uint64_t buffer = 1;
+    ::write(m_fds[queue], &buffer, sizeof(uint64_t));
+
     return rx_count - err;
+}
+
+std::vector<int> DDP::DPDKPort::fds() {
+    std::vector<int> ret;
+    for (auto&& fd: m_fds) {
+        ret.push_back(fd);
+    }
+    return ret;
 }
 
 std::string DDP::DPDKPort::selected_link_status()

@@ -20,7 +20,10 @@
 #include "CommLink.h"
 #include "utils/Ring.h"
 
-DDP::CommLink::CommLink(unsigned size, bool single_producer) : m_rings(), m_event_fd(), m_worker_ep(*this), m_config_ep(*this)
+DDP::CommLink::CommLink(unsigned size, bool single_producer) :
+    m_rings(),
+    m_event_fd(),
+    m_ep{{{*this, 0}, {*this, 1}}}
 {
     for (auto& ring: m_rings) {
         unsigned producer_settings = single_producer ? 0 : RING::MULTI_PRODUCER;
@@ -33,9 +36,11 @@ DDP::CommLink::CommLink(unsigned size, bool single_producer) : m_rings(), m_even
         }
     }
 
-    m_event_fd = eventfd(0, EFD_SEMAPHORE | EFD_NONBLOCK);
-    if (!m_event_fd.is_valid())
-        throw std::runtime_error("Cannot create eventfd device!");
+    for(auto&& fd: m_event_fd) {
+        fd = eventfd(0, EFD_SEMAPHORE | EFD_NONBLOCK);
+        if (!fd.is_valid())
+            throw std::runtime_error("Cannot create eventfd device!");
+    }
 }
 
 DDP::CommLink::~CommLink()
@@ -49,42 +54,9 @@ DDP::CommLink::~CommLink()
     }
 }
 
-void DDP::CommLink::CommLinkConfigEP::send(DDP::Message& msg)
+void DDP::CommLink::CommLinkEP::send(DDP::Message& msg)
 {
-    auto ring = m_cl_owner.m_rings[static_cast<int>(RingDirection::TO_WORKER)].get();
-    auto msg_clone = msg.clone();
-    try {
-        ring->emplace(msg_clone);
-    }
-    catch (std::exception& e) {
-        delete msg_clone;
-        throw std::runtime_error("Message ring is full!");
-    }
-}
-
-std::unique_ptr<DDP::Message> DDP::CommLink::CommLinkConfigEP::recv()
-{
-    uint64_t cnt = 0;
-    while (::read(m_cl_owner.m_event_fd, &cnt, sizeof(cnt)) < 0) {
-        if (errno == EINTR)
-            continue;
-        else if (errno == EAGAIN)
-            return std::unique_ptr<DDP::Message>(nullptr);
-        else
-            throw std::runtime_error("Read on eventfd failed!");
-    }
-
-    auto ring = m_cl_owner.m_rings[static_cast<int>(RingDirection::FROM_WORKER)].get();
-    auto msg = ring->pop();
-    if (msg)
-        return std::unique_ptr<DDP::Message>(msg.value());
-    else
-        return std::unique_ptr<DDP::Message>(nullptr);
-}
-
-void DDP::CommLink::CommLinkWorkerEP::send(DDP::Message& msg)
-{
-    auto ring = m_cl_owner.m_rings[static_cast<int>(RingDirection::TO_CONFIG)].get();
+    auto ring = m_cl_owner.m_rings[m_write_ep].get();
     auto msg_clone = msg.clone();
     try {
         ring->emplace(msg_clone);
@@ -95,13 +67,23 @@ void DDP::CommLink::CommLinkWorkerEP::send(DDP::Message& msg)
     }
 
     uint64_t cnt = 1;
-    if (::write(m_cl_owner.m_event_fd, &cnt, sizeof(cnt)) < 0)
+    if (::write(m_cl_owner.m_event_fd[m_write_ep], &cnt, sizeof(cnt)) < 0)
         throw std::runtime_error("Sending notification to the config thread failed!");
 }
 
-std::unique_ptr<DDP::Message> DDP::CommLink::CommLinkWorkerEP::recv()
+std::unique_ptr<DDP::Message> DDP::CommLink::CommLinkEP::recv()
 {
-    auto ring = m_cl_owner.m_rings[static_cast<int>(RingDirection::FROM_CONFIG)].get();
+    uint64_t cnt = 0;
+    while (::read(m_cl_owner.m_event_fd[m_read_ep], &cnt, sizeof(cnt)) < 0) {
+        if (errno == EINTR)
+            continue;
+        else if (errno == EAGAIN)
+            return std::unique_ptr<DDP::Message>(nullptr);
+        else
+            throw std::runtime_error("Read on eventfd failed!");
+    }
+
+    auto ring = m_cl_owner.m_rings[static_cast<int>(m_read_ep)].get();
     auto msg = ring->pop();
     if (msg)
         return std::unique_ptr<DDP::Message>(msg.value());

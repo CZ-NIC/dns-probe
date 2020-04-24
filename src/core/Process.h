@@ -25,7 +25,32 @@
 namespace DDP {
 
     class Process {
+    private:
+        class CommLinkPollAble : public PollAble {
+        public:
+            explicit CommLinkPollAble(Process& p) :
+                PollAble(PollEvents::READ), m_process(p) {}
 
+            int fd() override { return m_process.m_comm_link.fd(); }
+
+            void ready_read() override {
+                auto msg = m_process.m_comm_link.recv();
+                if (msg != nullptr) {
+                    if (msg->type() == DDP::Message::Type::STOP) {
+                        m_process.stop();
+                    }
+                    else if (msg->type() == DDP::Message::Type::NEW_CONFIG) {
+                        m_process.new_config(dynamic_cast<DDP::MessageNewConfig*>(msg.get())->cfg);
+                    }
+                    else if (msg->type() == DDP::Message::Type::ROTATE_OUTPUT) {
+                        m_process.rotate_output();
+                    }
+                }
+            }
+
+        private:
+            Process& m_process;
+        };
     public:
         /**
          * Instructions if process should terminate when it receives new message in communication queue
@@ -42,12 +67,16 @@ namespace DDP {
          * @param stats Container for gathering runtime statistics
          * @param comm_link Communication queue to configuration lcore
          */
-        explicit Process(Config cfg, Statistics& stats, CommLink::CommLinkWorkerEP& comm_link) :
-                m_cfg(cfg),
-                m_comm_link(comm_link),
-                m_stats(stats) {}
+        explicit Process(Config cfg, Statistics& stats, CommLink::CommLinkEP& comm_link) :
+            m_poll(),
+            m_cfg(std::move(cfg)),
+            m_comm_link(comm_link),
+            m_stats(stats)
+        {
+            m_poll.emplace<CommLinkPollAble>(*this);
+        }
 
-        virtual ~Process() {};
+        virtual ~Process() = default;
 
         /**
          * @brief Main lcore loop.
@@ -55,34 +84,15 @@ namespace DDP {
          */
         virtual int run() = 0;
 
-        /**
-         * @brief Check communication queue for new messages and handle them
-         * @param cfg Callback for necessary configuration updates on given process
-         * the statistics to communication queue
-         * @return BREAK if message to stop the application was received, CONTINUE otherwise
-         */
-        template<typename CB1>
-        processState check_comm_link(CB1 cfg) {
-            auto msg = m_comm_link.recv();
-            if (msg != nullptr) {
-                if (msg->type() == DDP::Message::Type::STOP) {
-                    return processState::BREAK;
-                }
-                else if (msg->type() == DDP::Message::Type::NEW_CONFIG) {
-                    m_cfg = dynamic_cast<DDP::MessageNewConfig*>(msg.get())->cfg;
-                    cfg();
-                }
-                else if (msg->type() == DDP::Message::Type::ROTATE_OUTPUT) {
-                    return processState::ROTATE_OUTPUT;
-                }
-            }
-
-            return processState::CONTINUE;
-        }
 
     protected:
+        virtual void stop() {m_poll.disable();};
+        virtual void new_config([[gnu::unused]] Config& cfg) {};
+        virtual void rotate_output() {};
+
+        Poll m_poll;
         Config m_cfg; //!< Copy of application configuration
-        CommLink::CommLinkWorkerEP& m_comm_link; //!< Link to master core.
+        CommLink::CommLinkEP& m_comm_link; //!< Link to master core.
         Statistics& m_stats; //!< Statistics structure
     };
 }
