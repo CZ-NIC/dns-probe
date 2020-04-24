@@ -8,7 +8,7 @@
 wrapper. DNS traffic monitoring probe with DPDK backend.
 .SH SYNOPSIS
 .B ddp-bind
-[-i <INTERFACE> | -p <PCAP>] [-r] [-h]
+[-i <INTERFACE> | -p <PCAP>] [-r] [-l <LOGFILE>] [-h]
 .SH DESCRIPTION
 .B ddp-bind
 is a Python script that wraps around
@@ -27,6 +27,9 @@ Input PCAP file. Parameter can repeat.
 .TP
 .B -r
 Indicates RAW PCAPs as input. Can't be used together with -i parameter.
+.TP
+.B -l <LOGFILE>
+Redirects probe's logs to LOGFILE instead of standard output.
 .TP
 .B -h
 Print help message.
