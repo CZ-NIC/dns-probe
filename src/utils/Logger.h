@@ -78,7 +78,6 @@ namespace DDP {
          */
         ~EntryAssembler()
         {
-            m_msg << std::endl;
             Probe::getInstance().log_link().send(MessageLog(std::move(m_msg)));
         }
 
