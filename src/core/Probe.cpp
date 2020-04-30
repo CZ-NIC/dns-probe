@@ -112,6 +112,7 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
             case 'l':
                 boost::log::add_file_log(
                     boost::log::keywords::file_name = optarg,
+                    boost::log::keywords::auto_flush = true,
                     boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
                 );
                 boost::log::add_common_attributes();
@@ -126,6 +127,7 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     if (!logfile) {
         boost::log::add_console_log(
             std::cout,
+            boost::log::keywords::auto_flush = true,
             boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
         );
         boost::log::add_common_attributes();
