@@ -28,7 +28,7 @@ dynamic configuration items will be applied instantly after the modification.
 
 # Installation from packages
 Packages for Debian 10 and 9 and Ubuntu 20.04, 18.04 and 16.04 are available from
-[OBS (openSUSE Build Service)](htts://build.opensuse.org/project/show/home:CZ-NIC:dns-probe).
+[OBS (openSUSE Build Service)](https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe).
 The OBS repository also contains packages with DNS probe's dependencies that don't have their
 own package in the distributions' standard repositories. These dependencies will be automatically
 installed as pre-requisites when installing DNS probe.
