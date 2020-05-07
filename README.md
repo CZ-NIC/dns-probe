@@ -9,7 +9,7 @@ The first is with DPDK backend. This backend allows to read packets directly fro
 traffic. Disadvantage of this approach is that application will seize the NIC and doesn't allow it to be used by OS.
 The second available backend is standard Linux's AF packet interface. This approach is significantly slower then DPDK
 one but allows monitored interface to be used by other applications. The selection of which backend will be used is
-made during the [compilation phase](#Compilation).       
+made during the [compilation phase](## Compiling and installing DNS Probe).
 
 ## Configuration
 The probe is using the [Sysrepo](https://github.com/sysrepo/sysrepo/) as storage for configuration. Sysrepo is using data
