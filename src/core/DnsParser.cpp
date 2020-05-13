@@ -637,10 +637,12 @@ void DDP::DnsParser::put_back_record(DDP::DnsRecord& record)
 {
     if (record.m_req_ednsRdata != nullptr) {
         m_edns_mempool.free(record.m_req_ednsRdata);
+        record.m_req_ednsRdata = nullptr;
     }
 
     if (record.m_resp_ednsRdata != nullptr) {
         m_edns_mempool.free(record.m_resp_ednsRdata);
+        record.m_resp_ednsRdata = nullptr;
     }
 
     m_record_mempool.free(record);

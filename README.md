@@ -9,7 +9,7 @@ The first is with DPDK backend. This backend allows to read packets directly fro
 traffic. Disadvantage of this approach is that application will seize the NIC and doesn't allow it to be used by OS.
 The second available backend is standard Linux's AF packet interface. This approach is significantly slower then DPDK
 one but allows monitored interface to be used by other applications. The selection of which backend will be used is
-made during the [compilation phase](#Compilation).       
+made during the [compilation phase](#compiling-and-installing-dns-probe).
 
 ## Configuration
 The probe is using the [Sysrepo](https://github.com/sysrepo/sysrepo/) as storage for configuration. Sysrepo is using data
@@ -26,9 +26,61 @@ dynamic configuration items will be applied instantly after the modification.
 
 * [data-model/cznic-dns-probe.yang](data-model/cznic-dns-probe.yang)
 
-# Installation on debian
+# Installation from packages
+Packages for Debian 10 and 9 and Ubuntu 20.04, 18.04 and 16.04 are available from
+[OBS (openSUSE Build Service)](https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe).
+The OBS repository also contains packages with DNS probe's dependencies that don't have their
+own package in the distributions' standard repositories. These dependencies will be automatically
+installed as pre-requisites when installing DNS probe.
 
-# Compilation
+First you need to add the OBS repository for given distribution to your system's repository list and download the repository's signing key:
+
+##### Debian 10
+```shell
+sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' > /etc/apt/sources.list.d/dns-probe.list
+wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/Debian_10/Release.key -O Release.key
+```
+
+##### Debian 9
+```shell
+sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_9.0/ /' > /etc/apt/sources.list.d/dns-probe.list
+wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/Debian_9.0/Release.key -O Release.key
+```
+
+##### Ubuntu 20.04
+```shell
+sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_20.04/ /' > /etc/apt/sources.list.d/dns-probe.list
+wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_20.04/Release.key -O Release.key
+```
+
+##### Ubuntu 18.04
+```shell
+sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_18.04/ /' > /etc/apt/sources.list.d/dns-probe.list
+wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_18.04/Release.key -O Release.key
+```
+
+##### Ubuntu 16.04
+```shell
+sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_16.04/ /' > /etc/apt/sources.list.d/dns-probe.list
+wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_16.04/Release.key -O Release.key
+```
+
+Now you need to add the signing key to your system, update the repository list and then you can finally install the DNS probe:
+
+```shell
+sudo apt-key add - < Release.key
+sudo apt-get update
+sudo apt-get install dns-probe-af dns-probe-dpdk
+```
+
+DNS probe is separated into two packages (`dns-probe-af` and `dns-probe-dpdk`) differing by the backend used for processing packets.
+The `dns-probe-af` package uses AF packet sockets to process packets whereas the `dns-probe-dpdk` package uses DPDK framework.
+You can install just one of these packages without the other depending on which of the packet processing backends you want to use.
+
+The packages also automatically install the YANG module [cznic-dns-probe.yang](data-model/cznic-dns-probe.yang) with default configuration
+to Sysrepo datastore if you haven't done so manually yet.
+
+# Installation from source
 
 This project has following required dependencies:
 
@@ -168,7 +220,7 @@ The `rte_kni.ko` driver is currently not used by the DPDK DNS Probe application.
 accessing Intel network cards over [UIO](https://www.kernel.org/doc/html/v4.11/driver-api/uio-howto.html) and
 it has to be loaded when using these cards.
 
-## Compiling DPDK DNS Probe
+## Compiling and installing DNS Probe
 
 ```shell
 # Replace <GIT_REPO> with path to this repository
@@ -178,7 +230,38 @@ make -j
 make install
 ```
 
+To run DNS probe the YANG module with default configuration also needs to be installed to Sysrepo datastore:
+
+```shell
+sudo sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
+```
+
 # Running DNS Probe
+
+## Running as systemd service
+Installation from packages includes a *systemd* service `dns-probe-<BACKEND>@.service` where `<BACKEND>` is either `af` or `dpdk` depending
+on the package you installed.
+
+The *systemd* service can be run like this:
+
+```shell
+sudo systemctl start dns-probe-<BACKEND>@<FILE>.service
+```
+To stop, enable or restart the service use the appropriate `systemctl` subcommands.
+
+The service takes a parameter `<FILE>` which is a name of configuration file located at `/etc/dns-probe-<BACKEND>/<FILE>.conf` that contains
+command line parameters for DNS probe instance. Without this file the *systemd* service will fail. Installation from packages supplies
+a default configuration file at `/etc/dns-probe-<BACKEND>/probe.conf` which looks like this:
+
+```
+DAEMON_ARGS="-i lo -l /var/log/dns-probe-<BACKEND>@probe.log"
+```
+
+This configuration file runs DNS probe on loopback interface and saves its logs to `/var/log/dns-probe-<BACKEND>@probe.log` file. The user
+should change the `-i` parameter to a network interface that DNS probe should process packets from and then start the *systemd*
+service.
+
+## Running from command line
 After installation of both backends the following executables are created:
 
 * `dns-probe-af` (AF backend), `dns-probe-dpdk` (DPDK backend) - These binaries contain the application itself
@@ -272,4 +355,3 @@ those used by `dns-probe-af` so you can specify interfaces by their name instead
 
 The other way how to bind drivers is decribed in the
 [DPDK documentation](https://doc.dpdk.org/guides/linux_gsg/sys_reqs.html#running-dpdk-applications).
-

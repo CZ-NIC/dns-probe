@@ -30,7 +30,7 @@ DDP::DynamicMempool::DynamicMempool(uint32_t element_size, uint32_t count) : m_e
         throw std::invalid_argument("Count has to be at least 1");
 
     m_mempool = std::make_unique<char[]>(m_element_size * m_elements_count);
-    m_mempool_boundary = m_mempool.get() + (m_element_size * (m_elements_count + 1));
+    m_mempool_boundary = m_mempool.get() + (m_element_size * m_elements_count);
 
     for (uint32_t i = 0; i < m_elements_count; i++) {
         m_free_list[i] = i + 1;
