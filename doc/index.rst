@@ -6,9 +6,8 @@
 DNS Probe |version| Documentation
 =================================
 
-This documentation aids various user groups of the **Free Registry for ENUM and Domains**,
-the domain name registry software developed by `CZ.NIC <http://www.nic.cz>`_
-as an open-source solution.
+This documentation aids users of the [DNS Probe](https://gitlab.labs.nic.cz/adam/dns-probe), a tool for collection of DNS information from
+scanned requests and responses.
 
 .. only:: mode_structure
 
@@ -16,17 +15,17 @@ as an open-source solution.
       which means that it contains authoring/editing/managing notes
       in addition to the actual content.
 
-:Edition: :doc:`1.4 <RecordOfChanges>`
+:Edition: :doc:`1.0 <RecordOfChanges>`
 
 :Source: The source code of this documentation is open and can be found
-         on `GitHub <https://github.com/CZ-NIC/fred-docs>`_.
+         on `GitLab <https://gitlab.labs.nic.cz/adam/dns-probe/-/tree/master/doc>`_.
 
          Contributions may be submitted using the pull-request mechanism.
 
 :General:
 
    .. toctree::
-      :name: fred-toc-info
+      :name: dns-probe-toc-info
       :maxdepth: 1
 
       RecordOfChanges
@@ -39,15 +38,12 @@ as an open-source solution.
    :doc:`/TODOList`
 
 .. toctree::
-   :caption: Publications
-   :name: fred-toc-publications
-   :maxdepth: 2
+   :caption: Sections
+   :name: dns-probe-toc-sections
+   :maxdepth: 1
 
-   Features/index
-   Concepts/index
-   Architecture/index
-   AdminManual/index
-   FerdaManual/index
-   EPPReference/index
-   RDAPReference/index
-   ReleaseNotes/index
+   CompilationInstallation
+   Architecture
+   YANGmodule
+   Sysrepo
+   ExportedDataSchema
