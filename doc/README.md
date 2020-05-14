@@ -3,22 +3,20 @@
 <img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" />
 </a>
 
-# FRED Documentation
+# DNS Probe Documentation
 
-This documentation aids users of the [Free Registry for ENUM and
-Domains](https://fred.nic.cz), the domain name registry software
-developed by CZ.NIC.
+This documentation aids users of the [DNS Probe](https://gitlab.labs.nic.cz/adam/dns-probe), a tool for collection of DNS information from
+scanned requests and responses.
 
-The documentation contains the following publications:
+The documentation contains the following sections:
 
-* Features,
-* Concepts,
-* Architecture Description,
-* Administration Manual,
-* EPP Reference Manual,
-* RDAP API Reference.
+* Compilation and Installation,
+* Architecture,
+* YANG Module,
+* Configuring DNS Probe with Sysrepo,
+* Exported Data Schema.
 
-The newest edition of the documentation is published at https://fred.nic.cz/documentation.
+The newest edition of the documentation is published at https://gitlab.labs.nic.cz/adam/dns-probe/-/tree/master/doc.
 
 ## What is in development
 
@@ -33,10 +31,7 @@ We accept pull requests.
 
 ## History
 
-The `master` always contains the newest edition of the documentation of the
-last FRED release.
-The documentation of older FRED releases is available under tags such as `v2.33`.
-The oldest historical version tagged is `v2.29`.
+The `master` always contains the newest edition of the documentation of the last DNS Probe release.
 
 ## License
 
