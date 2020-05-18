@@ -25,6 +25,7 @@ option.
    :alt: dns\_probe\_architecture
 
    dns\_probe\_architecture
+   
 Configuration thread
 --------------------
 

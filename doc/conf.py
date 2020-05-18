@@ -125,7 +125,7 @@ extlinks = {
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'fred_theme'
+html_theme = 'dnsprobe_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -133,7 +133,7 @@ html_theme = 'fred_theme'
 html_theme_options = {
     #"name": "value",
 }
-# Moved to fred_theme/theme.conf
+# Moved to dnsprobe_theme/theme.conf
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['.']
@@ -179,7 +179,7 @@ html_use_smartypants = True
 # Custom sidebar templates, maps document names to template names.
 # DEPRECATED
 #html_sidebars = {'**': ['globaltoc.html', 'searchbox.html']}
-# Moved to fred_theme/theme.conf
+# Moved to dnsprobe_theme/theme.conf
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
