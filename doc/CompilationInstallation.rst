@@ -1,3 +1,4 @@
+=========
 DNS Probe
 =========
 
@@ -43,7 +44,7 @@ YANG modules
 -  `data-model/cznic-dns-probe.yang <https://gitlab.labs.nic.cz/adam/dns-probe/-/blob/master/data-model/cznic-dns-probe.yang>`_
 
 Installation from packages
-==========================
+**************************
 
 Packages for Debian 10 and 9 and Ubuntu 20.04, 18.04 and 16.04 are
 available from `OBS (openSUSE Build
@@ -118,7 +119,7 @@ with default configuration to Sysrepo datastore if you haven't done so
 manually yet.
 
 Installation from source
-========================
+************************
 
 This project has following required dependencies:
 
@@ -297,7 +298,7 @@ to be installed to Sysrepo datastore:
     sudo sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
 
 Running DNS Probe
-=================
+*****************
 
 Running as systemd service
 --------------------------
@@ -386,7 +387,7 @@ Both backend variants support these command line parameters:
 -  ``-h`` - Provides basic help.
 
 DPDK backend
-============
+************
 
 For running the DNS Probe with DPDK backend you have to allocate huge
 pages. This requires root privileges and following steps:

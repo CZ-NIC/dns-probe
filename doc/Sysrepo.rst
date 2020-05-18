@@ -77,7 +77,7 @@ configuration looks like:
     </dns-probe>
 
 Installing DNS Probe model
-==========================
+**************************
 
 The model used by Sysrepo and applications using it has to be first
 installed. If you installed ``DNS Probe`` from package it is already
@@ -86,7 +86,7 @@ installed. Otherwise you have to run command
 can modify the configuration and start the application.
 
 Modifying configuration
-=======================
+***********************
 
 For changing configuration from default values defined in the YANG model
 you can use ``sysrepocfg`` utility. It has two categories of parameters.
@@ -127,4 +127,3 @@ XPath ``/dns-probe/export/cdns-records-per-block`` is in XML:
             <cdns-records-per-block>1000</cdns-records-per-block>
         </export>
     </dns-probe>
-
