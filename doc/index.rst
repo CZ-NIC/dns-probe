@@ -47,3 +47,4 @@ scanned requests and responses.
    YANGmodule
    Sysrepo
    ExportedDataSchema
+   manpages/index
