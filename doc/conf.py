@@ -222,3 +222,10 @@ html_context = {
 # -- Options for LaTeX output ---------------------------------------------
 #
 # We don't publish into PDF.
+
+# -- Options for manpage output -------------------------------------------
+man_pages = [
+    ('manpages/dns-probe-af', 'dns-probe-af',
+     'DNS traffic monitoring probe with AF packet backend',
+     'Pavel Doležal', 1)
+]
