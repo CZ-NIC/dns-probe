@@ -21,7 +21,7 @@ thread, one export thread and at least one worker thread. The amount of
 spawned worker threads can be configured in Sysrepo by the ``coremask``
 option.
 
-.. figure:: uploads/11b2144a7a14fcef69e2eab48d3053ad/dns_probe_architecture.png
+.. figure:: dns_probe_architecture.svg
    :alt: dns\_probe\_architecture
 
    dns\_probe\_architecture
