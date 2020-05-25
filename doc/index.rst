@@ -42,7 +42,7 @@ scanned requests and responses.
    :name: dns-probe-toc-sections
    :maxdepth: 1
 
-   CompilationInstallation
+   CompilationInstallation/index
    Architecture
    YANGmodule
    Sysrepo
