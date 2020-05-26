@@ -42,7 +42,6 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
     // Export expired records in transaction table after TT_TIMEOUT_COUNT processed packets
     m_tt_timeout_count++;
     if (m_tt_timeout_count >= TT_TIMEOUT_COUNT) {
-        Logger("TT").debug() << "Timeout";
         try {
             m_transaction_table.timeout([this](DnsRecord& rec){this->m_parser.put_back_record(rec);});
             m_parser.tcp_table_timetout();
