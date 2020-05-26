@@ -186,7 +186,7 @@ void DDP::AFPacketPort::free_packets(unsigned queue) {
     // Release processed ring buffer blocks back to kernel
     for (int i = m_info[queue].start_block; i < limit; i++) {
         tpacket_block_desc* pbd = reinterpret_cast<tpacket_block_desc*>(m_info[queue].buffer +
-                                  i * BLOCK_SIZE);
+                                  (i % NUM_BLOCKS) * BLOCK_SIZE);
 
         pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
     }
