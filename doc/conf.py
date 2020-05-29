@@ -37,15 +37,15 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'DNS Probe'
-copyright = u'2016–%d, CZ.NIC, z.s.p.o.' % time.localtime().tm_year
-author = u'Technical department of CZ.NIC'
+project = 'DNS Probe'
+copyright = '2018–%d, CZ.NIC, z.s.p.o.' % time.localtime().tm_year
+author = 'CZ.NIC Laboratories'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 # The short X.Y version.
-version = u'1.0'
+version = '1.0'
 # The full version, including alpha/beta/rc tags.
 release = version
 
@@ -57,7 +57,7 @@ language = 'en'
 # non-false value, then it is used:
 #today = ''
 # Else, today_fmt is used as the format for a strftime call.
-today_fmt = u'%d %B %Y'
+today_fmt = '%d %B %Y'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -140,10 +140,10 @@ html_theme_path = ['.']
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-html_title = u'DNS Probe '+version+' Documentation'
+html_title = 'DNS Probe '+version+' Documentation'
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = u'DNS Probe '+version+' Docs'
+html_short_title = 'DNS Probe '+version+' Docs'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -224,11 +224,12 @@ html_context = {
 # We don't publish into PDF.
 
 # -- Options for manpage output -------------------------------------------
+author_pd = 'Pavel Doležal <pavel.dolezal@nic.cz>'
 man_pages = [
     ('manpages/dns-probe-af', 'dns-probe-af',
      'DNS traffic monitoring probe with AF packet backend',
-     'Pavel Doležal', 1),
+     author_pd, 1),
     ('manpages/dns-probe-dpdk', 'dns-probe-dpdk',
      'DNS traffic monitoring probe with DPDK backend',
-     'Pavel Doležal', 1),
+     author_pd, 1),
 ]
