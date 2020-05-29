@@ -1,3 +1,5 @@
+.. highlight:: console
+
 ============
 dns-probe-af
 ============
@@ -5,7 +7,7 @@ dns-probe-af
 Synopsis
 --------
 
-**dns-probe-af** [-i <INTERFACE> | -p <PCAP>] [-r] [-l <LOGFILE>] [-h]
+:program:`dns-probe-af` [-i *interface* | -p *pcap* [-r]] [-l *logfile*] [-h]
 
 Description
 -----------
@@ -19,23 +21,21 @@ Depending on the configuration, :program:`dns-probe-af` exports the transaction 
 Options
 -------
 
-.. program:: dns-probe-af
+.. option:: -i interface
 
-.. option:: -i <INTERFACE>
+   Listen on the network interface with the given name, such as ``eth0``.
 
-   Network interface name to listen on.
+.. option:: -p pcap
 
-.. option:: -p <PCAP>
-
-   Input PCAP file.
+   Read input from the given PCAP file.
 
 .. option:: -r
 
    Indicates raw PCAP format.
 
-.. option:: -l <LOGFILE>
+.. option:: -l logfile
 
-   Logging messages are written to LOGFILE instead of standard output.
+   Write logging messages to *logfile* instead of standard output.
 
 .. option:: -h
 
