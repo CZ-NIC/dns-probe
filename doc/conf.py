@@ -227,5 +227,8 @@ html_context = {
 man_pages = [
     ('manpages/dns-probe-af', 'dns-probe-af',
      'DNS traffic monitoring probe with AF packet backend',
-     'Pavel Doležal', 1)
+     'Pavel Doležal', 1),
+    ('manpages/dns-probe-dpdk', 'dns-probe-dpdk',
+     'DNS traffic monitoring probe with DPDK backend',
+     'Pavel Doležal', 1),
 ]

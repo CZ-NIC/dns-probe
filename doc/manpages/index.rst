@@ -11,6 +11,7 @@ Traffic monitoring probes
    :maxdepth: 3
 
    dns-probe-af
+   dns-probe-dpdk
 
 Python wrapper scripts
 ----------------------
