@@ -40,3 +40,12 @@ Options
 .. option:: -h
 
    Print help message and exit.
+
+Exit Status
+-----------
+
+**0**
+   Normal exit
+
+**1**
+   Exit based on receiving ``restart`` operation from Sysrepo
