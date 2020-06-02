@@ -296,10 +296,10 @@ namespace DDP {
          */
         [[nodiscard]] ExportLocation value() const { return m_value; }
 
-        bool validate(const std::any& value) const override
+        bool validate(const boost::any& value) const override
         {
             try {
-                auto str_value = std::any_cast<std::string>(value);
+                auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "LOCAL" || str_value == "REMOTE";
             } catch(...) {
@@ -311,9 +311,9 @@ namespace DDP {
          * Save value from sysrepo.
          * @param value Value from sysrepo
          */
-        void from_sysrepo(const std::any& value) override
+        void from_sysrepo(const boost::any& value) override
         {
-            auto str_value = std::any_cast<std::string>(value);
+            auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
 
             if (str_value == "LOCAL")
@@ -359,10 +359,10 @@ namespace DDP {
          */
         [[nodiscard]] ExportIpVersion value() const { return m_value; }
 
-        bool validate(const std::any& value) const override
+        bool validate(const boost::any& value) const override
         {
             try {
-                auto str_value = std::any_cast<std::string>(value);
+                auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "UNKNOWN" || str_value == "IPV4" || str_value == "IPV6";
             } catch (...) {
@@ -374,9 +374,9 @@ namespace DDP {
          * Save value from sysrepo.
          * @param value Value from sysrepo.
          */
-        void from_sysrepo(const std::any& value) override
+        void from_sysrepo(const boost::any& value) override
         {
-            auto str_value = std::any_cast<std::string>(value);
+            auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
 
             if (str_value == "UNKNOWN")
