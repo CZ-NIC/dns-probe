@@ -235,4 +235,7 @@ man_pages = [
     ('manpages/dp-af', 'dp-af',
      'wrapper script for dns-probe-af binary',
      author_pd, 1),
+    ('manpages/dp-dpdk', 'dp-dpdk',
+     'wrapper script for dns-probe-dpdk binary',
+     author_pd, 1),
 ]

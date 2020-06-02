@@ -20,3 +20,4 @@ Python wrapper scripts
    :maxdepth: 3
 
    dp-af
+   dp-dpdk
