@@ -251,10 +251,10 @@ namespace DDP {
          */
         PollAble& add(pollable_p&& p)
         {
-            auto[it, inserted] = m_pollables.emplace(p->fd(), std::move(p));
-            it->second->assign_poll(this);
+            auto pair = m_pollables.emplace(p->fd(), std::move(p));
+            pair.first->second->assign_poll(this);
             rebuild_poll_fds();
-            return *it->second;
+            return *pair.first->second;
         }
 
         /**
@@ -269,11 +269,11 @@ namespace DDP {
             static_assert(std::is_base_of<PollAble, T>::value, "You can only create PollAble descendants!");
 
             pollable_p p = std::make_unique<T>(std::forward<Args>(args)...);
-            auto[it, inserted] = m_pollables.emplace(p->fd(), std::move(p));
-            it->second->assign_poll(this);
+            auto pair = m_pollables.emplace(p->fd(), std::move(p));
+            pair.first->second->assign_poll(this);
 
             rebuild_poll_fds();
-            return *static_cast<T*>(it->second.get());
+            return *static_cast<T*>(pair.first->second.get());
         }
 
         /**

@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <cstdio>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <parquet/arrow/reader.h>
@@ -36,7 +37,8 @@ namespace DDP {
          * @param cfg Configuration of the output
          * @param process_id Process ID used for generating names of the output files
          */
-        explicit ParquetWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id) {}
+        explicit ParquetWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id),
+                                                                   m_compress(cfg.file_compression.value()) {}
 
         /**
          * @brief Write Arrow table to output
@@ -44,11 +46,11 @@ namespace DDP {
          * @throw ::parquet::ParquetException
          * @return Number of DNS records written to output
          */
-        int64_t write(std::any item) override {
+        int64_t write(boost::any item) override {
             if (item.type() != typeid(std::shared_ptr<arrow::Table>))
                 return 0;
 
-            return write(std::any_cast<std::shared_ptr<arrow::Table>>(item));
+            return write(boost::any_cast<std::shared_ptr<arrow::Table>>(item));
         }
 
         /**
@@ -62,7 +64,8 @@ namespace DDP {
                 return 0;
 
             m_filename = filename("parquet", false);
-            auto res = arrow::io::FileOutputStream::Open(m_filename);
+            std::string full_name = m_filename + ".part";
+            auto res = arrow::io::FileOutputStream::Open(full_name);
             PARQUET_THROW_NOT_OK(res);
             std::shared_ptr<arrow::io::FileOutputStream> outfile = res.ValueOrDie();
 
@@ -70,8 +73,15 @@ namespace DDP {
             propsBuilder.compression(parquet::Compression::GZIP);
             auto props = propsBuilder.build();
 
-            PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows()));
+            if (m_compress)
+                PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows(), props));
+            else
+                PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows()));
+
             outfile->Close();
+            if (std::rename(full_name.c_str(), m_filename.c_str()))
+                throw std::runtime_error("Couldn't rename the output file!");
+
             chmod(m_filename.c_str(), 0666);
 
             return item->num_rows();
@@ -82,5 +92,8 @@ namespace DDP {
          * Does nothing because Parquet creates a new output for each arrow Table anyway.
          */
         void rotate_output() override {}
+
+        private:
+        bool m_compress;
     };
 }

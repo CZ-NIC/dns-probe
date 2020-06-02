@@ -1,0 +1,37 @@
+.\" Manpage for dp-dpdk.
+.\" Contact pavel.dolezal@nic.cz to correct errors or typos.
+.TH "dp-dpdk" "1" "04 March 2020" "CZ.NIC" "@PROJECT_NAME@ @PROJECT_VERSION@"
+.SH NAME
+.B dp-dpdk
+\- Python script that wraps around
+.B dns-probe-dpdk
+binary. DNS traffic monitoring probe with DPDK backend.
+.SH SYNOPSIS
+.B dp-dpdk
+[-i <INTERFACE> | -p <PCAP>] [-r] [-l <LOGFILE>] [-h]
+.SH DESCRIPTION
+.B dp-dpdk
+is a Python script that wraps around
+.B dns-probe-dpdk
+binary. When the
+.B dns-probe-dpdk
+application receives a restart RPC through Sysrepo the application exits with return code 1.
+This wrapper detects that code and reruns the application again. If the return code differs
+from 1 then the script exits and returns the same code as wrapped application.
+.SH OPTIONS
+.B -i <INTERFACE>
+Interface PCI ID e.g. 00:1f.6. Parameter can repeat.
+.TP
+.B -p <PCAP>
+Input PCAP file. Parameter can repeat.
+.TP
+.B -r
+Indicates RAW PCAPs as input. Can't be used together with -i parameter.
+.TP
+.B -l <LOGFILE>
+Redirects probe's logs to LOGFILE instead of standard output.
+.TP
+.B -h
+Print help message.
+.SH SEE ALSO
+.BR dns-probe-dpdk (1)

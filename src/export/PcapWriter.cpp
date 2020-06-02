@@ -59,7 +59,7 @@ int64_t DDP::PcapWriter::write(const Packet* pkt)
     if (!m_out)
         create_file();
 
-    if ((m_cfg.pcap_rot_size.value() > 0) && (m_cfg.pcap_rot_size.value() <=
+    if ((m_cfg.file_rot_size.value() > 0) && (m_cfg.file_rot_size.value() <=
          ((m_exported_bytes + pkt->size() + PCAP_PACKET_HEADER_LENGTH) / 1000000))) {
         rotate_output();
     }

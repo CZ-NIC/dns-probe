@@ -1,0 +1,14 @@
+# DNS probe daemon
+# Service argument is used as network interface to process traffic from
+[Unit]
+Description=Daemon for DNS probe
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+EnvironmentFile=-/etc/dns-probe-@BACKEND@/%i.conf
+ExecStart=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/dp-@BACKEND@ $DAEMON_ARGS
+
+[Install]
+WantedBy=multi-user.target

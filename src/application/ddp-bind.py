@@ -389,7 +389,7 @@ def run_app():
     pcaps = ""
     interfaces = ""
     raw_pcap = ""
-    version = ""
+    logfiles = ""
 
     path = str(pathlib.Path(sys.argv[0]).parent.absolute() / "dp-dpdk")
 
@@ -404,7 +404,11 @@ def run_app():
     if args.r:
         raw_pcap = " -r"
 
-    command = "\"" + path + "\"" + pcaps + interfaces + raw_pcap + version
+    if args.LOGFILE:
+        for log in args.LOGFILE:
+            logfiles += " -l \"" + log + "\""
+
+    command = "\"" + path + "\"" + pcaps + interfaces + raw_pcap + logfiles
     run_command(command)
 
 def check_drivers():
@@ -443,6 +447,7 @@ def parse_args():
     parser.add_argument("-p", action="append", dest="PCAP", help="indicates PCAPs as input interfaces")
     parser.add_argument("-i", action="append", dest="INTERFACE", help="interface PCI ID e.g. 00:1f.6")
     parser.add_argument("-r", action="store_true", help="indicates RAW PCAPs as input. Can't be used together with -i parameter.")
+    parser.add_argument("-l", action="append", dest="LOGFILE", help="redirect probe's logs to LOGFILE instead of standard output")
     args = parser.parse_args()
 
 def main():

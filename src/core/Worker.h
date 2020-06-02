@@ -32,7 +32,7 @@
 #include "export/CdnsExport.h"
 #include "export/CdnsWriter.h"
 #include "export/PcapWriter.h"
-#include "utils/Ring.h"
+#include "utils/PollAbleRing.h"
 #include "core/Statistics.h"
 #include "core/Port.h"
 
@@ -47,9 +47,29 @@ namespace DDP {
         WORKER_OK = 0,
         WORKER_PARSE_ERROR,
         WORKER_EXPORT_ERROR,
+        WORKER_NON_DNS_PACKET,
     };
 
     class Worker : public Process {
+        class PortPollAble : public PollAble {
+        public:
+            PortPollAble(Worker& worker, int port_pos) :
+                    PollAble(PollEvents::READ),
+                    m_worker(worker),
+                    m_port(*m_worker.m_ports[port_pos]),
+                    m_port_pos(port_pos),
+                    m_queue(m_worker.m_lcore_queue) {}
+
+            void ready_read() override;
+
+            int fd() override { return m_port.fds()[m_queue]; }
+
+        private:
+            Worker& m_worker;
+            Port& m_port;
+            int m_port_pos;
+            unsigned m_queue;
+        };
     public:
         /**
          * @brief Constructor. Creates worker core object with packet processing loop
@@ -66,14 +86,14 @@ namespace DDP {
          * @throw std::invalid_argument From calling TransactionTable constructor
          * @throw DnsParserConstructor From calling DnsParser constructor
          */
-        Worker(Config& cfg, Statistics& stats, std::unique_ptr<Ring<std::any>>& ring,
-               CommLink::CommLinkWorkerEP& comm_link, Mempool<DnsRecord>& record_mempool,
+        Worker(Config& cfg, Statistics& stats, PollAbleRing<boost::any> ring,
+               CommLink::CommLinkEP& comm_link, Mempool<DnsRecord>& record_mempool,
                Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, std::vector<std::shared_ptr<DDP::Port>> ports,
                bool match_qname, unsigned process_id) :
                 Process(cfg, stats, comm_link),
                 m_record_mempool(record_mempool),
                 m_tcp_mempool(tcp_mempool),
-                m_export_ring(ring),
+                m_export_ring(std::move(ring)),
                 m_tt_timeout_count(0),
                 m_transaction_table(cfg.tt_size, cfg.tt_timeout,
                                     cfg.match_qname),
@@ -109,7 +129,7 @@ namespace DDP {
             }
             catch (std::exception& e) {
                 delete writer;
-                Logger("Export").debug() << "Couldn't write leftovers on worker " << m_process_id
+                Logger("Export").warning() << "Couldn't write leftovers on worker " << m_process_id
                                          << " (" << e.what() << ")";
             }
 
@@ -136,18 +156,6 @@ namespace DDP {
         WorkerRetCode process_packet(const Packet& pkt);
 
         /**
-         * @brief Updated Probe's dynamic configuration
-         * @param cfg New dynamic configuration
-         */
-        void update_configuration(Config& cfg) {
-            m_cfg = cfg;
-            m_transaction_table.set_timeout(cfg.tt_timeout);
-            m_parser.update_configuration(cfg);
-            m_exporter->update_configuration(cfg);
-            m_pcap_all.update_configuration(cfg);
-        }
-
-        /**
          * @brief Clears everything from transaction table and sends all cleared DNS records for export
          */
         void tt_cleanup() {
@@ -166,7 +174,7 @@ namespace DDP {
         template<typename T>
         void enqueue(T item) {
             try {
-                m_export_ring->push(std::move(item));
+                m_export_ring.push(std::move(item));
             }
             catch(std::exception& e) {
                 Logger("Export").debug() << "Export ring is full. Couldn't enqueue "
@@ -174,10 +182,20 @@ namespace DDP {
             }
         }
 
+    protected:
+        void stop() override;
+        /**
+         * @brief Updated Probe's dynamic configuration
+         * @param cfg New dynamic configuration
+         */
+        void new_config(Config& cfg) override;
+        void rotate_output() override;
+        void close_port(int pos);
+
     private:
         Mempool<DnsRecord>& m_record_mempool; //!< Mempool used for saving records extracted from DNS packets.
         Mempool<DnsTcpConnection>& m_tcp_mempool; //!< Mempool used for tracking TCP connections.
-        std::unique_ptr<Ring<std::any>>& m_export_ring; //!< Export ring used for delivering data to exporter.
+        PollAbleRing<boost::any> m_export_ring; //!< Export ring used for delivering data to exporter.
         uint32_t m_tt_timeout_count; //!< Currently processed packets before triggering timeout check.
         TransactionTable<DnsRecord> m_transaction_table; //!< Transaction table for records extracted from DNS packets.
         DnsParser m_parser; //!< DnsParser for creating records into transaction table.

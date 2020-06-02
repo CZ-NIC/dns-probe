@@ -257,7 +257,7 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_e
                 }
             }
             catch (std::exception& e) {
-                Logger("EDNS").debug() << "Couldn't allocate memory for EDNS record";
+                Logger("EDNS").warning() << "Couldn't allocate memory for EDNS record";
                 return nullptr;
             }
         }
@@ -317,7 +317,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l2(const DDP::MemView<uint8_t>& pkt,
     auto eth_header = reinterpret_cast<const ether_header*>(pkt.ptr());
     if (!(eth_header->ether_type & ETHER_TYPE_IPV4 || eth_header->ether_type & ETHER_TYPE_IPV6)) {
         put_back_record(record);
-        throw DnsParseException("L3 layer doesn't contain IPv4/IPv6 header.");
+        throw NonDnsException("L3 layer doesn't contain IPv4/IPv6 header.");
     }
 
     return pkt.offset(sizeof(ether_header));
@@ -342,7 +342,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l3(const DDP::MemView<uint8_t>& pkt,
     }
     else {
         put_back_record(record);
-        throw DnsParseException("L3 layer doesn't contain IPv4/IPv6 header.");
+        throw NonDnsException("L3 layer doesn't contain IPv4/IPv6 header.");
     }
 }
 
@@ -379,9 +379,15 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
             break;
         default:
             put_back_record(record);
-            throw DnsParseException("Unsupported L4 layer.");
+            throw NonDnsException("Unsupported L4 layer.");
     }
-    return pkt.offset(end);
+
+    if (ntohs(ipv4_header->tot_len) > pkt.count()) {
+        put_back_record(record);
+        throw DnsParseException("Packet is shorter than IPv4 header claims.");
+    }
+
+    return MemView<uint8_t>(pkt.offset(end).ptr(), ntohs(ipv4_header->tot_len) - end);
 }
 
 DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
@@ -417,9 +423,15 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
             break;
         default:
             put_back_record(record);
-            throw DnsParseException("Unsupported L4 layer.");
+            throw NonDnsException("Unsupported L4 layer.");
     }
-    return pkt.offset(end);
+
+    if ((ntohs(ipv6_header->ip6_ctlun.ip6_un1.ip6_un1_plen) + end) > pkt.count()) {
+        put_back_record(record);
+        throw DnsParseException("Packet is shorter than IPv6 header claims");
+    }
+
+    return MemView<uint8_t>(pkt.offset(end).ptr(), ntohs(ipv6_header->ip6_ctlun.ip6_un1.ip6_un1_plen));
 }
 
 DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
@@ -437,7 +449,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& 
 
     if (src_port != m_dns_port && dst_port != m_dns_port) {
         put_back_record(record);
-        throw DnsParseException("Packet doesn't contain DNS UDP port.");
+        throw NonDnsException("Packet doesn't contain DNS UDP port.");
     }
 
     record.m_port[static_cast<int>(record.m_client_index)] = src_port;
@@ -470,7 +482,7 @@ bool DDP::DnsParser::parse_l4_tcp(const DDP::MemView<uint8_t>& pkt, DDP::DnsReco
 
     if (src_port != m_dns_port && dst_port != m_dns_port) {
         put_back_record(record);
-        throw DnsParseException("Packet doesn't contain DNS TCP port.");
+        throw NonDnsException("Packet doesn't contain DNS TCP port.");
     }
 
     record.m_port[static_cast<int>(record.m_client_index)] = src_port;
@@ -625,10 +637,12 @@ void DDP::DnsParser::put_back_record(DDP::DnsRecord& record)
 {
     if (record.m_req_ednsRdata != nullptr) {
         m_edns_mempool.free(record.m_req_ednsRdata);
+        record.m_req_ednsRdata = nullptr;
     }
 
     if (record.m_resp_ednsRdata != nullptr) {
         m_edns_mempool.free(record.m_resp_ednsRdata);
+        record.m_resp_ednsRdata = nullptr;
     }
 
     m_record_mempool.free(record);

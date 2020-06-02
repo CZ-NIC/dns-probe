@@ -44,6 +44,11 @@ namespace DDP {
         virtual void disarm() = 0;
 
         /**
+         * Get current interval in milliseconds
+         */
+        virtual int64_t get_interval() const = 0;
+
+        /**
          * Destructor.
          */
         virtual ~TimerInterface() = default;
@@ -67,7 +72,7 @@ namespace DDP {
          * Constructor.
          * @param cb Called callback on timers timeout.
          */
-        Timer(CB cb) : TimerInterface(), PollAble(), m_cb(cb), m_fd()
+        Timer(CB cb) : TimerInterface(), PollAble(), m_cb(cb), m_fd(), m_interval(0)
         {
             auto timer = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
             if (timer < 0)
@@ -121,6 +126,15 @@ namespace DDP {
             auto ret = timerfd_settime(m_fd, 0, &timer_spec, nullptr);
             if (ret < 0)
                 throw std::runtime_error("Disarming timer failed!");
+            m_interval = 0;
+        }
+
+        /**
+         * Get current interval in milliseconds
+         */
+        int64_t get_interval() const override
+        {
+            return m_interval;
         }
 
         /**
@@ -147,9 +161,11 @@ namespace DDP {
             auto ret = timerfd_settime(m_fd, 0, &timer_spec, nullptr);
             if (ret < 0)
                 throw std::runtime_error("Arming timer failed!");
+            m_interval = interval;
         }
 
         CB m_cb; //!< Callback called on timers timeout.
         FileDescriptor m_fd; //!< File descriptor used for notifying timeout.
+        int64_t m_interval; //!< Interval between timer's timeouts in milliseconds
     };
 }

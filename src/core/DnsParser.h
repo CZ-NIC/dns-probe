@@ -58,6 +58,16 @@ namespace DDP {
     };
 
     /**
+     * @brief Exception thrown if non-DNS packet is encountered in DNS Parser
+     */
+    class NonDnsException : public std::runtime_error
+    {
+    public:
+        explicit NonDnsException( const std::string& what_arg ) : std::runtime_error(what_arg) {}
+        explicit NonDnsException( const char* what_arg ) : std::runtime_error(what_arg) {}
+    };
+
+    /**
      * @brief This class performs parsing of incoming packets
      */
 
@@ -271,7 +281,7 @@ namespace DDP {
                     m_stats.exported_to_pcap += m_pcap_inv.write(&pkt);
             }
             catch (std::exception& e) {
-                Logger("PCAP").debug() << "Couldn't write invalid packet to PCAP file";
+                Logger("PCAP").warning() << "Couldn't write invalid packet to PCAP file";
             }
         }
 

@@ -59,7 +59,7 @@ namespace DDP {
          * @param item Item with DNS records ready for export to output
          * @return Number of DNS records written to output
          */
-        virtual int64_t write(std::any item) = 0;
+        virtual int64_t write(boost::any item) = 0;
 
         /**
          * @brief Close current output and open a new one
@@ -95,20 +95,21 @@ namespace DDP {
             }
             std::string counter = "_" + std::to_string(m_filename_counter);
             std::string full_sufix = sufix.empty() ? "" : ("." + sufix);
-            std::string filename = m_cfg.pcap_prefix.value() + std::string(time) + m_id + inv + counter + full_sufix;
+            std::string filename = m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() +
+                                   std::string(time) + m_id + inv + counter + full_sufix;
 
             struct stat buffer;
             if (stat((filename + m_sufix).c_str(), &buffer) == 0) {
-                return m_cfg.pcap_prefix.value() + std::string(time) + m_id + inv + "_" +
-                    std::to_string(++m_filename_counter) + full_sufix;
+                return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() + std::string(time) +
+                    m_id + inv + "_" + std::to_string(++m_filename_counter) + full_sufix;
             } else {
                 if (m_filename_counter == 0) {
                     return filename;
                 }
                 else {
                     m_filename_counter = 0;
-                    return m_cfg.pcap_prefix.value() + std::string(time) + m_id + inv + "_" +
-                        std::to_string(m_filename_counter) + full_sufix;
+                    return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() +
+                        std::string(time) + m_id + inv + "_" + std::to_string(m_filename_counter) + full_sufix;
                 }
             }
         }

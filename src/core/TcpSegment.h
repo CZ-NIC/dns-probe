@@ -41,7 +41,8 @@ namespace DDP {
      */
     class TcpSegment {
         public:
-        TcpSegment(TcpSegmentInfo& info, const Packet& packet) : m_info(info), m_packet(packet) {}
+        TcpSegment(TcpSegmentInfo& info, const Packet& packet, const MemView<uint8_t>& segment)
+            : m_info(info), m_packet(packet), m_seg_offset(segment.ptr() - packet.payload().ptr()) {}
 
         /**
          * @throw std::bad_alloc()
@@ -77,10 +78,13 @@ namespace DDP {
         /**
          * @brief Get TCP segment data
          */
-        const MemView<uint8_t> data() const { return m_packet.payload().offset(m_packet.size() - m_info.segment_size); }
+        const MemView<uint8_t> data() const {
+            return MemView<uint8_t>(m_packet.payload().ptr() + m_seg_offset, m_info.segment_size);
+        }
 
         private:
         TcpSegmentInfo m_info;
         Packet m_packet;
+        uint32_t m_seg_offset;
     };
 }

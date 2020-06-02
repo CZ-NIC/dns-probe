@@ -27,33 +27,31 @@ namespace DDP {
      * @tparam F Type of the callback (will be deduced).
      */
     template<typename F>
-    class Finally
+    class FinallyImpl
     {
     public:
         /**
          * Constructor.
          * @param f Callback called when object get ou of a scope.
          */
-        Finally(F&& f) : m_clean(std::forward<F>(f)) {}
+        explicit FinallyImpl(F f) : m_clean(std::move(f)) {}
 
         /**
          * Destructor which call associated callback (if activated).
          */
-        ~Finally() { clean(); }
+        ~FinallyImpl() { clean(); }
 
         /**
          * Finally cannot be copied.
          */
-        Finally(const Finally&) = delete;
+        FinallyImpl(const FinallyImpl&) = delete;
 
         /**
          * Allows move finally to other scope.
          * @param other Source finally.
          */
-        Finally(const Finally&& other) noexcept
+        FinallyImpl(FinallyImpl&& other) noexcept : m_clean(std::move(other.m_clean)), m_enabled(other.m_enabled)
         {
-            m_clean = std::move(other.m_clean);
-            m_enabled = other.m_enabled;
             other.disable();
         }
 
@@ -79,4 +77,8 @@ namespace DDP {
         F m_clean; //!< Callback triggered on clean.
         bool m_enabled{true}; //!< Flag allowing disable Finally.
     };
+
+    template<typename F>
+    auto Finally(F&& f) { return FinallyImpl<std::decay_t<F>>(std::forward<F>(f)); }
+
 }

@@ -1,14 +1,14 @@
-cmake_minimum_required(VERSION 3.13)
-project("DNS Probe")
+cmake_minimum_required(VERSION 3.5)
+project("DNS Probe" VERSION 0.4.4)
 
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
 set(DPDK_LEGACY_MEM OFF CACHE BOOL "Enable legacy memory management for DPDK")
 set(BUILD_TESTING OFF CACHE BOOL "Enable build testing binaries")
-set(INSTALL_YANG_MODULE ON CACHE BOOL "Install YANG module to Sysrepo datastore during dns-probe's installation")
+set(BUILD_DOC ON CACHE BOOL "Generate Doxygen documentation")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 ## Find required libraries
@@ -17,7 +17,10 @@ find_package(PCAP REQUIRED)
 find_package(Arrow REQUIRED)
 find_package(Parquet REQUIRED)
 find_package(CDNS REQUIRED)
-find_package(Sysrepo REQUIRED)
+find_package(LibYangCpp REQUIRED)
+find_package(SysrepoCpp REQUIRED)
+find_package(Boost REQUIRED COMPONENTS log log_setup)
+find_package(Doxygen)
 
 include(CheckCXXCompilerFlag)
 check_cxx_compiler_flag(-msse4 SSE4_FLAG)
@@ -45,10 +48,10 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads Sysrepo::Sysrepo CDNS::CDNS)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp CDNS::CDNS)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
-target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_compile_options(DNSProbe INTERFACE -msse4)
+target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
+target_compile_options(DNSProbe INTERFACE -msse4 -DBOOST_LOG_DYN_LINK)
 
 # Add warning flags
 function(set_warning param)
@@ -76,8 +79,14 @@ if (AF_PACKET_BACKEND)
 
     set(BACKEND af)
     configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.py ${CMAKE_BINARY_DIR}/dp-af)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dns-probe-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dns-probe-af.1)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dp-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dp-af.1)
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dns-probe@.service.in ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service)
+    configure_file(${CMAKE_SOURCE_DIR}/etc/probe.conf.in ${CMAKE_BINARY_DIR}/etc/dns-probe-af/probe.conf)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-af DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-af)
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af)
+    install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
+    install(FILES ${CMAKE_BINARY_DIR}/etc/dns-probe-af/probe.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af)
 endif ()
 
 # Settings for DPDK version
@@ -96,6 +105,9 @@ if (DPDK_BACKEND)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
     endif ()
 
+    if (libdpdk_VERSION VERSION_LESS "18.05")
+        target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY)
+    endif()
 
     install(TARGETS dns-probe-dpdk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
@@ -104,9 +116,19 @@ if (DPDK_BACKEND)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-dpdk DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     configure_file(${CMAKE_SOURCE_DIR}/src/application/ddp-bind.py ${CMAKE_BINARY_DIR}/ddp-bind)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dns-probe-dpdk.1.in ${CMAKE_BINARY_DIR}/doc/man/dns-probe-dpdk.1)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/dp-dpdk.1.in ${CMAKE_BINARY_DIR}/doc/man/dp-dpdk.1)
+    configure_file(${CMAKE_SOURCE_DIR}/doc/man/ddp-bind.1.in ${CMAKE_BINARY_DIR}/doc/man/ddp-bind.1)
+    configure_file(${CMAKE_SOURCE_DIR}/systemd/dns-probe@.service.in ${CMAKE_BINARY_DIR}/systemd/dns-probe-dpdk@.service)
+    configure_file(${CMAKE_SOURCE_DIR}/etc/probe.conf.in ${CMAKE_BINARY_DIR}/etc/dns-probe-dpdk/probe.conf)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/ddp-bind DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dns-probe-dpdk)
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk)
+    install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-dpdk@.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
+    install(FILES ${CMAKE_BINARY_DIR}/etc/dns-probe-dpdk/probe.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk)
 endif ()
+
+file(GLOB MAN_PAGES ${CMAKE_BINARY_DIR}/doc/man/*)
+install(FILES ${MAN_PAGES} DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 
 add_custom_target(install_module COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang)
 
@@ -117,4 +139,23 @@ enable_testing()
 if (BUILD_TESTING)
     add_subdirectory(tests/gtests)
 endif ()
+
+#Add Doxygen documentation
+if (BUILD_DOC)
+    if (DOXYGEN_FOUND)
+        set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
+        set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+
+        configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+
+        add_custom_target(doc
+            COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generating Doxygen documentation"
+            VERBATIM
+        )
+    else (DOXYGEN_FOUND)
+        message("Install Doxygen to generate documentation")
+    endif(DOXYGEN_FOUND)
+endif(BUILD_DOC)
 

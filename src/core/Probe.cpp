@@ -16,6 +16,12 @@
  */
 
 #include <iostream>
+#include <utility>
+#include <tuple>
+#include <boost/log/trivial.hpp>
+#include <boost/log/utility/setup/file.hpp>
+#include <boost/log/utility/setup/common_attributes.hpp>
+#include <boost/log/utility/setup/console.hpp>
 
 #include <getopt.h>
 
@@ -33,7 +39,7 @@ namespace DDP {
     class CommLinkProxy : public PollAble
     {
     public:
-        explicit CommLinkProxy(CommLink::CommLinkConfigEP& ep) : m_ep(ep) {}
+        explicit CommLinkProxy(CommLink::CommLinkEP& ep) : m_ep(ep) {}
 
         int fd() override { return m_ep.fd(); };
 
@@ -54,7 +60,7 @@ namespace DDP {
                     break;
 
                 case Message::Type::LOG:
-                    std::cout << dynamic_cast<MessageLog*>(message.get())->msg.str();
+                    BOOST_LOG_TRIVIAL(info) << dynamic_cast<MessageLog*>(message.get())->msg.str();
                     break;
 
                 case Message::Type::WORKER_STOPPED:
@@ -66,13 +72,14 @@ namespace DDP {
         }
 
     private:
-        CommLink::CommLinkConfigEP& m_ep;
+        CommLink::CommLinkEP& m_ep;
     };
 }
 
 
-DDP::Probe::Probe() : m_initialized(false), m_running(false), m_poll(), m_cfg(), m_sysrepo(nullptr), m_aggregated_timer(nullptr),
-                      m_comm_links(), m_log_link(), m_dns_record_mempool(), m_export_rings(), m_stats(),
+DDP::Probe::Probe() : m_initialized(false), m_running(false), m_poll(), m_cfg(), m_sysrepo(nullptr),
+                      m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(), m_log_link(),
+                      m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
                       m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
 
 DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
@@ -80,8 +87,9 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     DDP::Arguments args{};
     args.app = argv[0];
     int opt;
+    bool logfile = false;
 
-    while ((opt = getopt(argc, argv, "hi:p:r")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rl:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -101,9 +109,28 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
                 args.raw_pcap = true;
                 break;
 
+            case 'l':
+                boost::log::add_file_log(
+                    boost::log::keywords::file_name = optarg,
+                    boost::log::keywords::auto_flush = true,
+                    boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
+                );
+                boost::log::add_common_attributes();
+                logfile = true;
+                break;
+
             default:
                 throw std::invalid_argument("Invalid arguments");
         }
+    }
+
+    if (!logfile) {
+        boost::log::add_console_log(
+            std::cout,
+            boost::log::keywords::auto_flush = true,
+            boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
+        );
+        boost::log::add_common_attributes();
     }
 
     if (!args.exit) {
@@ -123,15 +150,16 @@ void DDP::Probe::print_help(const char* app)
     }
 
     std::string interface;
-    if constexpr (BACKEND == PacketBackend::Socket)
+    if (BACKEND == PacketBackend::Socket)
         interface = "interface name e.g. eth0";
     else
         interface = "interface PCI ID e.g. 00:1f.6";
 
-    std::cout << std::endl << app << " "
+    std::cout << std::endl << app << std::endl
               << "\t-p PCAP      : input pcap files; parameter can repeat" << std::endl
               << "\t-i INTERFACE : " << interface << std::endl
               << "\t-r           : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
+              << "\t-l LOGFILE   : redirect probe's logs to LOGFILE instead of standard output" << std::endl
               << "\t-h           : this help message" << std::endl;
 }
 
@@ -164,17 +192,21 @@ void DDP::Probe::init(const Arguments& args)
         auto workers = m_thread_manager->slave_lcores();
         workers.erase(workers.begin());
         for (auto worker : workers) {
-            m_export_rings[worker] = std::make_unique<Ring<std::any>>(4, RING::SINGLE_PRODUCER);
+            m_export_rings[worker] = std::make_unique<Ring<boost::any>>(4, RING::SINGLE_PRODUCER);
 
             if (!m_export_rings[worker])
                 throw std::runtime_error("Couldn't initialize export rings!");
+
+            m_factory_rings.emplace(worker, PollAbleRingFactory<boost::any>(*m_export_rings[worker]));
         }
 
         m_poll.emplace<CommLinkProxy>(m_log_link->config_endpoint());
 
         // Creates communication channels for workers
         for (auto slave: m_thread_manager->slave_lcores()) {
-            auto cl = m_comm_links.try_emplace(slave);
+            auto cl = m_comm_links.emplace(std::piecewise_construct,
+                                           std::forward_as_tuple(slave),
+                                           std::forward_as_tuple(32, true));
             m_poll.emplace<CommLinkProxy>(cl.first->second.config_endpoint());
             m_stats.emplace_back();
         }
@@ -185,13 +217,13 @@ void DDP::Probe::init(const Arguments& args)
         };
         m_aggregated_timer = &m_poll.emplace<Timer<decltype(cb)>>(cb);
 
-        if (m_cfg.pcap_rot_timeout.value() > 0) {
+        if (m_cfg.file_rot_timeout.value() > 0) {
             auto sender = [this]() {
                 for (auto& link : m_comm_links) {
                     link.second.config_endpoint().send(Message(Message::Type::ROTATE_OUTPUT));
                 }
             };
-            m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.pcap_rot_timeout.value() * 1000);
+            m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
         }
 
         m_initialized = true;
@@ -210,22 +242,38 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
     Logger logger("Probe");
 
     auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue) {
-        Worker w(m_cfg, stats, m_export_rings[worker], m_comm_links[worker].worker_endpoint(),
-                 *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
-                 m_cfg.match_qname, worker);
-        Logger logger("Worker");
-        logger.debug() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
-        w.run();
-        logger.debug() << "Worker on lcore " << ThreadManager::current_lcore() << " stopped.";
+        try {
+            Worker w(m_cfg, stats, m_factory_rings.at(worker).get_poll_able_ring(), m_comm_links[worker].worker_endpoint(),
+                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
+                    m_cfg.match_qname, worker);
+            Logger logger("Worker");
+            logger.info() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
+            w.run();
+            logger.info() << "Worker on lcore " << ThreadManager::current_lcore() << " stopped.";
+        }
+        catch (std::exception& e) {
+            Logger("Worker").error() << "Worker on core " << worker << " crashed. Cause: " << e.what();
+            m_comm_links[worker].worker_endpoint().send(Message(Message::Type::STOP));
+            return -1;
+        }
+
         return 0;
     };
 
     auto exporter_runner = [this](unsigned exporter, Statistics& stats) {
-        Exporter p(m_cfg, stats, m_export_rings, m_comm_links[exporter].worker_endpoint(), exporter);
-        Logger logger("Worker");
-        logger.debug() << "Starting exporter on lcore " << ThreadManager::current_lcore() << ".";
-        p.run();
-        logger.debug() << "Exporter on lcore " << ThreadManager::current_lcore() << " stopped.";
+        try {
+            Exporter p(m_cfg, stats, m_factory_rings, m_comm_links[exporter].worker_endpoint(), exporter);
+            Logger logger("Exporter");
+            logger.info() << "Starting exporter on lcore " << ThreadManager::current_lcore() << ".";
+            p.run();
+            logger.info() << "Exporter on lcore " << ThreadManager::current_lcore() << " stopped.";
+            }
+        catch (std::exception& e) {
+            Logger("Exporter").error() << "Export worker on core " << exporter << " crashed. Cause: " << e.what();
+            m_comm_links[exporter].worker_endpoint().send(Message(Message::Type::STOP));
+            return -1;
+        }
+
         return 0;
     };
 
@@ -240,15 +288,17 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
         m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++);
     }
 
-    logger.debug() << "Slave threads started.";
+    logger.info() << "Slave threads started.";
 
     m_aggregated_timer->arm(1000);
+    if (m_output_timer)
+        m_output_timer->arm(m_cfg.file_rot_timeout.value() * 1000);
 
     m_running = true;
     m_poll.enable();
     m_poll.loop();
 
-    logger.debug() << "Loop stopped. Waiting for workers to join.";
+    logger.info() << "Loop stopped. Waiting for workers to join.";
     process_log_messages();
 
     m_thread_manager->join_all_threads();
@@ -261,7 +311,7 @@ void DDP::Probe::process_log_messages() const
 {
     std::unique_ptr<DDP::Message> message;
     while ((message = std::move(this->m_log_link->config_endpoint().recv())).get())
-        std::cout << dynamic_cast<DDP::MessageLog*>(message.get())->msg.str();
+        BOOST_LOG_TRIVIAL(info) << dynamic_cast<DDP::MessageLog*>(message.get())->msg.str();
 }
 
 void DDP::Probe::stop(bool restart)
@@ -270,7 +320,7 @@ void DDP::Probe::stop(bool restart)
         return;
 
     //Send stop message to all workers
-    Logger("Probe").debug() << "Sending stop to slaves.";
+    Logger("Probe").info() << "Sending stop to slaves.";
     for (auto& link : m_comm_links) {
         link.second.config_endpoint().send(Message(Message::Type::STOP));
     }
@@ -282,8 +332,28 @@ void DDP::Probe::stop(bool restart)
 
 void DDP::Probe::update_config()
 {
+    // Send new config to all slave threads
     for (auto& link : m_comm_links) {
         link.second.config_endpoint().send(MessageNewConfig(m_cfg));
+    }
+
+    // Update output rotation timer if changed
+    if (m_output_timer && (m_output_timer->get_interval() / 1000 != m_cfg.file_rot_timeout.value())) {
+        m_output_timer->disarm();
+        if (m_cfg.file_rot_timeout.value() > 0) {
+            for (auto& link : m_comm_links) {
+                link.second.config_endpoint().send(Message(Message::Type::ROTATE_OUTPUT));
+            }
+            m_output_timer->arm(m_cfg.file_rot_timeout.value() * 1000);
+        }
+    }
+    else if (!m_output_timer && (m_cfg.file_rot_timeout.value() > 0)) {
+        auto sender = [this]() {
+            for (auto& link : m_comm_links) {
+                link.second.config_endpoint().send(Message(Message::Type::ROTATE_OUTPUT));
+            }
+        };
+        m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.file_rot_timeout.value() * 1000);
     }
 }
 
@@ -293,7 +363,7 @@ DDP::AggregatedStatistics DDP::Probe::statistics()
     return m_aggregated_stats;
 }
 
-void DDP::Probe::worker_stopped(unsigned lcore [[maybe_unused]])
+void DDP::Probe::worker_stopped(unsigned)
 {
     m_stopped_workers++;
     if(m_stopped_workers == slaves_cnt() - 1)

@@ -40,7 +40,7 @@ namespace DDP {
          * @param name Unused (keep to conform interface with DPDK mempool)
          * @throw MempoolException
          */
-        explicit AllocMempool(unsigned elements [[maybe_unused]], const char* name [[maybe_unused]]) {}
+        explicit AllocMempool(unsigned, const char*) {}
 
         /**
          * Destructor.
@@ -53,7 +53,7 @@ namespace DDP {
          * @return Reference to newly constructed object.
          */
         template<typename... Args>
-        [[nodiscard]] T& get_impl(Args&& ...args)
+        T& get_impl(Args&& ...args)
         {
             try {
                 return *new T(std::forward<Args>(args)...);

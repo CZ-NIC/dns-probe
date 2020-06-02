@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 #include <sys/mman.h>
 #include <iostream>
+#include <boost/log/trivial.hpp>
 
 #include "AfPacketPort.h"
 
@@ -158,7 +159,7 @@ uint16_t DDP::AFPacketPort::read(Packet* batch, unsigned queue)
                     rx_count++;
                 }
                 catch (std::exception& e) {
-                    std::cerr << "[WARNING] Packet: Unable to read packet data." << std::endl;
+                    BOOST_LOG_TRIVIAL(info) << "[WARNING] Packet: Unable to read packet data.";
                 }
 
                 ppd = reinterpret_cast<tpacket3_hdr*>(reinterpret_cast<uint8_t*>(ppd) + ppd->tp_next_offset);
@@ -185,8 +186,17 @@ void DDP::AFPacketPort::free_packets(unsigned queue) {
     // Release processed ring buffer blocks back to kernel
     for (int i = m_info[queue].start_block; i < limit; i++) {
         tpacket_block_desc* pbd = reinterpret_cast<tpacket_block_desc*>(m_info[queue].buffer +
-                                  i * BLOCK_SIZE);
+                                  (i % NUM_BLOCKS) * BLOCK_SIZE);
 
         pbd->hdr.bh1.block_status = TP_STATUS_KERNEL;
     }
+}
+
+std::vector<int> DDP::AFPacketPort::fds()
+{
+    std::vector<int> ret;
+    for (auto&& info: m_info) {
+        ret.push_back(info.socket);
+    }
+    return ret;
 }

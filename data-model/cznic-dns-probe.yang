@@ -32,40 +32,6 @@ module cznic-dns-probe {
             "Initial revision.";
     }
 
-    /* Groupings */
-
-    grouping file-export-parameters {
-        description
-            "Parameters common to file exports.";
-        leaf file-name-prefix {
-            type string;
-            default "dns_";
-            description
-            "Common prefix of export file names.";
-        }
-
-        leaf timeout {
-            type uint32;
-            units "seconds";
-            default "0";
-            description
-                "Time interval after which the export file is rotated.
-
-                The value of 0 (default) means no time-based rotation.";
-        }
-
-        leaf file-size-limit {
-            type uint64;
-            units "bytes";
-            default "0";
-            description
-                "Size limit for the export file. If the limit is exceeded,
-                the export file is rotated.
-
-                The value of 0 (default) means no size-based rotation.";
-        }
-    }
-
     /* Configuration data */
 
     container dns-probe {
@@ -78,7 +44,7 @@ module cznic-dns-probe {
             }
             default "0x7";
             description
-                "Coremask used fo selecting cores where application will be running.
+                "Coremask used for selecting cores where application will be running.
 
                 This is a static configuration parameter that is applied
                 only upon restarting the probe.";
@@ -97,6 +63,16 @@ module cznic-dns-probe {
         container export {
             description
                 "Configuration for exporting records";
+
+            leaf export-dir {
+                type string;
+                default ".";
+                description
+                    "Directory for exported data.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
 
             leaf export-format {
                 type enumeration {
@@ -187,75 +163,50 @@ module cznic-dns-probe {
                 type uint64;
                 default 5000000;
                 description
-                    "Parquet records per file.
-
-                    This is a static configuration parameter that is applied
-                    only upon restarting the probe.";
-            }
-        }
-
-        container transaction-table {
-            description
-                "Configuration of transaction table parameters.";
-
-            leaf max-transactions {
-                type uint32;
-                default "1048576";
-                description
-                    "Maximum number of entries in the transaction table.
-
-                    This is a static configuration parameter that is applied
-                    only upon restarting the probe.";
+                    "Parquet records per file.";
             }
 
-            leaf query-timeout {
-                type uint64;
-                units "milliseconds";
-                default "60000";
+            leaf file-name-prefix {
+                type string;
+                default "dns_";
                 description
-                    "Time interval after which a query record is removed from
-                    the transaction database if no response is observed.";
-            }
-
-            leaf match-qname {
-                type boolean;
-                default "false";
-                description
-                    "If this flag is true, DNS QNAME (if present) is used as a
-                    secondary key for matching requests with responses.";
-            }
-        }
-
-        container tcp {
-            description
-                "Configuration of processing TCP connections";
-
-            leaf concurrent-connections {
-                type uint32;
-                default "1048576";
-                description
-                    "Maximal number of concurrent TCP connections
-
-                    This is a static configuration parameter that is applied
-                    only upon restarting the probe.";
+                "Common prefix of export file names.";
             }
 
             leaf timeout {
-                type uint64;
-                units "milliseconds";
-                default "1000";
+                type uint32;
+                units "seconds";
+                default "0";
                 description
-                    "Time interval after which a TCP connection is removed from
-                    the transaction database if there is no data in the connection";
+                    "Time interval after which the export file is rotated.
+
+                    The value of 0 (default) means no time-based rotation.";
             }
-        }
 
-        container pcap-export {
-            description
-                "Configuration of PCAP file export parameters.";
-            uses file-export-parameters;
+            leaf file-size-limit {
+                type uint64;
+                units "bytes";
+                default "0";
+                description
+                    "Size limit for the export file. If the limit is exceeded,
+                    the export file is rotated.
 
-            leaf selection {
+                    The value of 0 (default) means no size-based rotation.";
+            }
+
+            leaf file-compression {
+                type boolean;
+                default "true";
+                description
+                    "If this flag is true, the exported Parquet or C-DNS files will be
+                    compressed with GZIP. C-DNS will be compressed explicitly with .gz sufix.
+                    Parquet files will be compressed internally due to the nature of the format.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
+            leaf pcap-export {
                 type enumeration {
                     enum all {
                         description
@@ -276,10 +227,65 @@ module cznic-dns-probe {
 
                 default "disabled";
                 description
-                    "Selection of packets to be stored in PCAP files.";
+                    "Selection of packets to be stored in PCAP files in addition to Parquet or C-DNS export.";
             }
         }
 
+        container transaction-table {
+            description
+                "Configuration of transaction table parameters.";
+
+            leaf max-transactions {
+                type uint32;
+                default "1048576";
+                description
+                    "Maximum number of entries in the transaction table.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
+            leaf query-timeout {
+                type uint64;
+                units "milliseconds";
+                default "1000";
+                description
+                    "Time interval after which a query record is removed from
+                    the transaction database if no response is observed.";
+            }
+
+            leaf match-qname {
+                type boolean;
+                default "false";
+                description
+                    "If this flag is true, DNS QNAME (if present) is used as a
+                    secondary key for matching requests with responses.";
+            }
+        }
+
+        container tcp-table {
+            description
+                "Configuration of processing TCP connections";
+
+            leaf concurrent-connections {
+                type uint32;
+                default "1048576";
+                description
+                    "Maximal number of concurrent TCP connections
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
+            leaf timeout {
+                type uint64;
+                units "milliseconds";
+                default "60000";
+                description
+                    "Time interval after which a TCP connection is removed from
+                    the transaction database if there is no data in the connection";
+            }
+        }
         container export-location {
             description
                 "Configuration of the location for the storage of the exported
