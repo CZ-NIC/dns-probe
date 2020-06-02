@@ -64,11 +64,54 @@ module cznic-dns-probe {
             description
                 "Configuration for exporting records";
 
-            leaf export-dir {
+            leaf location {
+                type enumeration {
+                    enum local {
+                        description
+                            "Store exported data to local files";
+                    }
+
+                    enum remote {
+                        description
+                            "Send exported data directly to a remote location";
+                    }
+                }
+
+                default local;
+
+                description
+                    "Location for the storage of the exported DNS records.
+
+                    This is a static configuration parameter that is applied
+                    only upon restarting the probe.";
+            }
+
+            leaf remote-ip-version {
+                type inet:ip-version;
+                default ipv4;
+                description
+                    "IP version of the IP address for remote export.";
+            }
+
+            leaf remote-ip-address {
+                type inet:ip-address-no-zone;
+                default "127.0.0.1";
+                description
+                    "IP address for remote export of the DNS records.";
+            }
+
+            leaf remote-port {
+                type inet:port-number;
+                default 6378;
+                description
+                    "Transport protocol port number for remote export of the DNS records.";
+            }
+
+            leaf local-export-dir {
                 type string;
                 default ".";
                 description
-                    "Directory for exported data.
+                    "Directory for locally exported data.
 
                     This is a static configuration parameter that is applied
                     only upon restarting the probe.";
@@ -284,54 +327,6 @@ module cznic-dns-probe {
                 description
                     "Time interval after which a TCP connection is removed from
                     the transaction database if there is no data in the connection";
-            }
-        }
-        container export-location {
-            description
-                "Configuration of the location for the storage of the exported
-                DNS records (local, remote).";
-
-            leaf location {
-                type enumeration {
-                    enum local {
-                        description
-                            "Store exported data to local files";
-                    }
-
-                    enum remote {
-                        description
-                            "Send exported data directly to a remote location";
-                    }
-                }
-
-                default local;
-
-                description
-                    "Location for the storage of the exported DNS records.
-
-                    This is a static configuration parameter that is applied
-                    only upon restarting the probe.";
-            }
-
-            leaf remote-ip-version {
-                type inet:ip-version;
-                default ipv4;
-                description
-                    "IP version of the IP address for remote export.";
-            }
-
-            leaf remote-ip-address {
-                type inet:ip-address-no-zone;
-                default "127.0.0.1";
-                description
-                    "IP address for remote export of the DNS records.";
-            }
-
-            leaf remote-port {
-                type inet:port-number;
-                default 6378;
-                description
-                    "Transport protocol port number for remote export of the DNS records.";
             }
         }
     }
