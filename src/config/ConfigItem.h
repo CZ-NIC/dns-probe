@@ -294,7 +294,7 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] ExportLocation value() const { return m_value; }
+        ExportLocation value() const { return m_value; }
 
         bool validate(const boost::any& value) const override
         {
@@ -357,7 +357,7 @@ namespace DDP {
          * Access saved value.
          * @return Value inside config item.
          */
-        [[nodiscard]] ExportIpVersion value() const { return m_value; }
+        ExportIpVersion value() const { return m_value; }
 
         bool validate(const boost::any& value) const override
         {
