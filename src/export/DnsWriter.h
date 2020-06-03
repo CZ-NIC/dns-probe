@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <openssl/ssl.h>
 
 #include "config/Config.h"
 
@@ -33,6 +34,71 @@ namespace DDP {
      * @param fields C-DNS fields according to which the hints will be set
      */
     void set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<23> fields);
+
+    /**
+     * @brief RAII wrapper around TLS connection using OpenSSL library
+     */
+    class TlsConnection {
+        public:
+
+        /**
+         * @brief Construct a new TLS connection from given configuration
+         * @param cfg Configuration to use for new TLS connection
+         */
+        TlsConnection(Config& cfg) : m_fd(0), m_ssl(nullptr) {
+            m_ipv = cfg.export_ip_version.value();
+            m_ip = cfg.export_ip.value();
+            m_port = cfg.export_port.value();
+            open();
+        }
+
+        /**
+         * @brief Destructor. Closes the TLS connection if it's still opened
+         */
+        ~TlsConnection() { close(); }
+
+        /**
+         * @brief Gracefully close the TLS connection
+         */
+        void close() {
+            if (m_ssl) {
+                SSL_shutdown(m_ssl);
+                SSL_shutdown(m_ssl);
+                SSL_free(m_ssl);
+                ::close(m_fd);
+                m_ssl = nullptr;
+            }
+        }
+
+        /**
+         * @brief Send given data through the TLS connection
+         * @param data Buffer with data to send
+         * @param n_bytes Length of the data buffer
+         * @return Number of bytes successfully sent through the TLS connection
+         */
+        int write(const void* data, int64_t n_bytes);
+
+        /**
+         * @brief Check if the TLS connection is already closed
+         * @return TRUE if the connection is closed, FALSE otherwise
+         */
+        bool closed() const { return m_ssl ? false : true; }
+
+        private:
+        /**
+         * @brief Open new TLS connection
+         */
+        void open();
+
+        int m_fd;
+        SSL* m_ssl;
+        ExportIpVersion m_ipv;
+        std::string m_ip;
+        uint16_t m_port;
+        std::string m_srv_cert;
+        std::string m_cert;
+        std::string m_key;
+    };
 
     /**
      * @brief Abstract class serving as interface for output writing classes

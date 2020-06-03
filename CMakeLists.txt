@@ -20,6 +20,7 @@ find_package(CDNS REQUIRED)
 find_package(LibYangCpp REQUIRED)
 find_package(SysrepoCpp REQUIRED)
 find_package(Boost REQUIRED COMPONENTS log log_setup)
+find_package(OpenSSL REQUIRED)
 find_package(Doxygen)
 
 include(CheckCXXCompilerFlag)
@@ -48,7 +49,7 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp CDNS::CDNS)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp CDNS::CDNS OpenSSL::SSL)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
 target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 target_compile_options(DNSProbe INTERFACE -msse4 -DBOOST_LOG_DYN_LINK)

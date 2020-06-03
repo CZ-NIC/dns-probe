@@ -15,6 +15,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include <cdns/cdns.h>
 
 #include "DnsWriter.h"
@@ -93,5 +96,60 @@ namespace DDP {
 
         if (fields[static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)])
             qr_hints |= CDNS::QueryResponseHintsMask::response_size;
+    }
+
+    int TlsConnection::write(const void* data, int64_t n_bytes)
+    {
+        if (!m_ssl)
+            return 0;
+
+        int written = SSL_write(m_ssl, data, n_bytes);
+        if (written < 0) {
+            int err = SSL_get_error(m_ssl, written);
+            throw std::runtime_error("Couldn't write to output! SSL error code: " + std::to_string(err));
+        }
+
+        return written;
+    }
+
+    void TlsConnection::open()
+    {
+        m_fd = socket(static_cast<int>(m_ipv), SOCK_STREAM, 0);
+        if (m_fd < 0)
+            throw std::runtime_error("Couldn't open socket for remote export");
+
+        if (m_ipv == ExportIpVersion::IPV4) {
+            sockaddr_in sa;
+            std::memset(&sa, 0, sizeof(sa));
+            sa.sin_family = static_cast<int>(m_ipv);
+            inet_pton(static_cast<int>(m_ipv), m_ip.c_str(), &sa.sin_addr.s_addr);
+            sa.sin_port = htons(m_port);
+            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa), sizeof(sa)))
+                throw std::runtime_error("Error connecting to server for remote export!");
+        }
+        else {
+            sockaddr_in6 sa;
+            std::memset(&sa, 0, sizeof(sa));
+            sa.sin6_family = static_cast<int>(m_ipv);
+            inet_pton(static_cast<int>(m_ipv), m_ip.c_str(), &sa.sin6_addr);
+            sa.sin6_port = htons(m_port);
+            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa), sizeof(sa)))
+                throw std::runtime_error("Error connecting to server for remote export!");
+        }
+
+        SSL_library_init();
+        SSL_load_error_strings();
+        const SSL_METHOD* method = TLS_client_method();
+        SSL_CTX* ctx = SSL_CTX_new(method);
+        SSL* ssl = SSL_new(ctx);
+        if (!ssl)
+            throw std::runtime_error("Error creating TLS context!");
+
+        SSL_set_fd(ssl, m_fd);
+        int err = SSL_connect(ssl);
+        if (err <= 0)
+            throw std::runtime_error("Error creating TLS connection to server for remote export!");
+
+        m_ssl = ssl;
     }
 }
