@@ -45,11 +45,11 @@ int main(int argc, char** argv)
     } catch(std::invalid_argument& e) {
         DDP::Probe::print_help(argv[0]);
         BOOST_LOG_TRIVIAL(error) << e.what();
-        return 1;
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
 
     if(arguments.args.exit)
-        return 0;
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::STOP);
 
     auto& runner = DDP::Probe::getInstance();
 
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
         runner.init(arguments.args);
     } catch (std::exception& e) {
         BOOST_LOG_TRIVIAL(error) << "Error: " << e.what() << std::endl << "Probe init failed!";
-        return 2;
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
 
     std::vector<std::shared_ptr<DDP::Port>> ready_ports;
@@ -105,10 +105,10 @@ int main(int argc, char** argv)
             return static_cast<int>(runner.run(ready_ports));
         } catch (std::exception &e) {
             BOOST_LOG_TRIVIAL(error) << "Uncaught exception: " << e.what();
-            return 128;
+            return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);
         }
     } catch (std::exception& e) {
         BOOST_LOG_TRIVIAL(error) << e.what();
-        return 128;
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);
     }
 }
