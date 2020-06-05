@@ -58,7 +58,7 @@ namespace DDP {
 
         /**
          * @brief Write currently buffered records into file on application exit
-         * @param writer CdnsWriter!!! object thaht handles writing C-DNS Block to output
+         * @param writer CdnsWriter!!! object that handles writing C-DNS Block to output
          * @param stats Statistics for update
          */
         void write_leftovers(DnsWriter* writer, Statistics& stats) override {
