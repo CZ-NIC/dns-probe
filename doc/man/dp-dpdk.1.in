@@ -20,7 +20,7 @@ This wrapper detects that code and reruns the application again. If the return c
 from 1 then the script exits and returns the same code as wrapped application.
 .SH OPTIONS
 .B -i <INTERFACE>
-Interface PCI ID e.g. 00:1f.6. Parameter can repeat.
+Interface name e.g. eth0 or interface PCI ID e.g. 00:1f.6. Parameter can repeat.
 .TP
 .B -p <PCAP>
 Input PCAP file. Parameter can repeat.

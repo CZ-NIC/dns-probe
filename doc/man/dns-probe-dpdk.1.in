@@ -12,7 +12,7 @@
 is a probe collecting records about DNS traffic in Parquet or C-DNS format.
 .SH OPTIONS
 .B -i <INTERFACE>
-Interface PCI ID e.g. 00:1f.6. Parameter can repeat.
+Interface name e.g. eth0 or interface PCI ID e.g. 00:1f.6. Parameter can repeat.
 .TP
 .B -p <PCAP>
 Input PCAP file. Parameter can repeat.

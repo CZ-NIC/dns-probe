@@ -41,9 +41,9 @@ void DDP::init_platform(const DDP::Arguments& args, const Config& cfg)
     argv.emplace_back("-c");
     argv.emplace_back(conv.str());
 
-    for(auto& interface: args.interfaces) {
+    for(auto& interface: args.devices) {
         argv.emplace_back("-w");
-        argv.emplace_back(interface.c_str());
+        argv.emplace_back(interface.pci_id.c_str());
     }
 
     auto i = 0;
