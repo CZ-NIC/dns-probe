@@ -15,8 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
+#include <stdexcept>
 #include "DynamicMempool.h"
 
 DDP::DynamicMempool::DynamicMempool(uint32_t element_size, uint32_t count) : m_element_size(element_size),
