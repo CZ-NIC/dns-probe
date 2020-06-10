@@ -2,11 +2,12 @@
 
 .. _typocon:
 
+***********************
 Typographic Conventions
-=======================
+***********************
 
 Font styles
------------
+===========
 
 *italics*
 
@@ -28,7 +29,7 @@ Font styles
 * constant values and other literals
 
 Links
------
+=====
 
 External and internal links are differentiated with the following styling:
 
@@ -36,7 +37,7 @@ External and internal links are differentiated with the following styling:
 * `external link <http://www.example.com>`_
 
 Code snippets
--------------
+=============
 
 Code snippets are set in a monospace font and they are highlighted
 according to the language of the snippet. Example:
@@ -48,7 +49,7 @@ according to the language of the snippet. Example:
    echo $variable
 
 Special characters
-------------------
+==================
 
 .. rubric:: Angle brackets < >
 
@@ -72,7 +73,7 @@ that may be used (or not used), unless specified otherwise. Again, if you decide
 to use an optional argument, enter it *without* the brackets.
 
 Admonitions
------------
+===========
 
 Admonitions are used to highlight a block of text that has special importance.
 Several types of admonitions are distinguished by their severity/importance:
@@ -95,7 +96,7 @@ Several types of admonitions are distinguished by their severity/importance:
    that is not apparent (what the user can do or know)
 
 Authoring notes
----------------
+===============
 
 Authoring notes—or TODOs—usually hold suggestions for new topics or notes
 about pending improvements. The TODOs are visible in the text, if their output
@@ -107,7 +108,7 @@ is allowed in project configuration.
 If you cannot see a green rectangle before this paragraph, the TODO output is disabled.
 
 Semantic markup overview
-------------------------
+========================
 
 This overview exists just for checking that semantic markup has correct
 styling.

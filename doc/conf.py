@@ -112,6 +112,15 @@ if is_draft:
     # Include stuff for the current version
     tags.add(version)
 
+# Numbering of figures, tables etc.
+numfig = True
+numfig_format = {
+    'figure': 'Figure %s',
+    'table': 'Table %s',
+    'code-block': 'Listing %s',
+    'section': 'Section %s',
+}
+
 # -- Extension - extlinks
 extlinks = {
     'repo': ('https://gitlab.nic.cz/%s', ''),
@@ -147,17 +156,17 @@ html_short_title = 'DNS Probe '+version+' Docs'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "path/fred-logo.png" #None
+html_logo = "dnsprobe_theme/static/fred-logo.png"
 
 # The name of an image file (relative to this directory) to use as a favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = "path/favicon.ico"
+html_favicon = "dnsprobe_theme/static/favicon.ico"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['fred_theme/static']
+html_static_path = ['dnsprobe_theme/static']
 
 # Additional CSS // requires version >=1.8
 html_css_files = ['svg.css']

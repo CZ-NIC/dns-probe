@@ -1,4 +1,5 @@
 .. highlight:: console
+.. program:: dns-probe-dpdk
 
 ==============
 dns-probe-dpdk

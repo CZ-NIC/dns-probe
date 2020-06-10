@@ -1,8 +1,9 @@
+*****************
 Running DNS Probe
-=================
+*****************
 
 Running as systemd service
-**************************
+==========================
 
 Installation from packages includes a *systemd* service
 ``dns-probe-<BACKEND>@.service`` where ``<BACKEND>`` is either ``af`` or
@@ -19,7 +20,7 @@ subcommands.
 
 The service takes a parameter ``<FILE>`` which is a name of
 configuration file located at ``/etc/dns-probe-<BACKEND>/<FILE>.conf``
-that contains command line parameters for DNS probe instance. Without
+that contains command line parameters for DNS Probe instance. Without
 this file the *systemd* service will fail. Installation from packages
 supplies a default configuration file at
 ``/etc/dns-probe-<BACKEND>/probe.conf`` which looks like this:
@@ -28,13 +29,13 @@ supplies a default configuration file at
 
     DAEMON_ARGS="-i lo -l /var/log/dns-probe-<BACKEND>@probe.log"
 
-This configuration file runs DNS probe on loopback interface and saves
+This configuration file runs DNS Probe on loopback interface and saves
 its logs to ``/var/log/dns-probe-<BACKEND>@probe.log`` file. The user
-should change the ``-i`` parameter to a network interface that DNS probe
+should change the ``-i`` parameter to a network interface that DNS Probe
 should process packets from and then start the *systemd* service.
 
 Running from command line
-*************************
+=========================
 
 After installation of both backends the following executables are
 created:
@@ -75,8 +76,7 @@ Both backend variants support these command line parameters:
       function ID device. For example ``00:1f.6`` where ``00:1f`` is PCI
       device and ``6`` is funcation number. Usually the last part
       specifies concrete physical interface on NIC. For more information
-      about usage with DPDK backend see `next
-      section <#DPDK%20backend>`__.
+      about usage with DPDK backend see :ref:`dpdk-backend`.
 
       When the DPDK version is started with ``ddp-bind`` instead of
       ``dp-dpdk`` then ``<INTERFACE>`` is standard interface defined by
@@ -87,8 +87,10 @@ Both backend variants support these command line parameters:
 
 -  ``-h`` - Provides basic help.
 
+.. _dpdk-backend:
+   
 DPDK backend
-************
+============
 
 For running the DNS Probe with DPDK backend you have to allocate huge
 pages. This requires root privileges and following steps:
@@ -137,14 +139,13 @@ necessary) and allocates 4 GB of memory for huge pages.
 
     set_pages 4 # Allocates 4 GB as huge pages
 
-The DNS probe with DPDK backend expects that used NIC interfaces have
+DNS Probe with DPDK backend expects that used NIC interfaces have
 binded DPDK drivers. For binding drivers there are two options. The
-easiest way is to run DNS probe through script ``ddp-bind``. This script
+easiest way is to run DNS Probe through script ``ddp-bind``. This script
 is installed with other executables. Its main purpose is to bind DPDK
-drivers to given interfaces and launch DNS probe. When the application
+drivers to given interfaces and launch DNS Probe. When the application
 stops the script binds original drivers back. Command line arguments are
 identical to those used by ``dns-probe-af`` so you can specify
 interfaces by their name instead of PCI ID.
 
-The other way how to bind drivers is decribed in the `DPDK
-documentation <https://doc.dpdk.org/guides/linux_gsg/sys_reqs.html#running-dpdk-applications>`__.
+The other way how to bind drivers is decribed in the `DPDK documentation <https://doc.dpdk.org/guides/linux_gsg/sys_reqs.html#running-dpdk-applications>`_.

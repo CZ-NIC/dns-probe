@@ -1,4 +1,5 @@
 .. highlight:: console
+.. program:: dns-probe-af
 
 ============
 dns-probe-af

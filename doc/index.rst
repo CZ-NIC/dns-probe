@@ -2,9 +2,9 @@
 .. DNS Probe documentation master file
 ..
 
-=================================
+#################################
 DNS Probe |version| Documentation
-=================================
+#################################
 
 This documentation aids users of the `DNS Probe <https://gitlab.labs.nic.cz/adam/dns-probe>`_, a tool for collection of DNS information from
 scanned requests and responses.
@@ -29,22 +29,20 @@ scanned requests and responses.
       :maxdepth: 1
 
       RecordOfChanges
-      LegalNotice
       TypographicConventions
       Glossary
-
-.. only:: include_todolist and format_html
-
-   :doc:`/TODOList`
 
 .. toctree::
    :caption: Sections
    :name: dns-probe-toc-sections
    :maxdepth: 1
 
-   CompilationInstallation/index
+   Overview
    Architecture
-   YANGmodule
-   Sysrepo
+   Installation
+   Configuration
+   Running
    ExportedDataSchema
    manpages/index
+   YANGmodule
+   References

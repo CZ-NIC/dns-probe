@@ -1,8 +1,6 @@
-
-
-
+*****************
 Record of Changes
-=================
+*****************
 
 Overview of changes in documentation from previous editions.
 For changes in software see :doc:`/ReleaseNotes/index`.

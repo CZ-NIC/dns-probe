@@ -1,14 +1,15 @@
+*************
 Exported data
-=============
+*************
 
-DNS probe exports data in one of two formats -
-`Parquet <https://parquet.apache.org/>`__ or
-`C-DNS <https://tools.ietf.org/html/rfc8618>`__. The exported data tries
+DNS Probe exports data in one of two formats -
+`Parquet <https://parquet.apache.org/>`_ or
+`C-DNS <https://tools.ietf.org/html/rfc8618>`_. The exported data tries
 to conform to the `Entrada
-schema <https://entrada.sidnlabs.nl/datamodel/>`__ for Hadoop. Parquet
+schema <https://entrada.sidnlabs.nl/datamodel/>`_ for Hadoop. Parquet
 export simply copies the Entrada schema shown in the table below. C-DNS
 format has its own schema defined in `RFC
-8616 <https://tools.ietf.org/html/rfc8618>`__. DNS probe tries to fill
+8616 <https://tools.ietf.org/html/rfc8618>`_. DNS Probe tries to fill
 this C-DNS schema with only the data needed for reconstructing the
 Entrada schema.
 
