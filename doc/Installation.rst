@@ -90,7 +90,6 @@ distribution repositories:
 - CMake, version at least 3.5
 - Boost (C++ libraries)
 - libpcap
-- Apache Arrow
 - DPDK (only for DPDK version)
 - libnuma-dev (only for DPDK version)
 
@@ -111,6 +110,14 @@ Start with creating a directory where DNS Probe and dependencies will be built a
    cd dp-dep
    DEP_DIR="$(pwd)"
 
+Apache Arrow
+------------
+
+Apache Arrow packages can be installed on most distributions from Apache's own
+`repositories <https://arrow.apache.org/install/>`_. Debian/Ubuntu ``libarrow-dev``
+and ``libparquet-dev`` packages or their equivalents in other distributions need
+to be installed for successful compilation of DNS probe.
+
 Sysrepo
 -------
 
@@ -121,7 +128,7 @@ installed first.
 
 .. code:: shell
 
-   curl -L https://github.com/CESNET/libyang/archive/v1.0.130.tar.gz > dl/libyang.tgz
+   curl -L https://github.com/CESNET/libyang/archive/master.tar.gz > dl/libyang.tgz
    mkdir build/libyang
    tar -xf dl/libyang.tgz -C build/libyang --strip-components=1
    mkdir -p build/libyang/build
@@ -131,7 +138,7 @@ installed first.
    make install
    cd "$DEP_DIR"
 
-   curl -L https://github.com/sysrepo/sysrepo/archive/v1.4.2.tar.gz > dl/sysrepo.tgz
+   curl -L https://github.com/sysrepo/sysrepo/archive/master.tar.gz > dl/sysrepo.tgz
    mkdir build/sysrepo
    tar -xf dl/sysrepo.tgz -C build/sysrepo --strip-components=1
    mkdir -p build/sysrepo/build
