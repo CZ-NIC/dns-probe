@@ -8,7 +8,7 @@ dns-probe-dpdk
 Synopsis
 --------
 
-:program:`dns-probe-dpdk` [-i *pci_id* | -p *pcap* [-r]] [-l *logfile*] [-h]
+:program:`dns-probe-dpdk` [-i *interface* | -p *pcap* [-r]] [-l *logfile*] [-h]
 
 Description
 -----------
@@ -22,9 +22,9 @@ Depending on the configuration, :program:`dns-probe-dpdk` exports the transactio
 Options
 -------
 
-.. option:: -i pci_id
+.. option:: -i interface
 
-   Listen on the network interface with the given PCI ID, such as ``00:1f.6``.
+   Listen on the network interface with the given name, such as ``eth0``, or with the given PCI ID, such as ``00:1f.6`` or ``0000:00:1f.6``.
 
 .. option:: -p pcap
 

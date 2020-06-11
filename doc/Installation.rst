@@ -144,20 +144,9 @@ installed first.
 C-DNS Library
 -------------
 
-`C-DNS Library <https://gitlab.labs.nic.cz/knot/c-dns>`_ is used for working with the C-DNS format. Its dependency is `libcbor <https://github.com/PJK/libcbor>`_.
+`C-DNS Library <https://gitlab.labs.nic.cz/knot/c-dns>`_ is used for working with the C-DNS format.
 
 .. code:: shell
-
-   curl -L https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz > dl/libcbor.tgz
-   mkdir build/libcbor
-   tar -xf dl/libcbor.tgz -C build/libcbor --strip-components=1
-   mkdir -p build/libcbor/build
-   cd build/libcbor/build
-   # Remove -DCMAKE_INSTALL_PREFIX="$DEP_DIR" if you want to install libcbor into /usr/local
-   cmake .. -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release
-   make -j
-   make install
-   cd "$DEP_DIR"
 
    curl -L https://gitlab.labs.nic.cz/knot/c-dns/-/archive/master/c-dns-master.tar.gz > dl/cdns.tgz
    mkdir build/cdns
@@ -185,4 +174,4 @@ Finally, YANG module containing the data model for DNS Probe and default configu
 
 .. code:: shell
 
-   sudo sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
+   sudo $DEP_DIR/bin/sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang

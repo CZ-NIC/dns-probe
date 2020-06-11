@@ -75,13 +75,12 @@ DPDK
 ----
 
 The `DPDK <https://www.dpdk.org/>`_ framework is used for packet
-processing by the ``dns-probe-dpdk`` binary and by the ``dp-dpdk`` and
-``ddp-bind`` scripts. This alternative for reading packets bypasses
-the kernel and reads packets from a network port directly to the
-user-space application. This makes packet input several times faster
-than with AF\_PACKET sockets. To ensure a proper distribution of
-packets to the RX queues (packets of the same flow going in both
-directions need to end up in the same RX queue), we use a
+processing by the ``dns-probe-dpdk`` binary and by the ``dp-dpdk`` script.
+This alternative for reading packets bypasses the kernel and reads packets
+from a network port directly to the user-space application. This makes
+packet input several times faster than with AF\_PACKET sockets. To ensure
+a proper distribution of packets to the RX queues (packets of the same
+flow going in both directions need to end up in the same RX queue), we use a
 `special key <https://www.ndsl.kaist.edu/~kyoungsoo/papers/TR-symRSS.pdf>`_
 for the RSS hash function in DPDK.
 

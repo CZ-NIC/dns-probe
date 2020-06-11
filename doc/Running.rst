@@ -44,14 +44,12 @@ created:
    These binaries contain the application itself
 -  ``dp-af`` (AF backend), ``dp-dpdk`` (DPDK backend) - These scripts
    take command line parameters, pass them to corresponding backend
-   executable and start it. When the application receives a restart RPC
+   binary and start it. When the application receives a restart RPC
    through sysrepo the application exits with return code 1. This
    wrapper detects that code and reruns the application again. If the
    return code differs from 1 than the script exits and returns the same
    code as wrapped application.
 
--  ``ddp-bind`` (DPDK backend) - Simplifies the usage of DPDK version.
-   Internally runs ``dp-dpdk``.
 
 Both backend variants support these command line parameters:
 
@@ -72,15 +70,11 @@ Both backend variants support these command line parameters:
    -  AF packet backend - The ``<INTERFACE>`` is name of network
       interface defined by kernel. List of available interfaces provides
       for example command ``ip link``.
-   -  DPDK backend - The ``<INTERFACE>`` is expected in format of PCI
-      function ID device. For example ``00:1f.6`` where ``00:1f`` is PCI
-      device and ``6`` is funcation number. Usually the last part
-      specifies concrete physical interface on NIC. For more information
-      about usage with DPDK backend see :ref:`dpdk-backend`.
-
-      When the DPDK version is started with ``ddp-bind`` instead of
-      ``dp-dpdk`` then ``<INTERFACE>`` is standard interface defined by
-      kernel as in case of AF packet backend.
+   -  DPDK backend - The ``<INTERFACE>`` is either name of network interface
+      defined by kernel or in format of PCI function ID device. For example
+      ``00:1f.6`` where ``00:1f`` is PCI device and ``6`` is funcation number.
+      Usually the last part specifies concrete physical interface on NIC.
+      For more information about usage with DPDK backend see :ref:`dpdk-backend`.
 
 -  ``-l <LOGFILE>`` - Redirects probe's logs to LOGFILE instead of
    standard output.
@@ -139,13 +133,19 @@ necessary) and allocates 4 GB of memory for huge pages.
 
     set_pages 4 # Allocates 4 GB as huge pages
 
-DNS Probe with DPDK backend expects that used NIC interfaces have
-binded DPDK drivers. For binding drivers there are two options. The
-easiest way is to run DNS Probe through script ``ddp-bind``. This script
-is installed with other executables. Its main purpose is to bind DPDK
-drivers to given interfaces and launch DNS Probe. When the application
-stops the script binds original drivers back. Command line arguments are
-identical to those used by ``dns-probe-af`` so you can specify
-interfaces by their name instead of PCI ID.
+The DNS probe with DPDK backend needs used NIC interfaces to be bound to
+DPDK compatible drivers. For binding drivers there are two options.
+The easier way is to just run DNS probe normally with ``dns-probe-dpdk`` or
+``dp-dpdk``. The probe will attempt to automatically bind given interfaces
+to ``uio_pci_generic`` driver and when it exits it will bind the interfaces
+back to their original driver. For this to work the ``uio_pci_generic`` module
+needs to be loaded by user like this:
 
-The other way how to bind drivers is decribed in the `DPDK documentation <https://doc.dpdk.org/guides/linux_gsg/sys_reqs.html#running-dpdk-applications>`_.
+.. code:: shell
+
+    sudo modprobe uio_pci_generic
+
+The other way is to bind the interfaces to DPDK compatible drivers manually
+before running DNS probe. In this instance the interfaces will then have to
+be identified to DNS probe with their PCI IDs. How to bind the interfaces manually is
+described in the `DPDK documentation <https://doc.dpdk.org/guides/linux_gsg/linux_drivers.html>`_.

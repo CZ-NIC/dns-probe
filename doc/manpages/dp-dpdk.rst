@@ -7,7 +7,7 @@ dp-dpdk
 Synopsis
 --------
 
-:program:`dp-dpdk` [-i *pci_id* | -p *pcap* [-r]] [-l *logfile*] [-h]
+:program:`dp-dpdk` [-i *interface* | -p *pcap* [-r]] [-l *logfile*] [-h]
 
 Description
 -----------
