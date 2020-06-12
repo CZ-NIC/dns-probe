@@ -93,7 +93,7 @@ distribution repositories:
 - DPDK (only for DPDK version)
 - libnuma-dev (only for DPDK version)
 
-The following instrfuctions describe how to compile DNS Probe and the
+The following instructions describe how to compile DNS Probe and the
 remaining dependencies. Also this approach installs all dependencies
 into local directory ``dp-dep``.
 
