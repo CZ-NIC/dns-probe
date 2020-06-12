@@ -91,7 +91,6 @@ distribution repositories:
 - Boost (C++ libraries)
 - libpcap
 - DPDK (only for DPDK version)
-- libnuma-dev (only for DPDK version)
 
 The following instructions describe how to compile DNS Probe and the
 remaining dependencies. Also this approach installs all dependencies
