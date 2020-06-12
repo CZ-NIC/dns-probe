@@ -38,7 +38,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'DNS Probe'
-copyright = '2018–%d, CZ.NIC, z.s.p.o.' % time.localtime().tm_year
+copyright = '2018-%d, CZ.NIC, z.s.p.o.' % time.localtime().tm_year
 author = 'CZ.NIC Laboratories'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -233,7 +233,7 @@ html_context = {
 # We don't publish into PDF.
 
 # -- Options for manpage output -------------------------------------------
-author_pd = 'Pavel Doležal <pavel.dolezal@nic.cz>'
+author_pd = 'Pavel Dolezal <pavel.dolezal@nic.cz>'
 man_pages = [
     ('manpages/dns-probe-af', 'dns-probe-af',
      'DNS traffic monitoring probe with AF packet backend',
