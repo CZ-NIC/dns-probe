@@ -26,14 +26,18 @@ dynamic configuration items will be applied instantly after the modification.
 
 * [data-model/cznic-dns-probe.yang](data-model/cznic-dns-probe.yang)
 
-# Installation from packages
-Packages for Debian 10 and 9 and Ubuntu 20.04, 18.04 and 16.04 are available from
-[OBS (openSUSE Build Service)](https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe).
-The OBS repository also contains packages with DNS probe's dependencies that don't have their
-own package in the distributions' standard repositories. These dependencies will be automatically
-installed as pre-requisites when installing DNS probe.
+# Installation
+DNS Probe can be used on Linux with kernel version at least 3.11. It also requires the system to support C++14 standard.
+Installation packages are available from [OBS (openSUSE Build Service)](https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe).
+The following distributions are currently supported: Debian 10 and 9, Ubuntu 20.04, 18.04 and 16.04.
 
-First you need to add the OBS repository for given distribution to your system's repository list and download the repository's signing key:
+The OBS repository also contains packages with several dependencies that are not provided by the distribution’s standard repositories.
+These dependencies will be automatically installed as pre-requisites when installing DNS Probe.
+
+On Linux distributions that are not (yet) supported, DNS Probe has to be compiled and built from source as described below.
+
+## Installation from packages
+The first two steps are to add the OBS repository for the given distribution to the system’s repository list, and download the repository’s signing key:
 
 ##### Debian 10
 ```shell
@@ -65,7 +69,8 @@ sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe
 wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_16.04/Release.key -O Release.key
 ```
 
-Now you need to add the signing key to your system, update the repository list and then you can finally install the DNS probe:
+The remaining steps are then identical for all distributions: the signing key is added to the system keyring, the repository list
+is updated, and finally the DNS Probe package is installed:
 
 ```shell
 sudo apt-key add - < Release.key
@@ -73,37 +78,32 @@ sudo apt-get update
 sudo apt-get install dns-probe-af dns-probe-dpdk
 ```
 
-DNS probe is separated into two packages (`dns-probe-af` and `dns-probe-dpdk`) differing by the backend used for processing packets.
-The `dns-probe-af` package uses AF packet sockets to process packets whereas the `dns-probe-dpdk` package uses DPDK framework.
-You can install just one of these packages without the other depending on which of the packet processing backends you want to use.
+Two alternative packages are available:
 
-The packages also automatically install the YANG module [cznic-dns-probe.yang](data-model/cznic-dns-probe.yang) with default configuration
-to Sysrepo datastore if you haven't done so manually yet.
+* `dns-probe-af` is compiled with support for AF_PACKET sockets
+
+* `dns-probe-dpdk` uses the DPDK framework.
+
+Package installation also initializes the Sysrepo datastore with a default configuration, if no configuration is found.
 
 # Installation from source
 
-This project has following required dependencies:
+This project has several dependencies that have to be installed first. The following packages
+should be available from standard distribution repositories:
 
-* [CMake >= 3.5](https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip)
-* [Linux OS (kernel at least 3.11)](http://kernel.org)
-* [Boost](https://www.boost.org/)
-* [Sysrepo 1.4.2](https://github.com/sysrepo/sysrepo/archive/v1.4.2.tar.gz)
-* [Arrow 0.16.0](https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz)
-* [C-DNS](https://gitlab.labs.nic.cz/knot/c-dns)
-* [libPCAP](https://www.tcpdump.org/)
+* [CMake](https://cmake.org/), version at least 3.5
+* [Boost](https://www.boost.org/) (C++ libraries)
+* [libpcap](https://www.tcpdump.org/)
+* [DPDK](https://www.dpdk.org/) (only for DPDK version)
 
-For DPDK backend the DNS probe also requires installed DPDK framework:
-* [DPDK >= 16.11](http://fast.dpdk.org/rel/dpdk-19.11.tar.xz)
-** Requires `libnuma-dev` and kernel headers installed
+The following instructions describe how to compile DNS probe and the remaining dependencies. Also this approach
+install all dependencies into local directory `dp-dep`.
 
+## Build directory
 
-## Preparing dependencies for DNS Probe
+Start with creating a directory where dependencies will be built and installed. Installation in a system directory,
+such as `/usr/local`, is also possible.
 
-Following steps describe how to compile all necessary dependencies for the DNS Probe. You can skip these steps
-if you have all dependencies installed through your package manager. Also this approach installs all dependencies into
-local directory `dp-dep`.
-
-Start with creating a folder for dependencies.
 ```shell
 mkdir dp-dep
 mkdir dp-dep/build
@@ -114,26 +114,16 @@ DEP_DIR="$(pwd)"
 Those commands create directory for downloaded packages (`dp-dep/dl`) and building directory (`dp-dep/build`). 
 The `dp-dep` directory is also used as target to install all compiled packages.
 
-### CMake
+### Apache Arrow
 
-CMake is usually available through the package managers on any Linux system. It's essential to have at least 
-version 3.5, otherwise compilation will fail.
-
-```shell
-curl -Lhttps://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip > dl/cmake.tgz
-mkdir build/cmake
-tar -xf dl/cmake.tgz -C build/cmake --strip-components=1
-cd build/cmake
-./bootstrap
-make -j
-make install DESTDIR="$DEP_DIR" # Remove `DESTDIR="$DEP_DIR"` if you want to install CMake into /usr/local
-cd "$DEP_DIR"
-PATH="$DEP_DIR/bin;$PATH"
-```
+Apache Arrow packages can be installed on most distributions from Apache's own [repositories](https://arrow.apache.org/install/).
+Debian/Ubuntu `libarrow-dev` and `libparquet-dev` packages or their equivalents in other distributions need to be
+installed for successful compilation of DNS probe.
 
 ### Sysrepo
-Sysrepo provides API to configuration storage. In the following steps it will install and compile sysrepo and its
-dependencies. 
+
+[Sysrepo](https://github.com/sysrepo/sysrepo) provides a configuration and management API. It uses
+[libyang](https://github.com/CESNET/libyang) library that needs to be installed first.
 
 ```shell
 curl -L https://github.com/CESNET/libyang/archive/v1.0.130.tar.gz > dl/libyang.tgz
@@ -157,24 +147,8 @@ make install
 cd "$DEP_DIR"
 ```
 
-### Arrow
-Arrow library provides API for working with parquet files.
-
-```shell
-curl -L https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz > dl/arrow.tgz
-mkdir build/arrow
-tar -xf dl/arrow.tgz -C build/arrow --strip-components=1
-mkdir -p build/arrow/cpp/build
-cd build/arrow/cpp/build
-# Remove -DCMAKE_INSTALL_PREFIX="$DEP_DIR" if you want to install Arrow into /usr/local
-cmake .. -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DARROW_WITH_RAPIDJSON=ON -DARROW_BUILD_TESTS=OFF -DARROW_PARQUET=ON
-make -j
-make install
-cd "$DEP_DIR"
-```
-
 ### CDNS
-C-DNS is another format used for exporting collected statistics.
+[C-DNS Library](https://gitlab.labs.nic.cz/knot/c-dns) is used for working with the C-DNS format.
 
 ```shell
 curl -L https://gitlab.labs.nic.cz/knot/c-dns/-/archive/master/c-dns-master.tar.gz > dl/cdns.tgz
@@ -189,21 +163,6 @@ make install
 cd "$DEP_DIR"
 ```
 
-
-### DPDK
-DPDK framework is required only when the DPDK backend is enabled in compilation process of the DNS Probe.
-
-```shell
-curl -L http://fast.dpdk.org/rel/dpdk-19.11.tar.xz > dl/dpdk.tgz
-mkdir build/dpdk
-tar -xf dl/dpdk.tgz -C build/dpdk --strip-components=1
-cd build/dpdk
-meson build -Dprefix="$DEP_DIR" # Remove `-Dprefix="$DEP_DIR"` if you want to install DPDK into /usr/local
-cd build
-ninja install
-cd "$DEP_DIR"
-```
-
 ## Compiling and installing DNS Probe
 
 ```shell
@@ -214,10 +173,10 @@ make -j
 make install
 ```
 
-To run DNS probe the YANG module with default configuration also needs to be installed to Sysrepo datastore:
+Finally, YANG module containing the data model for DNS Probe and default configuration also need to be installed:
 
 ```shell
-sudo sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
+sudo $DEP_DIR/bin/sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
 ```
 
 # Running DNS Probe
