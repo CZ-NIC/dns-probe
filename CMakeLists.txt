@@ -78,7 +78,7 @@ if (AF_PACKET_BACKEND)
     install(TARGETS dns-probe-af RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     set(BACKEND af)
-    configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.py ${CMAKE_BINARY_DIR}/dp-af)
+    configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.sh ${CMAKE_BINARY_DIR}/dp-af @ONLY)
     configure_file(${CMAKE_SOURCE_DIR}/doc/man/dns-probe-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dns-probe-af.1)
     configure_file(${CMAKE_SOURCE_DIR}/doc/man/dp-af.1.in ${CMAKE_BINARY_DIR}/doc/man/dp-af.1)
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dns-probe@.service.in ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service)
@@ -112,7 +112,7 @@ if (DPDK_BACKEND)
     install(TARGETS dns-probe-dpdk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     set(BACKEND dpdk)
-    configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.py ${CMAKE_BINARY_DIR}/dp-dpdk)
+    configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.sh ${CMAKE_BINARY_DIR}/dp-dpdk @ONLY)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-dpdk DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     configure_file(${CMAKE_SOURCE_DIR}/doc/man/dns-probe-dpdk.1.in ${CMAKE_BINARY_DIR}/doc/man/dns-probe-dpdk.1)
