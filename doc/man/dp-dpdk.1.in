@@ -3,7 +3,7 @@
 .TH "dp-dpdk" "1" "04 March 2020" "CZ.NIC" "@PROJECT_NAME@ @PROJECT_VERSION@"
 .SH NAME
 .B dp-dpdk
-\- Python script that wraps around
+\- Shell script that wraps around
 .B dns-probe-dpdk
 binary. DNS traffic monitoring probe with DPDK backend.
 .SH SYNOPSIS
@@ -11,7 +11,7 @@ binary. DNS traffic monitoring probe with DPDK backend.
 [-i <INTERFACE> | -p <PCAP>] [-r] [-l <LOGFILE>] [-h]
 .SH DESCRIPTION
 .B dp-dpdk
-is a Python script that wraps around
+is a Shell script that wraps around
 .B dns-probe-dpdk
 binary. When the
 .B dns-probe-dpdk
