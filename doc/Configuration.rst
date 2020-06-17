@@ -123,18 +123,6 @@ Static configuration parameters
 
 This section lists all static configuration parameters in alphabetical order. 
 
-.. _cdns-blocks-per-file:
-
-cdns-blocks-per-file
-^^^^^^^^^^^^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/export/cdns-blocks-per-file``
-:default: 0
-
-This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It specifies the maximum number of C-DNS blocks written to one exported file (see `Section 7.3.2 <https://tools.ietf.org/html/rfc8618#section-7.3.2>`_ in [RFC8618]_). If this limit is reached, the export file is closed and a new one started.
-
-The default value of 0 means that there is no limit.
-
 cdns-fields
 ^^^^^^^^^^^
 
@@ -142,6 +130,18 @@ cdns-fields
 :default: all fields
 
 This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It is a bit set that determines which fields from the C-DNS schema defined in [RFC8618]_ will be included in the exported transaction records.
+
+.. _cdns-records-per-block:
+
+cdns-records-per-block
+^^^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/cdns-records-per-block``
+:default: 10000
+
+This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It specifies the maximum number of exported DNS transaction records per one C-DNS block, see `Section 7.3.2 <https://tools.ietf.org/html/rfc8618#section-7.3.2>`_ in [RFC8618]_.
+
+The default value of 10000 corresponds to the recommendation in `Appendix C.6 <https://tools.ietf.org/html/rfc8618#appendix-C.6>`_ of [RFC8618]_.
 
 coremask
 ^^^^^^^^
@@ -209,7 +209,7 @@ of the file, and there is no ``.gz``.
 concurrent-connections
 ^^^^^^^^^^^^^^^^^^^^^^
 
-:data node: ``/cznic-dns-probe:dns-probe/transaction-table/concurrent-connections``
+:data node: ``/cznic-dns-probe:dns-probe/tcp-table/concurrent-connections``
 :default: 1048576
 
 The value of this parameter must be a power of 2. It specifies the maximum number of TCP connections that DNS Probe can handle at any given time, which in turn affects the size of in-memory data structures allocated for keeping the status of TCP connections.
@@ -231,17 +231,17 @@ Dynamic configuration parameters
 
 This section lists all dynamic configuration parameters in alphabetical order. 
 
-.. _cdns-records-per-block:
+.. _cdns-blocks-per-file:
 
-cdns-records-per-block
-^^^^^^^^^^^^^^^^^^^^^^
+cdns-blocks-per-file
+^^^^^^^^^^^^^^^^^^^^
 
-:data node: ``/cznic-dns-probe:dns-probe/export/cdns-records-per-block``
-:default: 10000
+:data node: ``/cznic-dns-probe:dns-probe/export/cdns-blocks-per-file``
+:default: 0
 
-This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It specifies the maximum number of exported DNS transaction records per one C-DNS block, see `Section 7.3.2 <https://tools.ietf.org/html/rfc8618#section-7.3.2>`_ in [RFC8618]_.
+This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It specifies the maximum number of C-DNS blocks written to one exported file (see `Section 7.3.2 <https://tools.ietf.org/html/rfc8618#section-7.3.2>`_ in [RFC8618]_). If this limit is reached, the export file is closed and a new one started.
 
-The default value of 10000 corresponds to the recommendation in `Appendix C.6 <https://tools.ietf.org/html/rfc8618#appendix-C.6>`_ of [RFC8618]_.
+The default value of 0 means that there is no limit.
 
 .. _parquet-records-per-file:
 
@@ -327,7 +327,7 @@ By default, the 5-tuple of source and destination IP address, source and destina
 timeout
 ^^^^^^^       
 
-:data node: ``/cznic-dns-probe:dns-probe/transaction-table/timeout``
+:data node: ``/cznic-dns-probe:dns-probe/tcp-table/timeout``
 :default: 60000
 
 This parameter specifies the time interval in miliseconds after which the TCP connection is removed from the tcp table if no new traffic is observed.
