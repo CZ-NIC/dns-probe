@@ -27,7 +27,7 @@ module cznic-dns-probe {
     description
         "This YANG module defines the data model for a DNS monitoring";
 
-    revision 2019-12-02 {
+    revision 2019-06-17 {
         description
             "Initial revision.";
     }
@@ -269,7 +269,7 @@ module cznic-dns-probe {
 
             leaf concurrent-connections {
                 type uint32;
-                default "1048576";
+                default "131072";
                 description
                     "Maximal number of concurrent TCP connections
 
