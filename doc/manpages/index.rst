@@ -13,7 +13,7 @@ Traffic monitoring probes
    dns-probe-af
    dns-probe-dpdk
 
-Python wrapper scripts
+Shell wrapper scripts
 ----------------------
 
 .. toctree::
