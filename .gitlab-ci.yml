@@ -43,14 +43,12 @@ build_and_test:
     - pip3 install pyarrow
   script:
     - sysrepoctl -i data-model/cznic-dns-probe.yang
-    - sysctl -w vm.nr_hugepages=1700
     - mkdir build
     - cd build
     - cmake -DDPDK_BACKEND=ON -DAF_PACKET_BACKEND=ON ..
     - make
     - cd ../tests
     - python3 ./run_tests.py -p ../build/dns-probe-af
-    - python3 ./run_tests.py -p ../build/dns-probe-dpdk
 
 pages:
   stage: deploy
