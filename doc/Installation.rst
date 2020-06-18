@@ -92,6 +92,11 @@ distribution repositories:
 - libpcap
 - DPDK (only for DPDK version)
 
+Optionally, to build this user documentation (``make doc``) or manual pages (``make man``)
+one additional dependency is required:
+
+- Sphinx
+
 The following instructions describe how to compile DNS Probe and the
 remaining dependencies. Also this approach installs all dependencies
 into local directory ``dp-dep``.
