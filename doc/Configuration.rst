@@ -210,11 +210,13 @@ concurrent-connections
 ^^^^^^^^^^^^^^^^^^^^^^
 
 :data node: ``/cznic-dns-probe:dns-probe/tcp-table/concurrent-connections``
-:default: 1048576
+:default: 131072
 
 The value of this parameter must be a power of 2. It specifies the maximum number of TCP connections that DNS Probe can handle at any given time, which in turn affects the size of in-memory data structures allocated for keeping the status of TCP connections.
 
-The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS over TCP at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+The default value of 131072 (2^17) was determined experimentally – it takes into account the default value for :ref:`max-transactions` and the current common ratio of DNS traffic over UDP and TCP. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
+.. _max-transactions:
 
 max-transactions
 ^^^^^^^^^^^^^^^^
