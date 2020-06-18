@@ -96,8 +96,11 @@ should be available from standard distribution repositories:
 * [libpcap](https://www.tcpdump.org/)
 * [DPDK](https://www.dpdk.org/) (only for DPDK version)
 
+Optionally, to build user documentation (`make doc`) or manual pages (`make man`) one additional dependency is required:
+* [Sphinx](https://www.sphinx-doc.org/en/master/)
+
 The following instructions describe how to compile DNS probe and the remaining dependencies. Also this approach
-install all dependencies into local directory `dp-dep`.
+installs all dependencies into local directory `dp-dep`.
 
 ## Build directory
 
