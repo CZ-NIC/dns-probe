@@ -4,16 +4,12 @@
 Man Pages
 =========
 
-These executable programs are distributed with DNS Probe
-
-Traffic monitoring probes
--------------------------
-
 .. toctree::
    :maxdepth: 3
 
    dns-probe-af
    dns-probe-dpdk
+<<<<<<< HEAD
 
 Shell wrapper scripts
 ----------------------
@@ -23,3 +19,5 @@ Shell wrapper scripts
 
    dp-af
    dp-dpdk
+=======
+>>>>>>> 7122ca3... Remove man pages for wrapper scripts
