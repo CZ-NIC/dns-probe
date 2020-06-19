@@ -1,3 +1,5 @@
+.. _manpages:
+
 =========
 Man Pages
 =========

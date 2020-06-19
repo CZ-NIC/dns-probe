@@ -374,5 +374,7 @@ RPC operations
 
 Currently, only one RPC operation is implemented in Sysrepo:
 
+.. _rpc-restart:
+
 **restart**
    restart the probe and apply the changes in static configuration.
