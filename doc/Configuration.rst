@@ -118,6 +118,8 @@ Configuration parameters are of two basic types:
 *dynamic*
    Changes to such parameters take effect immediately, no restart is needed.
 
+.. _static-conf-par:
+
 Static configuration parameters
 -------------------------------
 
@@ -228,12 +230,14 @@ The value of this parameter must be a power of 2. It specifies the maximum numbe
 
 The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS traffic at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
 
+.. _dynamic-conf-par:
+
 Dynamic configuration parameters
 --------------------------------
 
 This section lists all dynamic configuration parameters in alphabetical order. 
 
-.. _cdns-blocks-per-file:
+.. _cdns-blocks-per-file: 
 
 cdns-blocks-per-file
 ^^^^^^^^^^^^^^^^^^^^

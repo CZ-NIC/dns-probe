@@ -9,7 +9,7 @@ Running as systemd service
 
 Installation packages include a *systemd* unit file
 ``dns-probe-<BACKEND>@.service``, where ``<BACKEND>`` is either ``af``
-or ``dpdk`` depending on the backend that the package installs.
+or ``dpdk`` depending on the :term:`backend` that the package installs.
 
 The *systemd* service can be run like this:
 
@@ -36,7 +36,7 @@ its logs to ``/var/log/dns-probe-<BACKEND>@probe.log`` file. For normal operatio
 Running from command line
 =========================
 
-For each backend, one binary program and one shell script is installed. Their names are shown in :numref:`exec-table`.
+For each :term:`backend`, one binary program and one shell script is installed. Their names are shown in :numref:`exec-table`.
 
 .. _exec-table:
 
