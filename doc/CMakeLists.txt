@@ -28,12 +28,10 @@ if (Sphinx_FOUND)
 
     if (AF_PACKET_BACKEND)
         install(FILES ${SPHINX_BUILD_MAN}/dns-probe-af.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
-        install(FILES ${SPHINX_BUILD_MAN}/dp-af.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
     endif()
 
     if (DPDK_BACKEND)
         install(FILES ${SPHINX_BUILD_MAN}/dns-probe-dpdk.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
-        install(FILES ${SPHINX_BUILD_MAN}/dp-dpdk.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 OPTIONAL)
     endif()
 else (Sphinx_FOUND)
     message("Install Sphinx to generate documentation and manual pages")
