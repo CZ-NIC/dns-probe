@@ -3,7 +3,7 @@ Record of Changes
 *****************
 
 Overview of changes in documentation from previous editions.
-For changes in software see :doc:`/ReleaseNotes/index`.
+For changes in software see `version descriptions <https://gitlab.labs.nic.cz/adam/dns-probe/-/tags>`_.
 
 .. tabularcolumns:: |p{0.075\textwidth}|p{0.075\textwidth}|p{0.25\textwidth}|p{0.575\textwidth}|
 
@@ -15,7 +15,7 @@ For changes in software see :doc:`/ReleaseNotes/index`.
      - Edition
      - Segment
      - Change description
-   * - 
-     - 
-     - 
-     - 
+   * - 0.5
+     - 1.0
+     - ALL
+     - Initial release.
