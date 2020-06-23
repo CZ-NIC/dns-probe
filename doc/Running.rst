@@ -8,30 +8,33 @@ Running as systemd service
 ==========================
 
 Installation packages include a *systemd* unit file
-``dns-probe-<BACKEND>@.service``, where ``<BACKEND>`` is either ``af``
+``dns-probe-<BACKEND>.service``, where ``<BACKEND>`` is either ``af``
 or ``dpdk`` depending on the :term:`backend` that the package installs.
 
 The *systemd* service can be run like this:
 
 .. code:: shell
 
-    sudo systemctl start dns-probe-<BACKEND>@<FILE>.service
+    sudo systemctl start dns-probe-<BACKEND>.service
 
 Other ``systemctl`` subcommands can be used to stop, enable or restart the service.
 
-The service takes a parameter ``<FILE>`` which is a name of
-configuration file located at ``/etc/dns-probe-<BACKEND>/<FILE>.conf``
-that contains command line parameters for DNS Probe instance. Without
-this file the *systemd* service will fail. Installation from packages
-supplies a default configuration file at
-``/etc/dns-probe-<BACKEND>/probe.conf`` which looks like this:
+By default the *systemd* service reads packets from loopback interface. To make the service
+read packets from different network interface the unit file should be modified like this:
+
+.. code:: shell
+
+    sudo systemctl edit --full dns-probe-<BACKEND>.service
+
+This command copies the unit file to ``/etc/systemd/system/dns-probe-<BACKEND>.service`` and opens it
+in default text editor. The line
 
 ::
 
-    DAEMON_ARGS="-i lo -l /var/log/dns-probe-<BACKEND>@probe.log"
+    ExecStart=/path/to/dns-probe-<BACKEND> -i lo -l /var/log/dns-probe-<BACKEND>.log
 
-This configuration file runs DNS Probe on the loopback interface and saves
-its logs to ``/var/log/dns-probe-<BACKEND>@probe.log`` file. For normal operation, the ``-i`` parameter needs to be changed to one or more network interfaces that DNS Probe is to process packets from and then start the *systemd* service.
+should then be modified to include the desired network interface from which to read packets.
+After the modification is done the *systemd* service can be started as usual.
 
 Running from command line
 =========================
