@@ -52,7 +52,7 @@ For each :term:`backend`, one binary program and one shell script is installed. 
 
 The binary programs accept several command-line options described in their :ref:`manual pages <manpages>`.
 
-The wrapper shell scripts accept the same options as the corresponding backend binary, and starts the binary with these options. If the running binary program receives the :ref:`restart <rpc-restart>` operation through Sysrepo, it exits with return code 1. The wrapper script than starts the same binary again.
+The wrapper shell scripts accept the same options as the corresponding backend binary, and start the binary with these options. If the running binary program receives the :ref:`restart <rpc-restart>` operation through Sysrepo, it exits with return code 1. The wrapper script then starts the same binary again.
 
 For other codes returned by the binary, the wrapper script just exits and returns the same code.
 
