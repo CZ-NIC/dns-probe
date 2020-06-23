@@ -24,16 +24,19 @@ read packets from different network interface the unit file should be modified l
 
 .. code:: shell
 
-    sudo systemctl edit --full dns-probe-<BACKEND>.service
+    sudo systemctl edit dns-probe-<BACKEND>.service
 
-This command copies the unit file to ``/etc/systemd/system/dns-probe-<BACKEND>.service`` and opens it
-in default text editor. The line
+This command creates an override file for the *systemd* service in
+``/etc/systemd/system/dns-probe-<BACKEND>.service.d/override.conf`` and opens it in default text editor.
+The ``ExecStart=...`` line from original *systemd* service should be overwritten here to include
+the desired network interface from which to read packets. The override file can look like this:
 
 ::
 
-    ExecStart=/path/to/dns-probe-<BACKEND> -i lo -l /var/log/dns-probe-<BACKEND>.log
+    [Service]
+    ExecStart=
+    ExecStart=/path/to/dns-probe-<BACKEND> -i <NETWORK_INTERFACE> -l /var/log/dns-probe-<BACKEND>.log
 
-should then be modified to include the desired network interface from which to read packets.
 After the modification is done the *systemd* service can be started as usual.
 
 Running from command line
