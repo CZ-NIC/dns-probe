@@ -10,13 +10,16 @@ scanned requests and responses.
 
 The documentation contains the following sections:
 
-* Compilation and Installation,
-* Architecture,
-* YANG Module,
-* Configuring DNS Probe with Sysrepo,
-* Exported Data Schema.
+* Overview
+* DNS Probe architecture
+* Installation
+* Configuration and management
+* Running DNS Probe
+* Exported data
+* Man Pages
+* YANG module
 
-The newest edition of the documentation is published at https://gitlab.labs.nic.cz/adam/dns-probe/-/tree/master/doc.
+The newest edition of the documentation is published at https://adam.pages.labs.nic.cz/dns-probe.
 
 ## What is in development
 
