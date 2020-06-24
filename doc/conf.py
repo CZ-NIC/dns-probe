@@ -241,10 +241,4 @@ man_pages = [
     ('manpages/dns-probe-dpdk', 'dns-probe-dpdk',
      'DNS traffic monitoring probe with DPDK backend',
      author_pd, 1),
-    ('manpages/dp-af', 'dp-af',
-     'wrapper script for dns-probe-af binary',
-     author_pd, 1),
-    ('manpages/dp-dpdk', 'dp-dpdk',
-     'wrapper script for dns-probe-dpdk binary',
-     author_pd, 1),
 ]

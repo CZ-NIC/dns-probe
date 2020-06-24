@@ -2,104 +2,90 @@
 Running DNS Probe
 *****************
 
+It is recommended to run DNS Probe as a `systemd <https://www.freedesktop.org/wiki/Software/systemd/>`_ service. Alternatively, it is possible to start it from the command line using shell scripts that are part of the DNS Probe distribution. These shell scripts can also be used as a basis for integration with other init systems.
+
 Running as systemd service
 ==========================
 
-Installation from packages includes a *systemd* service
-``dns-probe-<BACKEND>@.service`` where ``<BACKEND>`` is either ``af`` or
-``dpdk`` depending on the package you installed.
+Installation packages include a *systemd* unit file
+``dns-probe-<BACKEND>.service``, where ``<BACKEND>`` is either ``af``
+or ``dpdk`` depending on the :term:`backend` that the package installs.
 
 The *systemd* service can be run like this:
 
 .. code:: shell
 
-    sudo systemctl start dns-probe-<BACKEND>@<FILE>.service
+    sudo systemctl start dns-probe-<BACKEND>.service
 
-To stop, enable or restart the service use the appropriate ``systemctl``
-subcommands.
+Other ``systemctl`` subcommands can be used to stop, enable or restart the service.
 
-The service takes a parameter ``<FILE>`` which is a name of
-configuration file located at ``/etc/dns-probe-<BACKEND>/<FILE>.conf``
-that contains command line parameters for DNS Probe instance. Without
-this file the *systemd* service will fail. Installation from packages
-supplies a default configuration file at
-``/etc/dns-probe-<BACKEND>/probe.conf`` which looks like this:
+By default the *systemd* service reads packets from loopback interface. To make the service
+read packets from different network interface the unit file should be modified like this:
+
+.. code:: shell
+
+    sudo systemctl edit dns-probe-<BACKEND>.service
+
+This command creates an override file for the *systemd* service in
+``/etc/systemd/system/dns-probe-<BACKEND>.service.d/override.conf`` and opens it in default text editor.
+The ``ExecStart=...`` line from original *systemd* service should be overwritten here to include
+the desired network interface from which to read packets. The override file can look like this:
 
 ::
 
-    DAEMON_ARGS="-i lo -l /var/log/dns-probe-<BACKEND>@probe.log"
+    [Service]
+    ExecStart=
+    ExecStart=/path/to/dns-probe-<BACKEND> -i <NETWORK_INTERFACE> -l /var/log/dns-probe-<BACKEND>.log
 
-This configuration file runs DNS Probe on loopback interface and saves
-its logs to ``/var/log/dns-probe-<BACKEND>@probe.log`` file. The user
-should change the ``-i`` parameter to a network interface that DNS Probe
-should process packets from and then start the *systemd* service.
+After the modification is done the *systemd* service can be started as usual.
 
 Running from command line
 =========================
 
-After installation of both backends the following executables are
-created:
+For each :term:`backend`, one binary program and one shell script is installed. Their names are shown in :numref:`exec-table`.
 
--  ``dns-probe-af`` (AF backend), ``dns-probe-dpdk`` (DPDK backend) -
-   These binaries contain the application itself
--  ``dp-af`` (AF backend), ``dp-dpdk`` (DPDK backend) - These scripts
-   take command line parameters, pass them to corresponding backend
-   binary and start it. When the application receives a restart RPC
-   through sysrepo the application exits with return code 1. This
-   wrapper detects that code and reruns the application again. If the
-   return code differs from 1 than the script exits and returns the same
-   code as wrapped application.
+.. _exec-table:
 
+.. table:: Installed binaries and wrapper scripts
 
-Both backend variants support these command line parameters:
+   +---------+------------------+--------------+
+   |Backend  |Binary program    |Wrapper script|
+   +=========+==================+==============+
+   |AF_PACKET|``dns-probe-af``  |``dp-af``     |
+   +---------+------------------+--------------+
+   |DPDK     |``dns-probe-dpdk``|``dp-dpdk``   |
+   +---------+------------------+--------------+
 
--  ``-p <PCAP>`` - Read ``<PCAP>`` file and process it into aggregated
-   statistic file. This parameter can be used multiple times. Every
-   usage adds one PCAP file into processing. All PCAPs are always
-   processed in single thread mode.
+The binary programs accept several command-line options described in their :ref:`manual pages <manpages>`.
 
--  ``-r`` - Marks pcaps from ``-p`` parameters as raw. Raw PCAP contains
-   packets starting with IPv4 or IPv6 header. When the ``-r`` parameter
-   is specified it is illegal to use ``-i`` parameter.
+The wrapper shell scripts accept the same options as the corresponding backend binary, and start the binary with these options. If the running binary program receives the :ref:`restart <rpc-restart>` operation through Sysrepo, it exits with return code 1. The wrapper script then starts the same binary again.
 
--  ``-i <INTERFACE>`` - Read packets from given ``<INTERFACE>``. This
-   parameter can be used multiple times. Every usage adds one interface
-   for processing packets. Reading from an interface has multi-threaded
-   support. The format of ``<INTERFACE>`` depends on used backend.
+For other codes returned by the binary, the wrapper script just exits and returns the same code.
 
-   -  AF packet backend - The ``<INTERFACE>`` is name of network
-      interface defined by kernel. List of available interfaces provides
-      for example command ``ip link``.
-   -  DPDK backend - The ``<INTERFACE>`` is either name of network interface
-      defined by kernel or in format of PCI function ID device. For example
-      ``00:1f.6`` where ``00:1f`` is PCI device and ``6`` is funcation number.
-      Usually the last part specifies concrete physical interface on NIC.
-      For more information about usage with DPDK backend see :ref:`dpdk-backend`.
-
--  ``-l <LOGFILE>`` - Redirects probe's logs to LOGFILE instead of
-   standard output.
-
--  ``-h`` - Provides basic help.
-
-.. _dpdk-backend:
-   
 DPDK backend
 ============
 
-For running the DNS Probe with DPDK backend you have to allocate huge
-pages. This requires root privileges and following steps:
+For running DNS Probe with the DPDK backend, a portion of memory with huge
+pages has to be allocated. This is done in two steps, both requiring root privileges:
 
-1. Mount the huge pages file system
+1. mount the huge pages file system
+2. allocate huge pages
 
-   -  On some system the huge pages FS is automatically allocated. You
-      can check it with command ``mount | grep -E ^hugetlbfs``. If the
-      command prints some row (e.g.
-      ``hugetlbfs on /dev/hugepages type hugetlbfs (rw,relatime,pagesize=2M)``),
-      then you have huge pages FS mounted.
+On some systems, the huge pages FS is mounted automatically, so step #1 can be omitted. It can be checked by running the command
 
-2. Allocate huge pages
+.. code:: shell
 
-Following script automatically mounts huge pages file system (if
+   mount | grep -E ^hugetlbfs
+
+If the command prints something similar to
+
+::
+ 
+   hugetlbfs on /dev/hugepages type hugetlbfs (rw,relatime,pagesize=2M)
+
+then the huge pages FS is already mounted.
+
+The following script automatically mounts huge pages file system (if
 necessary) and allocates 4 GB of memory for huge pages.
 
 .. code:: shell
@@ -133,19 +119,19 @@ necessary) and allocates 4 GB of memory for huge pages.
 
     set_pages 4 # Allocates 4 GB as huge pages
 
-The DNS probe with DPDK backend needs used NIC interfaces to be bound to
-DPDK compatible drivers. For binding drivers there are two options.
-The easier way is to just run DNS probe normally with ``dns-probe-dpdk`` or
-``dp-dpdk``. The probe will attempt to automatically bind given interfaces
-to ``uio_pci_generic`` driver and when it exits it will bind the interfaces
-back to their original driver. For this to work the ``uio_pci_generic`` module
-needs to be loaded by user like this:
+Network cards used with the DPDK backend have to be bound to
+DPDK-compatible drivers. The easier way of doing this is to run
+``dns-probe-dpdk`` or ``dp-dpdk`` with the ``-i`` parameter(s)
+specifying the NIC name such as ``eth0``. DNS probe will then attempt
+to automatically bind these interfaces to the ``uio_pci_generic``
+driver and, when it exits, it will bind the interfaces back to their
+original driver. For this to work, the ``uio_pci_generic`` module
+needs to be loaded manually like this:
 
 .. code:: shell
 
     sudo modprobe uio_pci_generic
 
-The other way is to bind the interfaces to DPDK compatible drivers manually
-before running DNS probe. In this instance the interfaces will then have to
-be identified to DNS probe with their PCI IDs. How to bind the interfaces manually is
-described in the `DPDK documentation <https://doc.dpdk.org/guides/linux_gsg/linux_drivers.html>`_.
+The other way is to bind the NICs to DPDK-compatible drivers manually
+before running DNS Probe. In this case, the NICs have to
+be identified by their PCI IDs in ``-i`` options. Details about binding network interfaces manually are described in the `DPDK documentation <https://doc.dpdk.org/guides/linux_gsg/linux_drivers.html>`_.
