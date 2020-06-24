@@ -22,6 +22,17 @@
 
 namespace DDP {
     /**
+     * @brief Structure representing a PCI device
+     */
+    struct PciDevice {
+        std::string driver;
+        std::string orig_driver;
+        std::string class_;
+        std::string vendor;
+        std::string pci_id;
+        std::list<std::string> if_name;
+    };
+    /**
      * @brief Structure for unified program arguments
      */
     struct Arguments
@@ -29,6 +40,7 @@ namespace DDP {
         bool exit; //!< Signals that application should exit
         const char* app = "app"; //<! Contains name of currently running application (usually argv[0])
         std::list<std::string> interfaces; //<! List of interfaces used for listening for incoming DNS data
+        std::list<PciDevice> devices; //<! List of PCI devices corresponding to interfaces list (used in DPDK version)
         std::list<std::string> pcaps; //<! List of PCAPs with data for processing
         bool raw_pcap;
     };

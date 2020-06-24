@@ -19,6 +19,10 @@
 #include <csignal>
 #include <set>
 #include <vector>
+#include <cstring>
+#include <fstream>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <boost/log/trivial.hpp>
 
 #include <rte_eal.h>
@@ -37,6 +41,212 @@ static void signal_handler(int signum)
     DDP::Probe::getInstance().stop();
 }
 
+/**
+ * @brief Check if 'uio_pci_generic' module is loaded
+ * @return TRUE if module is loaded, FALSE otherwise
+ */
+static bool check_module()
+{
+    if (auto dir = opendir("/sys/module/")) {
+        while (auto f = readdir(dir)) {
+            if (!f->d_name || f->d_name[0] == '.')
+                continue;
+
+            if (std::strcmp("uio_pci_generic", f->d_name) == 0) {
+                closedir(dir);
+                return true;
+            }
+        }
+        closedir(dir);
+    }
+
+    return false;
+}
+
+/**
+ * @brief Unbind PCI device from its current driver
+ * @param dev PCI device to unbind
+ */
+static void unbind(DDP::PciDevice& dev) {
+    if (!dev.driver.empty()) {
+        std::ofstream ofs("/sys/bus/pci/drivers/" + dev.driver + "/unbind", std::ios_base::app);
+        if (ofs.fail())
+            throw std::runtime_error("Couldn't unbind interface " + dev.pci_id + " from driver " + dev.driver);
+
+        ofs.write(dev.pci_id.data(), dev.pci_id.size());
+        ofs.close();
+    }
+}
+
+/**
+ * @brief Bind PCI device to given driver
+ * @param dev PCI device to bind
+ * @param driver Driver for PCI device
+ */
+static void bind(DDP::PciDevice& dev, std::string driver)
+{
+    // Unbind device from existing driver first
+    if (dev.driver == driver)
+        return;
+    else
+        unbind(dev);
+
+    if (driver.empty())
+        return;
+
+    struct stat buffer;
+    // For kernel >= 3.15
+    if (stat(("/sys/bus/pci/devices/" + dev.pci_id + "/driver_override").c_str(), &buffer) == 0) {
+        std::ofstream drv_ovr("/sys/bus/pci/devices/" + dev.pci_id + "/driver_override");
+        if (drv_ovr.fail())
+            throw std::runtime_error("Bind failed for " + dev.pci_id + "! Can't open driver_override file!");
+
+        drv_ovr.write(driver.data(), driver.size());
+        drv_ovr.close();
+    }
+    // For kernel < 3.15
+    else {
+        std::ofstream new_id("/sys/bus/pci/drivers/" + driver + "/new_id");
+        if (new_id.fail())
+            throw std::runtime_error("Bind failed for " + dev.pci_id + "! Can't open new_id file!");
+
+        new_id.write(dev.vendor.data(), dev.vendor.size());
+        new_id.close();
+    }
+
+    std::ofstream drv_bind("/sys/bus/pci/drivers/" + driver + "/bind", std::ios_base::app);
+    if (drv_bind.fail())
+        throw std::runtime_error("Bind failed for " + dev.pci_id + "! Can't open bind file!");
+
+    drv_bind.write(dev.pci_id.data(), dev.pci_id.size());
+    drv_bind.close();
+
+    // For kernel >= 3.15
+    if (stat(("/sys/bus/pci/devices/" + dev.pci_id + "/driver_override").c_str(), &buffer) == 0) {
+        std::ofstream drv_ovr("/sys/bus/pci/devices/" + dev.pci_id + "/driver_override");
+        if (drv_ovr.fail())
+            throw std::runtime_error("Bind failed for " + dev.pci_id + "! Can't open driver_override file!");
+
+        drv_ovr.write("\00", 1);
+        drv_ovr.close();
+    }
+
+    dev.driver = driver;
+}
+
+/**
+ * @brief Bind interfaces given to probe to DPDK drivers
+ * @param args Probe's input arguments containing list of interfaces to use
+ */
+static void bind_interfaces(DDP::Arguments& args)
+{
+    // Check if uio_pci_generic module is loaded
+    bool module = check_module();
+
+    // Get list of network PCI devices on this machine
+    std::list<DDP::PciDevice> dev_list;
+    if (auto dir = opendir("/sys/bus/pci/devices/")) {
+        while (auto f = readdir(dir)) {
+            if (!f->d_name || f->d_name[0] == '.')
+                continue;
+
+            DDP::PciDevice tmp;
+            std::ifstream uevent("/sys/bus/pci/devices/" + std::string(f->d_name) + "/uevent");
+            if (uevent.fail())
+                continue;
+
+            std::string line;
+            while (std::getline(uevent, line)) {
+                std::string name = line.substr(0, line.find("="));
+                std::string value = line.substr(line.find("=") + 1, line.size() - 1);
+                if (name == "DRIVER")
+                    tmp.orig_driver = tmp.driver = value;
+                else if (name == "PCI_CLASS")
+                    tmp.class_ = value;
+                else if (name == "PCI_ID") {
+                    std::replace(value.begin(), value.end(), ':', ' ');
+                    tmp.vendor = value;
+                }
+                else if (name == "PCI_SLOT_NAME") {
+                    std::transform(value.begin(), value.end(), value.begin(), tolower);
+                    tmp.pci_id = value;
+                }
+            }
+            uevent.close();
+
+            if (auto dir2 = opendir(("/sys/bus/pci/devices/" + std::string(f->d_name) + "/net").c_str())) {
+                while (auto g = readdir(dir2)) {
+                    if (!g->d_name || g->d_name[0] == '.')
+                        continue;
+
+                    tmp.if_name.push_back(g->d_name);
+                }
+                closedir(dir2);
+            }
+
+            if (tmp.class_ == "20000")
+                dev_list.push_back(tmp);
+        }
+        closedir(dir);
+    }
+
+    // Match interfaces given as input arguments with list of available PCI devices
+    std::list<DDP::PciDevice> tobind;
+    for (auto dev : args.interfaces) {
+        bool found = false;
+        std::string lower_dev(dev);
+        std::transform(dev.begin(), dev.end(), lower_dev.begin(), tolower);
+        for (auto pci : dev_list) {
+            if (lower_dev == pci.pci_id || ("0000:" + lower_dev) == pci.pci_id) {
+                tobind.push_back(pci);
+                found = true;
+                break;
+            }
+
+            for (auto ifn : pci.if_name) {
+                if (dev == ifn) {
+                    tobind.push_back(pci);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found)
+                break;
+        }
+
+        if (!found)
+            throw std::runtime_error("Couldn't find interface: " + dev);
+    }
+
+    // Bind input interfaces to DPDK drivers
+    for (auto& dev : tobind) {
+        if (dev.driver == "uio_pci_generic" || dev.driver == "igb_uio" || dev.driver == "vfio-pci" ||
+            dev.driver == "vfio_pci") {
+            continue;
+        }
+
+        if (module)
+            bind(dev, "uio_pci_generic");
+        else
+            throw std::runtime_error("Can't bind interface " + dev.pci_id + " to DPDK driver." +
+                                      " Module uio_pci_generic not loaded!");
+    }
+
+    args.devices = tobind;
+}
+
+/**
+ * @brief Unbind interfaces given to probe from DPDK drivers to their original ones
+ * @param args Probe's input arguments containing list of interfaces to use
+ */
+static void unbind_interfaces(DDP::Arguments& args)
+{
+    for (auto& dev : args.devices) {
+        bind(dev, dev.orig_driver);
+    }
+}
+
 int main(int argc, char** argv)
 {
     DDP::ParsedArgs arguments;
@@ -45,19 +255,26 @@ int main(int argc, char** argv)
     } catch(std::invalid_argument& e) {
         DDP::Probe::print_help(argv[0]);
         BOOST_LOG_TRIVIAL(error) << e.what();
-        return 1;
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
 
     if(arguments.args.exit)
-        return 0;
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::STOP);
 
     auto& runner = DDP::Probe::getInstance();
 
     try {
+        bind_interfaces(arguments.args);
         runner.init(arguments.args);
     } catch (std::exception& e) {
         BOOST_LOG_TRIVIAL(error) << "Error: " << e.what() << std::endl << "Probe init failed!";
-        return 2;
+        try {
+            unbind_interfaces(arguments.args);
+        }
+        catch (std::exception& e) {
+            BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+        }
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
 
     std::vector<std::shared_ptr<DDP::Port>> ready_ports;
@@ -102,13 +319,32 @@ int main(int argc, char** argv)
 
         // Poll on configuration core
         try {
-            return static_cast<int>(runner.run(ready_ports));
+            auto ret = static_cast<int>(runner.run(ready_ports));
+            try {
+                unbind_interfaces(arguments.args);
+            }
+            catch (std::exception& e) {
+                BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+            }
+            return ret;
         } catch (std::exception &e) {
             BOOST_LOG_TRIVIAL(error) << "Uncaught exception: " << e.what();
-            return 128;
+            try {
+                unbind_interfaces(arguments.args);
+            }
+            catch (std::exception& e) {
+                BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+            }
+            return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);
         }
     } catch (std::exception& e) {
         BOOST_LOG_TRIVIAL(error) << e.what();
-        return 128;
+        try {
+            unbind_interfaces(arguments.args);
+        }
+        catch (std::exception& e) {
+            BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+        }
+        return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);
     }
 }

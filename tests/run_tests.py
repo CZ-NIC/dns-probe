@@ -66,6 +66,7 @@ vals = [
 ]
 
 def main():
+    retval = 0
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="path to dns-probe binary in build directory", required=True)
     parser.add_argument("-v", "--verbose", action="store_true", default=False, dest="verbose_switch",
@@ -107,6 +108,7 @@ def main():
         if len(os.listdir(os.getcwd())) == 0:
             print("Error: No parquet generated")
             print("xxx Fail")
+            retval = 1
             continue
         
         for file in os.listdir(os.getcwd()):
@@ -146,6 +148,7 @@ def main():
                 print("!!! Success")
             else:
                 print("xxx Fail")
+                retval = 1
             
             os.remove(file)
     
@@ -154,6 +157,7 @@ def main():
     
     os.chdir("../")
     os.rmdir(tmpdir)
+    return retval
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

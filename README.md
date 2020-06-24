@@ -26,14 +26,18 @@ dynamic configuration items will be applied instantly after the modification.
 
 * [data-model/cznic-dns-probe.yang](data-model/cznic-dns-probe.yang)
 
-# Installation from packages
-Packages for Debian 10 and 9 and Ubuntu 20.04, 18.04 and 16.04 are available from
-[OBS (openSUSE Build Service)](https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe).
-The OBS repository also contains packages with DNS probe's dependencies that don't have their
-own package in the distributions' standard repositories. These dependencies will be automatically
-installed as pre-requisites when installing DNS probe.
+# Installation
+DNS Probe can be used on Linux with kernel version at least 3.11. It also requires the system to support C++14 standard.
+Installation packages are available from [OBS (openSUSE Build Service)](https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe).
+The following distributions are currently supported: Debian 10 and 9, Ubuntu 20.04, 18.04 and 16.04.
 
-First you need to add the OBS repository for given distribution to your system's repository list and download the repository's signing key:
+The OBS repository also contains packages with several dependencies that are not provided by the distribution’s standard repositories.
+These dependencies will be automatically installed as pre-requisites when installing DNS Probe.
+
+On Linux distributions that are not (yet) supported, DNS Probe has to be compiled and built from source as described below.
+
+## Installation from packages
+The first two steps are to add the OBS repository for the given distribution to the system’s repository list, and download the repository’s signing key:
 
 ##### Debian 10
 ```shell
@@ -65,7 +69,8 @@ sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe
 wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_16.04/Release.key -O Release.key
 ```
 
-Now you need to add the signing key to your system, update the repository list and then you can finally install the DNS probe:
+The remaining steps are then identical for all distributions: the signing key is added to the system keyring, the repository list
+is updated, and finally the DNS Probe package is installed:
 
 ```shell
 sudo apt-key add - < Release.key
@@ -73,37 +78,35 @@ sudo apt-get update
 sudo apt-get install dns-probe-af dns-probe-dpdk
 ```
 
-DNS probe is separated into two packages (`dns-probe-af` and `dns-probe-dpdk`) differing by the backend used for processing packets.
-The `dns-probe-af` package uses AF packet sockets to process packets whereas the `dns-probe-dpdk` package uses DPDK framework.
-You can install just one of these packages without the other depending on which of the packet processing backends you want to use.
+Two alternative packages are available:
 
-The packages also automatically install the YANG module [cznic-dns-probe.yang](data-model/cznic-dns-probe.yang) with default configuration
-to Sysrepo datastore if you haven't done so manually yet.
+* `dns-probe-af` is compiled with support for AF_PACKET sockets
+
+* `dns-probe-dpdk` uses the DPDK framework.
+
+Package installation also initializes the Sysrepo datastore with a default configuration, if no configuration is found.
 
 # Installation from source
 
-This project has following required dependencies:
+This project has several dependencies that have to be installed first. The following packages
+should be available from standard distribution repositories:
 
-* [CMake >= 3.5](https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.zip)
-* [Linux OS (kernel at least 3.11)](http://kernel.org)
-* [Boost](https://www.boost.org/)
-* [Sysrepo 1.4.2](https://github.com/sysrepo/sysrepo/archive/v1.4.2.tar.gz)
-* [Arrow 0.16.0](https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz)
-* [C-DNS](https://gitlab.labs.nic.cz/knot/c-dns)
-* [libPCAP](https://www.tcpdump.org/)
+* [CMake](https://cmake.org/), version at least 3.5
+* [Boost](https://www.boost.org/) (C++ libraries)
+* [libpcap](https://www.tcpdump.org/)
+* [DPDK](https://www.dpdk.org/) (only for DPDK version)
 
-For DPDK backend the DNS probe also requires installed DPDK framework:
-* [DPDK >= 16.11](http://fast.dpdk.org/rel/dpdk-19.11.tar.xz)
-** Requires `libnuma-dev` and kernel headers installed
+Optionally, to build user documentation (`make doc`) or manual pages (`make man`) one additional dependency is required:
+* [Sphinx](https://www.sphinx-doc.org/en/master/)
 
+The following instructions describe how to compile DNS probe and the remaining dependencies. Also this approach
+installs all dependencies into local directory `dp-dep`.
 
-## Preparing dependencies for DNS Probe
+## Build directory
 
-Following steps describe how to compile all necessary dependencies for the DNS Probe. You can skip these steps
-if you have all dependencies installed through your package manager. Also this approach installs all dependencies into
-local directory `dp-dep`.
+Start with creating a directory where dependencies will be built and installed. Installation in a system directory,
+such as `/usr/local`, is also possible.
 
-Start with creating a folder for dependencies.
 ```shell
 mkdir dp-dep
 mkdir dp-dep/build
@@ -114,26 +117,16 @@ DEP_DIR="$(pwd)"
 Those commands create directory for downloaded packages (`dp-dep/dl`) and building directory (`dp-dep/build`). 
 The `dp-dep` directory is also used as target to install all compiled packages.
 
-### CMake
+### Apache Arrow
 
-CMake is usually available through the package managers on any Linux system. It's essential to have at least 
-version 3.5, otherwise compilation will fail.
-
-```shell
-curl -L https://github.com/Kitware/CMake/releases/download/v3.16.4/cmake-3.16.4.tar.gz > dl/cmake.tgz
-mkdir build/cmake
-tar -xf dl/cmake.tgz -C build/cmake --strip-components=1
-cd build/cmake
-./bootstrap --parallel=4 --prefix="$DEP_DIR" # Remove `--prefix="$DEP_DIR"` if you want to install CMake into /usr/local
-make -j
-make install
-cd "$DEP_DIR"
-PATH="$DEP_DIR/bin;$PATH"
-```
+Apache Arrow packages can be installed on most distributions from Apache's own [repositories](https://arrow.apache.org/install/).
+Debian/Ubuntu `libarrow-dev` and `libparquet-dev` packages or their equivalents in other distributions need to be
+installed for successful compilation of DNS probe.
 
 ### Sysrepo
-Sysrepo provides API to configuration storage. In the following steps it will install and compile sysrepo and its
-dependencies. 
+
+[Sysrepo](https://github.com/sysrepo/sysrepo) provides a configuration and management API. It uses
+[libyang](https://github.com/CESNET/libyang) library that needs to be installed first.
 
 ```shell
 curl -L https://github.com/CESNET/libyang/archive/v1.0.130.tar.gz > dl/libyang.tgz
@@ -157,37 +150,10 @@ make install
 cd "$DEP_DIR"
 ```
 
-### Arrow
-Arrow library provides API for working with parquet files.
-
-```shell
-curl -L https://github.com/apache/arrow/archive/apache-arrow-0.16.0.tar.gz > dl/arrow.tgz
-mkdir build/arrow
-tar -xf dl/arrow.tgz -C build/arrow --strip-components=1
-mkdir -p build/arrow/cpp/build
-cd build/arrow/cpp/build
-# Remove -DCMAKE_INSTALL_PREFIX="$DEP_DIR" if you want to install Arrow into /usr/local
-cmake .. -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DARROW_WITH_ZLIB=ON -DARROW_WITH_RAPIDJSON=ON -DARROW_BUILD_TESTS=OFF -DARROW_PARQUET=ON
-make -j
-make install
-cd "$DEP_DIR"
-```
-
 ### CDNS
-C-DNS is another format used for exporting collected statistics.
+[C-DNS Library](https://gitlab.labs.nic.cz/knot/c-dns) is used for working with the C-DNS format.
 
 ```shell
-curl -L https://github.com/PJK/libcbor/archive/v0.5.0.tar.gz > dl/libcbor.tgz
-mkdir build/libcbor
-tar -xf dl/libcbor.tgz -C build/libcbor --strip-components=1
-mkdir -p build/libcbor/build
-cd build/libcbor/build
-# Remove -DCMAKE_INSTALL_PREFIX="$DEP_DIR" if you want to install libcbor into /usr/local
-cmake .. -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release
-make -j
-make install
-cd "$DEP_DIR"
-
 curl -L https://gitlab.labs.nic.cz/knot/c-dns/-/archive/master/c-dns-master.tar.gz > dl/cdns.tgz
 mkdir build/cdns
 tar -xf dl/cdns.tgz -C build/cdns --strip-components=1
@@ -200,26 +166,6 @@ make install
 cd "$DEP_DIR"
 ```
 
-
-### DPDK
-DPDK framework is required only when the DPDK backend is enabled in compilation process of the DNS Probe.
-
-```shell
-curl -L http://fast.dpdk.org/rel/dpdk-19.11.tar.xz > dl/dpdk.tgz
-mkdir build/dpdk
-tar -xf dl/dpdk.tgz -C build/dpdk --strip-components=1
-cd build/dpdk
-meson build -Dprefix="$DEP_DIR" # Remove `-Dprefix="$DEP_DIR"` if you want to install DPDK into /usr/local
-cd build
-ninja install
-cd "$DEP_DIR"
-```
-
-After these steps, the directory `ddp-dep/lib/modules/<kernel_version>/extra/dpdk/` will contain compiled drivers.
-The `rte_kni.ko` driver is currently not used by the DPDK DNS Probe application. `igb_uio.ko` is the driver used for
-accessing Intel network cards over [UIO](https://www.kernel.org/doc/html/v4.11/driver-api/uio-howto.html) and
-it has to be loaded when using these cards.
-
 ## Compiling and installing DNS Probe
 
 ```shell
@@ -230,48 +176,62 @@ make -j
 make install
 ```
 
-To run DNS probe the YANG module with default configuration also needs to be installed to Sysrepo datastore:
+Finally, YANG module containing the data model for DNS Probe and default configuration also need to be installed:
 
 ```shell
-sudo sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
+sudo $DEP_DIR/bin/sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
 ```
 
 # Running DNS Probe
 
+It is recommended to run DNS Probe as a [systemd](https://www.freedesktop.org/wiki/Software/systemd/) service.
+Alternatively, it is possible to start it from the command line using shell scripts that are part of the DNS Probe distribution.
+These shell scripts can also be used as a basis for integration with other init systems.
+
 ## Running as systemd service
-Installation from packages includes a *systemd* service `dns-probe-<BACKEND>@.service` where `<BACKEND>` is either `af` or `dpdk` depending
-on the package you installed.
+Installation packages include a *systemd* unit file `dns-probe-<BACKEND>.service`, where `<BACKEND>` is either `af` or `dpdk` depending
+on the backend that the package installs.
 
 The *systemd* service can be run like this:
 
 ```shell
-sudo systemctl start dns-probe-<BACKEND>@<FILE>.service
-```
-To stop, enable or restart the service use the appropriate `systemctl` subcommands.
-
-The service takes a parameter `<FILE>` which is a name of configuration file located at `/etc/dns-probe-<BACKEND>/<FILE>.conf` that contains
-command line parameters for DNS probe instance. Without this file the *systemd* service will fail. Installation from packages supplies
-a default configuration file at `/etc/dns-probe-<BACKEND>/probe.conf` which looks like this:
-
-```
-DAEMON_ARGS="-i lo -l /var/log/dns-probe-<BACKEND>@probe.log"
+sudo systemctl start dns-probe-<BACKEND>.service
 ```
 
-This configuration file runs DNS probe on loopback interface and saves its logs to `/var/log/dns-probe-<BACKEND>@probe.log` file. The user
-should change the `-i` parameter to a network interface that DNS probe should process packets from and then start the *systemd*
-service.
+Other `systemctl` subcommands can be used to stop, enable or restart the service.
+
+By default the *systemd* service reads packets from loopback interface. To make the service read packets from different network interface
+the unit file should be modified like this:
+
+```shell
+sudo systemctl edit dns-probe-<BACKEND>.service
+```
+
+This command creates an override file for the *systemd* service in `/etc/systemd/system/dns-probe-<BACKEND>.service.d/override.conf` and
+opens it in default text editor. The `ExecStart=...` line from original *systemd* service should be overwritten here to include the desired
+network interface from which to read packets. The override file can look like this:
+
+```
+[Service]
+ExecStart=
+ExecStart=/path/to/dns-probe-<BACKEND> -i <NETWORK_INTERFACE> -l /var/log/dns-probe-<BACKEND>.log
+```
+
+After the modification is done the *systemd* service can be started as usual.
 
 ## Running from command line
-After installation of both backends the following executables are created:
+For each backend, one binary program and one shell script is installed. Their names are shown in table below.
 
-* `dns-probe-af` (AF backend), `dns-probe-dpdk` (DPDK backend) - These binaries contain the application itself
-* `dp-af` (AF backend), `dp-dpdk` (DPDK backend) - These scripts take command line parameters, pass them to corresponding
-backend executable and start it. When the application receives a restart RPC
-through sysrepo the application exits with return code 1. This wrapper detects
-that code and reruns the application again. If the return code differs from
-1 than the script exits and returns the same code as wrapped application.
+| **Backend** | **Binary program** | **Wrapper script** |
+| ----------- | ------------------ | ------------------ |
+| AF_PACKET   | `dns-probe-af`     | `dp-af`            |
+| DPDK        | `dns-probe-dpdk`   | `dp-dpdk`          |
 
-* `ddp-bind` (DPDK backend) - Simplifies the usage of DPDK version. Internally runs `dp-dpdk`.
+The wrapper shell scripts accept the same options as the corresponding backend binary, and start the binary with these options.
+If the running binary program receives the *restart* operation through Sysrepo, it exits with return code 1. The wrapper script
+then starts the same binary again.
+
+For other codes returned by the binary, the wrapper script just exits and returns the same code.
                                             
 Both backend variants support these command line parameters:
 
@@ -288,13 +248,10 @@ The format of `<INTERFACE>` depends on used backend.
 
     * AF packet backend - The `<INTERFACE>` is name of network interface defined by kernel. List of available interfaces
                           provides for example command `ip link`.
-    * DPDK backend - The `<INTERFACE>` is expected in format of PCI function ID device. For example `00:1f.6` where
-    `00:1f` is PCI device and `6` is funcation number. Usually the last part specifies concrete physical
-    interface on NIC. For more information about usage with DPDK backend see
-    [next section](#DPDK backend).
-                     
-        When the DPDK version is started with `ddp-bind` instead of `dp-dpdk` then `<INTERFACE>` is standard interface
-        defined by kernel as in case of AF packet backend.
+    * DPDK backend - The `<INTERFACE>` is either name of network interface defined by kernel or in format of PCI function ID device.
+                     For example `00:1f.6` where `00:1f` is PCI device and `6` is funcation number. Usually the last part specifies
+                     concrete physical interface on NIC. For more information about usage with DPDK backend see [next section](#DPDK backend).
+
 
 * `-l <LOGFILE>` - Redirects probe's logs to LOGFILE instead of standard output.
 
@@ -302,18 +259,24 @@ The format of `<INTERFACE>` depends on used backend.
 
 # DPDK backend
 
-For running the DNS Probe with DPDK backend you have to allocate huge pages. This requires root privileges
-and following steps:
+For running DNS Probe with DPDK backend, a portion of memory with huge pages has to be allocated. This is done in two steps,
+both requiring root privileges:
 
-1. Mount the huge pages file system
+1. mount the huge pages file system
+2. allocate huge pages
 
-    * On some system the huge pages FS is automatically allocated. You can check it with command
-    `mount | grep -E ^hugetlbfs`. If the command prints some row 
-    (e.g. `hugetlbfs on /dev/hugepages type hugetlbfs (rw,relatime,pagesize=2M)`), then you have huge pages FS mounted.
-     
-2. Allocate huge pages
+On some systems, the huge pages FS is mounted automatically, so step #1 can be ommited. It can be checked by runnning the command:
+```shell
+mount | grep -E ^hugetlbfs
+```
 
-Following script automatically mounts huge pages file system (if necessary) and allocates 4 GB of memory for
+If the command prints something similar to 
+```shell
+hugetlbfs on /dev/hugepages type hugetlbfs (rw,relatime,pagesize=2M)
+```
+then the huge pages FS is already mounted.
+
+The following script automatically mounts huge pages file system (if necessary) and allocates 4 GB of memory for
 huge pages.
  
 ```shell
@@ -347,11 +310,15 @@ function set_pages() {
 set_pages 4 # Allocates 4 GB as huge pages
 ```
 
-The DNS probe with DPDK backend expects that used NIC interfaces have binded DPDK drivers. 
-For binding drivers there are two options. The easiest way is to run DNS probe through script `ddp-bind`. This script is
-installed with other executables. Its main purpose is to bind DPDK drivers to given interfaces and launch
-DNS probe. When the application stops the script binds original drivers back. Command line arguments are identical to 
-those used by `dns-probe-af` so you can specify interfaces by their name instead of PCI ID.
+Network cards used with the DPDK backend have to be bound to DPDK-compatible drivers. The easier way of doing this is to run
+`dns-probe-dpdk` or `dp-dpdk` with the `-i` parameter(s) specifying the NIC name such as `eth0`. DNS Probe will then attempt to
+automatically bind these interfaces to the `uio_pci_generic` driver and, when it exits, it will bind the interfaces back to their
+original driver. For this to work, the `uio_pci_generic` module needs to be loaded manually like this:
 
-The other way how to bind drivers is decribed in the
-[DPDK documentation](https://doc.dpdk.org/guides/linux_gsg/sys_reqs.html#running-dpdk-applications).
+```shell
+sudo modprobe uio_pci_generic
+```
+
+The other way is to bind the NICs to DPDK-compatible drivers manually before running DNS Probe. In this case, the NICs
+have to be identified by their PCI IDs in `-i` options. Details about binding network interfaces manually are described
+in the [DPDK documentation](https://doc.dpdk.org/guides/linux_gsg/linux_drivers.html).

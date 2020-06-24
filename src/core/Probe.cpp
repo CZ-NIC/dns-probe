@@ -153,11 +153,11 @@ void DDP::Probe::print_help(const char* app)
     if (BACKEND == PacketBackend::Socket)
         interface = "interface name e.g. eth0";
     else
-        interface = "interface PCI ID e.g. 00:1f.6";
+        interface = "interface name e.g. eth0 or PCI ID e.g. 00:1f.6";
 
     std::cout << std::endl << app << std::endl
-              << "\t-p PCAP      : input pcap files; parameter can repeat" << std::endl
-              << "\t-i INTERFACE : " << interface << std::endl
+              << "\t-p PCAP      : input pcap files. Parameter can repeat." << std::endl
+              << "\t-i INTERFACE : " << interface << ". Parameter can repeat." << std::endl
               << "\t-r           : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
               << "\t-l LOGFILE   : redirect probe's logs to LOGFILE instead of standard output" << std::endl
               << "\t-h           : this help message" << std::endl;

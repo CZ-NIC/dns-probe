@@ -1,0 +1,13 @@
+# DNS probe daemon
+# Modify probe's parameters in ExecStart= to fit your use case
+[Unit]
+Description=Daemon for DNS probe
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/dns-probe-@BACKEND@ -i lo -l /var/log/dns-probe-@BACKEND@.log
+
+[Install]
+WantedBy=multi-user.target
