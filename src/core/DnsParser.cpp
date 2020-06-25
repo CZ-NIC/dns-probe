@@ -40,7 +40,7 @@ DDP::DnsParser::DnsParser(Config& cfg, unsigned process_id, DDP::Mempool<DDP::Dn
         m_export_invalid(cfg.pcap_export.value() == PcapExportCfg::INVALID),
         m_pcap_inv(cfg, cfg.pcap_export.value() == PcapExportCfg::INVALID, process_id),
         m_processed_packet{nullptr},
-        m_dns_port(cfg.dns_port),
+        m_dns_ports(cfg.dns_ports),
         m_stats(stats)
 {
     if (!m_msg_buffer)
@@ -447,7 +447,15 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& 
     auto src_port = ntohs(udp_header->source);
     auto dst_port = ntohs(udp_header->dest);
 
-    if (src_port != m_dns_port && dst_port != m_dns_port) {
+    bool is_dns = false;
+    for (auto& dns_port : m_dns_ports) {
+        if (src_port == dns_port || dst_port == dns_port) {
+            is_dns = true;
+            break;
+        }
+    }
+
+    if (!is_dns) {
         put_back_record(record);
         throw NonDnsException("Packet doesn't contain DNS UDP port.");
     }
@@ -480,7 +488,15 @@ bool DDP::DnsParser::parse_l4_tcp(const DDP::MemView<uint8_t>& pkt, DDP::DnsReco
     auto src_port = ntohs(tcp_header->source);
     auto dst_port = ntohs(tcp_header->dest);
 
-    if (src_port != m_dns_port && dst_port != m_dns_port) {
+    bool is_dns = false;
+    for (auto& dns_port : m_dns_ports) {
+        if (src_port == dns_port || dst_port == dns_port) {
+            is_dns = true;
+            break;
+        }
+    }
+
+    if (!is_dns) {
         put_back_record(record);
         throw NonDnsException("Packet doesn't contain DNS TCP port.");
     }

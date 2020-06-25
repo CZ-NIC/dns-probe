@@ -19,6 +19,7 @@
 
 #include <exception>
 #include <vector>
+#include <list>
 
 #include <cstdint>
 #include <arpa/inet.h> // in6_addr
@@ -307,7 +308,7 @@ namespace DDP {
         bool m_export_invalid;
         PcapWriter m_pcap_inv;
         const Packet* m_processed_packet;
-        uint16_t m_dns_port;
+        std::list<uint16_t> m_dns_ports;
         Statistics& m_stats;
 
         /**
