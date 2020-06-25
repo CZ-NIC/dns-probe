@@ -59,6 +59,15 @@ module cznic-dns-probe {
          This is a static configuration parameter that is applied
          only upon restarting the probe.";
     }
+    leaf-list dns-ports {
+      type uint16;
+      default "53";
+      description
+        "List of ports used for identifying DNS traffic.
+
+        This is a static configuration parameter that is applied
+        only upon restarting the probe.";
+    }
     container export {
       description
         "Configuration of exported data.";

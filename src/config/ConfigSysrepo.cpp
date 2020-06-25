@@ -104,6 +104,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
         {SYSCONF_CFG_ROOT "/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
         {SYSCONF_CFG_ROOT "/dns-port",                           m_cfg.dns_port},
+        {SYSCONF_CFG_ROOT "/dns-ports",                          m_cfg.dns_ports},
 }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     try {
@@ -119,14 +120,14 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
 
     for (auto&& item : m_path_map) {
         try {
-            auto val = tree->find_path(item.first.c_str())->data()[0];
-
-            if (val) {
-                m_logger.debug() << "Setting new value for " << item.first << " (old value: " << item.second.string() << ")";
-                item.second.from_sysrepo(conv_sysrepo_data(val));
-                m_logger.debug() << "New value for " << item.first << " is " << item.second.string();
-            } else
-                m_logger.warning() << "Config for path '" << item.first << "' not found!";
+            for (auto val : tree->find_path(item.first.c_str())->data()) {
+                if (val) {
+                    m_logger.debug() << "Setting new value for " << item.first << " (old value: " << item.second.string() << ")";
+                    item.second.from_sysrepo(conv_sysrepo_data(val));
+                    m_logger.debug() << "New value for " << item.first << " is " << item.second.string();
+                } else
+                    m_logger.warning() << "Config for path '" << item.first << "' not found!";
+            }
         } catch (sysrepo::sysrepo_exception& e) {
             m_logger.warning() << "Getting config for path '" << item.first << "' failed! (" << e.what() << ")";
         }

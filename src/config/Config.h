@@ -34,6 +34,7 @@ namespace DDP {
     {
         ConfigItem<ThreadManager::MaskType> coremask; //!< Coremask used fo selecting cores where application will be running.
         ConfigItem<uint16_t> dns_port; //!< TCP/UDP port used for identifying DNS traffic
+        PortList dns_ports;
 
         ConfigItem<uint32_t> tt_size; //!< Number of items in the transaction table
         ConfigItem<uint64_t> tt_timeout; //!< Timeout for orphaned items transaction table in milliseconds

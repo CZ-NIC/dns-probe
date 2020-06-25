@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <list>
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
@@ -334,5 +335,56 @@ namespace DDP {
 
     protected:
         Type m_value{0x0}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for std::list<uint16_t> as config item.
+     */
+    class PortList: public ConfigItemBase
+    {
+        using Type = std::list<uint16_t>;
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        Type value() const { return m_value; }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo.
+         */
+        void from_sysrepo(const boost::any& value) override
+        {
+            m_value.push_back(boost::any_cast<uint16_t>(value));
+        }
+
+        /**
+         * Implicit conversion to PortList.
+         * @return Saved value.
+         */
+        operator Type() const { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            std::stringstream str;
+            bool first = true;
+            for (auto& val : m_value) {
+                if (first) {
+                    str << std::to_string(val);
+                    first = false;
+                }
+                else
+                    str << ", " << std::to_string(val);
+            }
+            return str.str();
+        }
+
+    protected:
+        Type m_value{};
     };
 }
