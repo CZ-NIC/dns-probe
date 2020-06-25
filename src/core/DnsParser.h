@@ -266,7 +266,6 @@ namespace DDP {
          */
         void update_configuration(Config& cfg) {
             m_export_invalid = cfg.pcap_export.value() == PcapExportCfg::INVALID;
-            m_dns_port = cfg.dns_port;
             m_pcap_inv.update_configuration(cfg);
             m_tcp_table.set_timeout(cfg.tcp_ct_timeout);
         }
