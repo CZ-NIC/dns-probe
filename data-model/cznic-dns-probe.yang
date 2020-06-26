@@ -10,6 +10,10 @@ module cznic-dns-probe {
     prefix yang;
   }
 
+  import ietf-inet-types {
+    prefix inet;
+  }
+
   organization
     "CZ.NIC, z. s. p. o.";
 
@@ -49,6 +53,42 @@ module cznic-dns-probe {
 
          This is a static configuration parameter that is applied
          only upon restarting the probe.";
+    }
+    leaf-list ipv4-allowlist {
+      type inet:ipv4-address-no-zone;
+      description
+        "List of allowed IPv4 addresses to process traffic from.
+        By default all IPv4 addresses are allowed.
+
+        This is a static configuration parameter that is applied
+        only upon restarting the probe.";
+    }
+    leaf-list ipv4-denylist {
+      type inet:ipv4-address-no-zone;
+      description
+        "List of IPv4 addresses from which to NOT process traffic.
+        By default all IPv4 addresses are allowed.
+
+        This is a static configuration parameter that is applied
+        only upon restarting the probe.";
+    }
+    leaf-list ipv6-allowlist {
+      type inet:ipv6-address-no-zone;
+      description
+        "List of allowed IPv6 addresses to process traffic from.
+        By default all IPv6 addresses are allowed.
+
+        This is a static configuration parameter that is applied
+        only upon restarting the probe.";
+    }
+    leaf-list ipv6-denylist {
+      type inet:ipv6-address-no-zone;
+      description
+        "List of IPv6 addresses from which to NOT process traffic.
+        By default all IPv6 addresses are allowed.
+
+        This is a static configuration parameter that is applied
+        only upon restarting the probe.";
     }
     leaf-list dns-ports {
       type uint16;

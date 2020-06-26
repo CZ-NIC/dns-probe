@@ -25,6 +25,8 @@
 #include <algorithm>
 #include <cstring>
 #include <sstream>
+#include <arpa/inet.h>
+#include <sys/socket.h>
 #include <boost/any.hpp>
 #include <type_traits>
 #include <sysrepo-cpp/Session.hpp>
@@ -340,7 +342,7 @@ namespace DDP {
     /**
      * Specialized implementation for std::list<uint16_t> as config item.
      */
-    class PortList: public ConfigItemBase
+    class ConfigPortList: public ConfigItemBase
     {
         using Type = std::list<uint16_t>;
     public:
@@ -385,6 +387,124 @@ namespace DDP {
         }
 
     protected:
-        Type m_value{};
+        Type m_value{}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for std::list<in_addr> as config item.
+     */
+    class ConfigIPv4List: public ConfigItemBase
+    {
+        using Type = std::list<in_addr>;
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        Type value() const { return m_value; }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo.
+         */
+        void from_sysrepo(const boost::any& value) override
+        {
+            in_addr addr;
+            int ret = inet_pton(AF_INET, boost::any_cast<std::string>(value).c_str(), &addr);
+            if (ret != 1)
+                throw std::invalid_argument("IPv4 list doesn't contain valid IPv4 address.");
+            m_value.push_back(addr);
+        }
+
+        /**
+         * Implicit conversion to IPv4List
+         * @return Save value.
+         */
+        operator Type() const { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            std::stringstream str;
+            bool first = true;
+            for (auto& val : m_value) {
+                char buff[INET_ADDRSTRLEN + 4];
+                auto* ret = inet_ntop(AF_INET, &val, buff, INET_ADDRSTRLEN + 4);
+                if (!ret)
+                    continue;
+                if (first) {
+                    str << buff;
+                    first = false;
+                }
+                else
+                    str << ", " << buff;
+            }
+            return str.str();
+        }
+
+    protected:
+        Type m_value{}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for std::list<in6_addr> as config item.
+     */
+    class ConfigIPv6List: public ConfigItemBase
+    {
+        using Type = std::list<in6_addr>;
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        Type value() const { return m_value; }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo.
+         */
+        void from_sysrepo(const boost::any& value) override
+        {
+            in6_addr addr;
+            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), &addr);
+            if (ret != 1)
+                throw std::invalid_argument("IPv6 list doesn't contain valid IPv6 address.");
+            m_value.push_back(addr);
+        }
+
+        /**
+         * Implicit conversion to IPv6List
+         * @return Save value.
+         */
+        operator Type() const { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            std::stringstream str;
+            bool first = true;
+            for (auto& val : m_value) {
+                char buff[INET6_ADDRSTRLEN + 4];
+                auto* ret = inet_ntop(AF_INET6, &val, buff, INET6_ADDRSTRLEN + 4);
+                if (!ret)
+                    continue;
+                if (first) {
+                    str << buff;
+                    first = false;
+                }
+                else
+                    str << ", " << buff;
+            }
+            return str.str();
+        }
+
+    protected:
+        Type m_value{}; //!< Saved value.
     };
 }

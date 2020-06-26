@@ -87,6 +87,10 @@ static boost::any conv_sysrepo_data(libyang::S_Data_Node data)
 
 DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_map{
         {SYSCONF_CFG_ROOT "/coremask",                           m_cfg.coremask},
+        {SYSCONF_CFG_ROOT "/ipv4-allowlist",                     m_cfg.ipv4_allowlist},
+        {SYSCONF_CFG_ROOT "/ipv4-denylist",                      m_cfg.ipv4_denylist},
+        {SYSCONF_CFG_ROOT "/ipv6-allowlist",                     m_cfg.ipv6_allowlist},
+        {SYSCONF_CFG_ROOT "/ipv6-denylist",                      m_cfg.ipv6_denylist},
         {SYSCONF_CFG_ROOT "/transaction-table/max-transactions", m_cfg.tt_size},
         {SYSCONF_CFG_ROOT "/transaction-table/query-timeout",    m_cfg.tt_timeout},
         {SYSCONF_CFG_ROOT "/transaction-table/match-qname",      m_cfg.match_qname},
