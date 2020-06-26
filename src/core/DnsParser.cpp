@@ -41,6 +41,10 @@ DDP::DnsParser::DnsParser(Config& cfg, unsigned process_id, DDP::Mempool<DDP::Dn
         m_pcap_inv(cfg, cfg.pcap_export.value() == PcapExportCfg::INVALID, process_id),
         m_processed_packet{nullptr},
         m_dns_ports(cfg.dns_ports),
+        m_ipv4_allowlist(cfg.ipv4_allowlist),
+        m_ipv4_denylist(cfg.ipv4_denylist),
+        m_ipv6_allowlist(cfg.ipv6_allowlist),
+        m_ipv6_denylist(cfg.ipv6_denylist),
         m_stats(stats)
 {
     if (!m_msg_buffer)
@@ -356,6 +360,35 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
 
     auto ipv4_header = reinterpret_cast<const iphdr*>(pkt.ptr());
 
+    bool allowed = true;
+    if (!m_ipv4_allowlist.empty()) {
+        bool deny = true;
+        for (auto& ipv4 : m_ipv4_allowlist) {
+            if ((std::memcmp(&(ipv4_header->saddr), &ipv4, IPV4_ADDRLEN) == 0) ||
+                (std::memcmp(&(ipv4_header->daddr), &ipv4, IPV4_ADDRLEN) == 0)) {
+                deny = false;
+                break;
+            }
+        }
+
+        if (deny)
+            allowed = false;
+    }
+    else if (!m_ipv4_denylist.empty() && m_ipv4_allowlist.empty()) {
+        for (auto& ipv4 : m_ipv4_denylist) {
+            if ((std::memcmp(&(ipv4_header->saddr), &ipv4, IPV4_ADDRLEN) == 0) ||
+                (std::memcmp(&(ipv4_header->daddr), &ipv4, IPV4_ADDRLEN) == 0)) {
+                allowed = false;
+                break;
+            }
+        }
+    }
+
+    if (!allowed) {
+        put_back_record(record);
+        throw NonDnsException("IPv4 addresses not on allowed list.");
+    }
+
     if(std::memcmp(&(ipv4_header->saddr), &(ipv4_header->daddr), IPV4_ADDRLEN) > 0) {
         std::memcpy(&(record.m_addr[0]), &(ipv4_header->daddr), IPV4_ADDRLEN);
         std::memcpy(&(record.m_addr[1]), &(ipv4_header->saddr), IPV4_ADDRLEN);
@@ -399,6 +432,35 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
     }
 
     auto ipv6_header = reinterpret_cast<const ip6_hdr*>(pkt.ptr());
+
+    bool allowed = true;
+    if (!m_ipv6_allowlist.empty()) {
+        bool deny = true;
+        for (auto& ipv6 : m_ipv6_allowlist) {
+            if ((std::memcmp(&(ipv6_header->ip6_src), &ipv6, IPV6_ADDRLEN) == 0) ||
+                (std::memcmp(&(ipv6_header->ip6_dst), &ipv6, IPV6_ADDRLEN) == 0)) {
+                deny = false;
+                break;
+            }
+        }
+
+        if (deny)
+            allowed = false;
+    }
+    else if (!m_ipv6_denylist.empty() && m_ipv6_allowlist.empty()) {
+        for (auto& ipv6 : m_ipv6_denylist) {
+            if ((std::memcmp(&(ipv6_header->ip6_src), &ipv6, IPV6_ADDRLEN) == 0) ||
+                (std::memcmp(&(ipv6_header->ip6_dst), &ipv6, IPV6_ADDRLEN) == 0)) {
+                allowed = false;
+                break;
+            }
+        }
+    }
+
+    if (!allowed) {
+        put_back_record(record);
+        throw NonDnsException("IPv6 addresses not on allowed list.");
+    }
 
     if(std::memcmp(&ipv6_header->ip6_src, &ipv6_header->ip6_dst, IPV6_ADDRLEN) > 0) {
         std::memcpy(&(record.m_addr[0]), &ipv6_header->ip6_dst, IPV6_ADDRLEN);

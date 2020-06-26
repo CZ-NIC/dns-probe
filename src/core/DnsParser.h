@@ -309,6 +309,10 @@ namespace DDP {
         PcapWriter m_pcap_inv;
         const Packet* m_processed_packet;
         std::list<uint16_t> m_dns_ports;
+        std::list<in_addr> m_ipv4_allowlist;
+        std::list<in_addr> m_ipv4_denylist;
+        std::list<in6_addr> m_ipv6_allowlist;
+        std::list<in6_addr> m_ipv6_denylist;
         Statistics& m_stats;
 
         /**
