@@ -356,6 +356,12 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
 
     auto ipv4_header = reinterpret_cast<const iphdr*>(pkt.ptr());
 
+    end = ipv4_header->ihl * 4;
+    if(end > pkt.count()) {
+        put_back_record(record);
+        throw DnsParseException("Packet is too short. Probably missing part of IPv4 header.");
+    }
+
     if(std::memcmp(&(ipv4_header->saddr), &(ipv4_header->daddr), IPV4_ADDRLEN) > 0) {
         std::memcpy(&(record.m_addr[0]), &(ipv4_header->daddr), IPV4_ADDRLEN);
         std::memcpy(&(record.m_addr[1]), &(ipv4_header->saddr), IPV4_ADDRLEN);
