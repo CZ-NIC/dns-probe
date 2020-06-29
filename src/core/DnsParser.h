@@ -180,6 +180,7 @@ namespace DDP {
          * @brief Parse packet's L2 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
@@ -189,6 +190,7 @@ namespace DDP {
          * @brief Parse packet's L3 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
@@ -198,6 +200,7 @@ namespace DDP {
          * @brief Parse packet's IPv4 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
@@ -207,6 +210,7 @@ namespace DDP {
          * @brief Parse packet's IPv6 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
@@ -216,6 +220,7 @@ namespace DDP {
          * @brief Parse packet's UDP header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
