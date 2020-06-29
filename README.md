@@ -12,3 +12,4 @@ make html
 ```
 
 The resulting documentation is then located in `_build/html`.
+
