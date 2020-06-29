@@ -361,6 +361,12 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
 
     auto ipv4_header = reinterpret_cast<const iphdr*>(pkt.ptr());
 
+    end = ipv4_header->ihl * 4;
+    if(end > pkt.count()) {
+        put_back_record(record);
+        throw DnsParseException("Packet is too short. Probably missing part of IPv4 header.");
+    }
+
     if (!m_ipv4_allowlist.empty()) {
         bool deny = true;
         for (auto& ipv4 : m_ipv4_allowlist) {
