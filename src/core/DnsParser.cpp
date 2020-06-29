@@ -310,7 +310,7 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_e
     return ptr;
 }
 
-DDP::MemView<uint8_t> DDP::DnsParser::parse_l2(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
+DDP::MemView<uint8_t> DDP::DnsParser::parse_l2(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record, bool& drop)
 {
     // Check if packet is long enough to contain valid ethernet header
     if(pkt.count() < sizeof(ether_header)) {
@@ -321,13 +321,13 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l2(const DDP::MemView<uint8_t>& pkt,
     auto eth_header = reinterpret_cast<const ether_header*>(pkt.ptr());
     if (!(eth_header->ether_type & ETHER_TYPE_IPV4 || eth_header->ether_type & ETHER_TYPE_IPV6)) {
         put_back_record(record);
-        throw NonDnsException("L3 layer doesn't contain IPv4/IPv6 header.");
+        drop = true;
     }
 
     return pkt.offset(sizeof(ether_header));
 }
 
-DDP::MemView<uint8_t> DDP::DnsParser::parse_l3(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
+DDP::MemView<uint8_t> DDP::DnsParser::parse_l3(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record, bool& drop)
 {
     // Check if first byte of L3 header exists
     if(!pkt.count()) {
@@ -339,18 +339,19 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l3(const DDP::MemView<uint8_t>& pkt,
     auto ip_bits = *pkt.ptr() >> 4;
 
     if(ip_bits == IP_VERSION_4) {
-        return parse_ipv4(pkt, record);
+        return parse_ipv4(pkt, record, drop);
     }
     else if(ip_bits == IP_VERSION_6) {
-        return parse_ipv6(pkt, record);
+        return parse_ipv6(pkt, record, drop);
     }
     else {
         put_back_record(record);
-        throw NonDnsException("L3 layer doesn't contain IPv4/IPv6 header.");
+        drop = true;
+        return pkt;
     }
 }
 
-DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
+DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record, bool& drop)
 {
     auto end = sizeof(iphdr);
     if(end > pkt.count()) {
@@ -385,8 +386,9 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
     }
 
     if (!allowed) {
+        drop = true;
         put_back_record(record);
-        throw NonDnsException("IPv4 addresses not on allowed list.");
+        return pkt;
     }
 
     if(std::memcmp(&(ipv4_header->saddr), &(ipv4_header->daddr), IPV4_ADDRLEN) > 0) {
@@ -412,7 +414,8 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
             break;
         default:
             put_back_record(record);
-            throw NonDnsException("Unsupported L4 layer.");
+            drop = true;
+            return pkt;
     }
 
     if (ntohs(ipv4_header->tot_len) > pkt.count()) {
@@ -423,7 +426,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
     return MemView<uint8_t>(pkt.offset(end).ptr(), ntohs(ipv4_header->tot_len) - end);
 }
 
-DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
+DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record, bool& drop)
 {
     auto end = sizeof(ip6_hdr);
     if(end > pkt.count()) {
@@ -458,8 +461,9 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
     }
 
     if (!allowed) {
+        drop = true;
         put_back_record(record);
-        throw NonDnsException("IPv6 addresses not on allowed list.");
+        return pkt;
     }
 
     if(std::memcmp(&ipv6_header->ip6_src, &ipv6_header->ip6_dst, IPV6_ADDRLEN) > 0) {
@@ -485,7 +489,8 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
             break;
         default:
             put_back_record(record);
-            throw NonDnsException("Unsupported L4 layer.");
+            drop = true;
+            return pkt;
     }
 
     if ((ntohs(ipv6_header->ip6_ctlun.ip6_un1.ip6_un1_plen) + end) > pkt.count()) {
@@ -496,7 +501,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
     return MemView<uint8_t>(pkt.offset(end).ptr(), ntohs(ipv6_header->ip6_ctlun.ip6_un1.ip6_un1_plen));
 }
 
-DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
+DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record, bool& drop)
 {
     auto end = sizeof(udphdr);
     if(end > pkt.count()) {
@@ -519,7 +524,8 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& 
 
     if (!is_dns) {
         put_back_record(record);
-        throw NonDnsException("Packet doesn't contain DNS UDP port.");
+        drop = true;
+        return pkt;
     }
 
     record.m_port[static_cast<int>(record.m_client_index)] = src_port;
@@ -558,10 +564,8 @@ bool DDP::DnsParser::parse_l4_tcp(const DDP::MemView<uint8_t>& pkt, DDP::DnsReco
         }
     }
 
-    if (!is_dns) {
-        put_back_record(record);
-        throw NonDnsException("Packet doesn't contain DNS TCP port.");
-    }
+    if (!is_dns)
+        return false;
 
     record.m_port[static_cast<int>(record.m_client_index)] = src_port;
     record.m_port[!static_cast<int>(record.m_client_index)] = dst_port;
@@ -576,7 +580,6 @@ bool DDP::DnsParser::parse_l4_tcp(const DDP::MemView<uint8_t>& pkt, DDP::DnsReco
     }
     connection->set_hash(record.do_tcp_hash());
 
-    // TODO Handle exception thrown from bad tcp table allocation
     bool export_record;
     try {
         auto gate = m_tcp_table[*connection];
@@ -671,15 +674,23 @@ std::vector<DDP::DnsRecord*> DDP::DnsParser::parse_packet(const Packet& packet)
 
     auto pkt = packet.payload();
     m_processed_packet = &packet;
+    bool drop = false;
 
     if (!m_raw_pcap) {
-        pkt = parse_l2(pkt, record);
+        pkt = parse_l2(pkt, record, drop);
+        if (drop)
+            return records;
     }
 
-    pkt = parse_l3(pkt, record);
+    pkt = parse_l3(pkt, record, drop);
+
+    if (drop)
+        return records;
 
     if (record.m_proto == DDP::DnsRecord::Proto::UDP) {
-        pkt = parse_l4_udp(pkt, record);
+        pkt = parse_l4_udp(pkt, record, drop);
+        if (drop)
+            return records;
 
         parse_dns(pkt, record);
         record.do_hash();

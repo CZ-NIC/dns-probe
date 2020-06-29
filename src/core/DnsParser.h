@@ -59,16 +59,6 @@ namespace DDP {
     };
 
     /**
-     * @brief Exception thrown if non-DNS packet is encountered in DNS Parser
-     */
-    class NonDnsException : public std::runtime_error
-    {
-    public:
-        explicit NonDnsException( const std::string& what_arg ) : std::runtime_error(what_arg) {}
-        explicit NonDnsException( const char* what_arg ) : std::runtime_error(what_arg) {}
-    };
-
-    /**
      * @brief This class performs parsing of incoming packets
      */
 
@@ -193,7 +183,7 @@ namespace DDP {
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_l2(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_l2(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's L3 header
@@ -202,7 +192,7 @@ namespace DDP {
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_l3(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_l3(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's IPv4 header
@@ -211,7 +201,7 @@ namespace DDP {
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_ipv4(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_ipv4(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's IPv6 header
@@ -220,7 +210,7 @@ namespace DDP {
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_ipv6(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_ipv6(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's UDP header
@@ -229,7 +219,7 @@ namespace DDP {
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_l4_udp(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_l4_udp(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's TCP header
