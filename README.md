@@ -6,10 +6,9 @@ Alternatively, the [Sphinx](https://www.sphinx-doc.org/en/master/) generated doc
 like this:
 
 ```shell
-mkdir build
-cd build
-cmake ..
-make doc
+# <GIT_REPO> is the location of DNS Probe repository
+cd <GIT_REPO>/doc
+make html
 ```
 
-The resulting documentation is then located in `doc/html`.
+The resulting documentation is then located in `_build/html`.
