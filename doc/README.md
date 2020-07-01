@@ -5,7 +5,7 @@
 
 # DNS Probe Documentation
 
-This documentation aids users of the [DNS Probe](https://gitlab.labs.nic.cz/adam/dns-probe), a tool for collection of DNS information from
+This documentation aids users of the [DNS Probe](https://gitlab.nic.cz/adam/dns-probe), a tool for collection of DNS information from
 scanned requests and responses.
 
 The documentation contains the following sections:
@@ -19,7 +19,7 @@ The documentation contains the following sections:
 * Man Pages
 * YANG module
 
-The newest edition of the documentation is published at https://adam.pages.labs.nic.cz/dns-probe.
+The newest edition of the documentation is published at https://adam.pages.nic.cz/dns-probe.
 
 ## What is in development
 

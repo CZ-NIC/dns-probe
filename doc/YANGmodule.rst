@@ -4,7 +4,7 @@
 YANG module
 ***********
 
-This section contains the complete YANG module *cznic-dns-probe* that is used for DNS Probe. It is also included in the project repository (`data-model/cznic-dns-probe.yang <https://gitlab.labs.nic.cz/adam/dns-probe/blob/master/data-model/cznic-dns-probe.yang>`_) and packages.
+This section contains the complete YANG module *cznic-dns-probe* that is used for DNS Probe. It is also included in the project repository (`data-model/cznic-dns-probe.yang <https://gitlab.nic.cz/adam/dns-probe/blob/master/data-model/cznic-dns-probe.yang>`_) and packages.
 
 ::
 

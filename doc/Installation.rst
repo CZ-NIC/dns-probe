@@ -155,11 +155,11 @@ installed first.
 C-DNS Library
 -------------
 
-`C-DNS Library <https://gitlab.labs.nic.cz/knot/c-dns>`_ is used for working with the C-DNS format.
+`C-DNS Library <https://gitlab.nic.cz/knot/c-dns>`_ is used for working with the C-DNS format.
 
 .. code:: shell
 
-   curl -L https://gitlab.labs.nic.cz/knot/c-dns/-/archive/master/c-dns-master.tar.gz > dl/cdns.tgz
+   curl -L https://gitlab.nic.cz/knot/c-dns/-/archive/master/c-dns-master.tar.gz > dl/cdns.tgz
    mkdir build/cdns
    tar -xf dl/cdns.tgz -C build/cdns --strip-components=1
    mkdir -p build/cdns/build
