@@ -6,7 +6,7 @@
 DNS Probe |version| Documentation
 #################################
 
-This documentation aids users of the `DNS Probe <https://gitlab.labs.nic.cz/adam/dns-probe>`_, a tool for collection of DNS information from
+This documentation aids users of the `DNS Probe <https://gitlab.nic.cz/adam/dns-probe>`_, a tool for collection of DNS information from
 scanned requests and responses.
 
 .. only:: mode_structure
@@ -15,10 +15,10 @@ scanned requests and responses.
       which means that it contains authoring/editing/managing notes
       in addition to the actual content.
 
-:Edition: :doc:`1.0 <RecordOfChanges>`
+:Edition: :doc:`1.1 <RecordOfChanges>`
 
 :Source: The source code of this documentation is open and can be found
-         on `GitLab <https://gitlab.labs.nic.cz/adam/dns-probe/-/tree/master/doc>`_.
+         on `GitLab <https://gitlab.nic.cz/adam/dns-probe/-/tree/master/doc>`_.
 
          Contributions may be submitted using the pull-request mechanism.
 
