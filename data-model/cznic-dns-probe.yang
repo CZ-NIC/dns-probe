@@ -22,7 +22,10 @@ module cznic-dns-probe {
              <mailto:lhotka@nic.cz>
 
      Editor: Jan Dražil
-             <mailto:idrazil@fit.vutbr.cz>";
+             <mailto:idrazil@fit.vutbr.cz>
+
+     Editor: Pavel Doležal
+             <mailto:pavel.dolezal@nic.cz>";
 
   description
     "This YANG module defines the data model for the DNS probe.
@@ -63,37 +66,37 @@ module cznic-dns-probe {
       type inet:ipv4-address-no-zone;
       description
         "List of allowed IPv4 addresses to process traffic from.
-        By default all IPv4 addresses are allowed.
+         By default all IPv4 addresses are allowed.
 
-        This is a static configuration parameter that is applied
-        only upon restarting the probe.";
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
     }
     leaf-list ipv4-denylist {
       type inet:ipv4-address-no-zone;
       description
         "List of IPv4 addresses from which to NOT process traffic.
-        By default all IPv4 addresses are allowed.
+         By default all IPv4 addresses are allowed.
 
-        This is a static configuration parameter that is applied
-        only upon restarting the probe.";
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
     }
     leaf-list ipv6-allowlist {
       type inet:ipv6-address-no-zone;
       description
         "List of allowed IPv6 addresses to process traffic from.
-        By default all IPv6 addresses are allowed.
+         By default all IPv6 addresses are allowed.
 
-        This is a static configuration parameter that is applied
-        only upon restarting the probe.";
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
     }
     leaf-list ipv6-denylist {
       type inet:ipv6-address-no-zone;
       description
         "List of IPv6 addresses from which to NOT process traffic.
-        By default all IPv6 addresses are allowed.
+         By default all IPv6 addresses are allowed.
 
-        This is a static configuration parameter that is applied
-        only upon restarting the probe.";
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
     }
     leaf-list dns-ports {
       type uint16;
@@ -101,8 +104,8 @@ module cznic-dns-probe {
       description
         "List of ports used for identifying DNS traffic.
 
-        This is a static configuration parameter that is applied
-        only upon restarting the probe.";
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
     }
     container export {
       description
