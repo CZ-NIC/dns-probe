@@ -32,6 +32,11 @@ module cznic-dns-probe {
      records about DNS transactions in C-DNS or Apache Parquet
      format.";
 
+  revision 2020-07-08 {
+    description
+      "Add IP and port filtering";
+  }
+
   revision 2020-06-09 {
     description
       "Initial revision.";
