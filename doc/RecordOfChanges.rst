@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.labs.nic.cz/ad
      - Segment
      - Change description
    * - 0.5
+     - 1.1
+     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
+     - Add IP filtering to YANG module
+   * -
      - 1.0
      - ALL
      - Initial release.

@@ -25,7 +25,11 @@ Sysrepo uses the YANG language [RFC7950]_ for modelling configuration and state 
 
    +--rw cznic-dns-probe:dns-probe
    |  +--rw coremask? <uint64>
-   |  +--rw dns-port? <uint16>
+   |  +--rw ipv4-allowlist? <inet:ipv4-address-no-zone>
+   |  +--rw ipv4-denylist? <inet:ipv4-address-no-zone>
+   |  +--rw ipv6-allowlist? <inet:ipv6-address-no-zone>
+   |  +--rw ipv6-denylist? <inet:ipv6-address-no-zone>
+   |  +--rw dns-ports? <uint16>
    |  +--rw export
    |  |  +--rw cdns-blocks-per-file? <uint64>
    |  |  +--rw cdns-fields? <bits>
@@ -83,14 +87,15 @@ The contents of the configuration datastore can be manipulated using the **sysre
 
 opens the `Vim <https://www.vim.org/>`_ editor on an empty document. Changes to the running configuration datastore can be specified in the XML representation. For example, the following snippet
 
-* changes the :ref:`dns-port` parameter to 64
+* changes the :ref:`dns-ports` list parameter to 64,65
 * selects C-DNS as the :ref:`export-format`
 * sets :ref:`cdns-records-per-block` to 1000
 
 .. code-block:: xml
 
    <dns-probe xmlns="https://www.nic.cz/ns/yang/dns-probe">
-     <dns-port>64</dns-port>
+     <dns-ports>64</dns-ports>
+     <dns-ports>65</dns-ports>
      <export>
        <export-format>cdns</export-format>
        <cdns-records-per-block>1000</cdns-records-per-block>
@@ -155,15 +160,15 @@ Bitmask indicating which CPU cores should DNS Probe use. At least 3 CPU cores ar
 
 The default value of 7 indicates that DNS Probe should use the first 3 CPU cores with IDs of 0, 1 and 2.
 
-.. _dns-port:
+.. _dns-ports:
 
-dns-port
-^^^^^^^^
+dns-ports
+^^^^^^^^^
 
-:data node: ``/cznic-dns-probe:dns-probe/dns-port``
+:data node: ``/cznic-dns-probe:dns-probe/dns-ports``
 :default: 53
 
-Transport protocol port number that DNS Probe will check for in
+List of transport protocol port numbers that DNS Probe will check for in
 incoming packets to recognize DNS traffic.
 
 The default value of 53 is the standard DNS server port as defined
@@ -217,6 +222,54 @@ concurrent-connections
 The value of this parameter must be a power of 2. It specifies the maximum number of TCP connections that DNS Probe can handle at any given time, which in turn affects the size of in-memory data structures allocated for keeping the status of TCP connections.
 
 The default value of 131072 (2^17) was determined experimentally – it takes into account the default value for :ref:`max-transactions` and the current common ratio of DNS traffic over UDP and TCP. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
+.. _ipv4-allowlist:
+
+ipv4-allowlist
+^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/ipv4-allowlist``
+:default: empty
+
+List of allowed IPv4 addresses to process traffic from.
+
+By default all IPv4 addressess are allowed.
+
+ipv4-denylist
+^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/ipv4-denylist``
+:default: empty
+
+List of IPv4 addresses from which to NOT process traffic.
+
+By default all IPv4 addresses are allowed.
+
+If :ref:`ipv4-allowlist` is not empty this configuration item doesn't have any effect.
+
+.. _ipv6-allowlist:
+
+ipv6-allowlist
+^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/ipv6-allowlist``
+:default: empty
+
+List of allowed IPv6 addresses to process traffic from.
+
+By default all IPv6 addresses are allowed.
+
+ipv6-denylist
+^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/ipv6-denylist``
+:default: empty
+
+List of IPv6 addresses from which to NOT process traffic.
+
+By default all IPv6 addresses are allowed.
+
+If :ref:`ipv6-allowlist` is not empty this configuration item doesn't have any effect.
 
 .. _max-transactions:
 
