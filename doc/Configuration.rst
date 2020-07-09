@@ -160,20 +160,6 @@ Bitmask indicating which CPU cores should DNS Probe use. At least 3 CPU cores ar
 
 The default value of 7 indicates that DNS Probe should use the first 3 CPU cores with IDs of 0, 1 and 2.
 
-.. _dns-ports:
-
-dns-ports
-^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/dns-ports``
-:default: 53
-
-List of transport protocol port numbers that DNS Probe will check for in
-incoming packets to recognize DNS traffic.
-
-The default value of 53 is the standard DNS server port as defined
-in [RFC1035]_.
-
 export-dir
 ^^^^^^^^^^
 
@@ -223,6 +209,51 @@ The value of this parameter must be a power of 2. It specifies the maximum numbe
 
 The default value of 131072 (2^17) was determined experimentally – it takes into account the default value for :ref:`max-transactions` and the current common ratio of DNS traffic over UDP and TCP. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
 
+.. _max-transactions:
+
+max-transactions
+^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/transaction-table/max-transactions``
+:default: 1048576
+
+The value of this parameter must be a power of 2. It specifies the maximum number of pending DNS transactions that DNS Probe can handle at any given time, which in turn affects the size of in-memory transaction table.
+
+The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS traffic at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
+.. _dynamic-conf-par:
+
+Dynamic configuration parameters
+--------------------------------
+
+This section lists all dynamic configuration parameters in alphabetical order.
+
+.. _cdns-blocks-per-file:
+
+cdns-blocks-per-file
+^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/cdns-blocks-per-file``
+:default: 0
+
+This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It specifies the maximum number of C-DNS blocks written to one exported file (see `Section 7.3.2 <https://tools.ietf.org/html/rfc8618#section-7.3.2>`_ in [RFC8618]_). If this limit is reached, the export file is closed and a new one started.
+
+The default value of 0 means that there is no limit.
+
+.. _dns-ports:
+
+dns-ports
+^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/dns-ports``
+:default: 53
+
+List of transport protocol port numbers that DNS Probe will check for in
+incoming packets to recognize DNS traffic.
+
+The default value of 53 is the standard DNS server port as defined
+in [RFC1035]_.
+
 .. _ipv4-allowlist:
 
 ipv4-allowlist
@@ -270,37 +301,6 @@ List of IPv6 addresses from which to NOT process traffic.
 By default all IPv6 addresses are allowed.
 
 If :ref:`ipv6-allowlist` is not empty this configuration item doesn't have any effect.
-
-.. _max-transactions:
-
-max-transactions
-^^^^^^^^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/transaction-table/max-transactions``
-:default: 1048576
-
-The value of this parameter must be a power of 2. It specifies the maximum number of pending DNS transactions that DNS Probe can handle at any given time, which in turn affects the size of in-memory transaction table.
-
-The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS traffic at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
-
-.. _dynamic-conf-par:
-
-Dynamic configuration parameters
---------------------------------
-
-This section lists all dynamic configuration parameters in alphabetical order. 
-
-.. _cdns-blocks-per-file: 
-
-cdns-blocks-per-file
-^^^^^^^^^^^^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/export/cdns-blocks-per-file``
-:default: 0
-
-This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It specifies the maximum number of C-DNS blocks written to one exported file (see `Section 7.3.2 <https://tools.ietf.org/html/rfc8618#section-7.3.2>`_ in [RFC8618]_). If this limit is reached, the export file is closed and a new one started.
-
-The default value of 0 means that there is no limit.
 
 .. _parquet-records-per-file:
 

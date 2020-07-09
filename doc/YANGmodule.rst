@@ -45,7 +45,7 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
        records about DNS transactions in C-DNS or Apache Parquet
        format.";
 
-    revision 2020-07-08 {
+    revision 2020-07-09 {
       description
         "Add IP and port filtering";
     }
@@ -76,37 +76,25 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
         type inet:ipv4-address-no-zone;
         description
           "List of allowed IPv4 addresses to process traffic from.
-           By default all IPv4 addresses are allowed.
-
-           This is a static configuration parameter that is applied
-           only upon restarting the probe.";
+           By default all IPv4 addresses are allowed.";
       }
       leaf-list ipv4-denylist {
         type inet:ipv4-address-no-zone;
         description
           "List of IPv4 addresses from which to NOT process traffic.
-           By default all IPv4 addresses are allowed.
-
-           This is a static configuration parameter that is applied
-           only upon restarting the probe.";
+           By default all IPv4 addresses are allowed.";
       }
       leaf-list ipv6-allowlist {
         type inet:ipv6-address-no-zone;
         description
           "List of allowed IPv6 addresses to process traffic from.
-           By default all IPv6 addresses are allowed.
-
-           This is a static configuration parameter that is applied
-           only upon restarting the probe.";
+           By default all IPv6 addresses are allowed.";
       }
       leaf-list ipv6-denylist {
         type inet:ipv6-address-no-zone;
         description
           "List of IPv6 addresses from which to NOT process traffic.
-           By default all IPv6 addresses are allowed.
-
-           This is a static configuration parameter that is applied
-           only upon restarting the probe.";
+           By default all IPv6 addresses are allowed.";
       }
       leaf-list dns-ports {
         type uint16;
