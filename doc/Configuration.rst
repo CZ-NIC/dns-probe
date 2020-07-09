@@ -150,6 +150,16 @@ This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It 
 
 The default value of 10000 corresponds to the recommendation in `Appendix C.6 <https://tools.ietf.org/html/rfc8618#appendix-C.6>`_ of [RFC8618]_.
 
+concurrent-connections
+^^^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/tcp-table/concurrent-connections``
+:default: 131072
+
+The value of this parameter must be a power of 2. It specifies the maximum number of TCP connections that DNS Probe can handle at any given time, which in turn affects the size of in-memory data structures allocated for keeping the status of TCP connections.
+
+The default value of 131072 (2^17) was determined experimentally – it takes into account the default value for :ref:`max-transactions` and the current common ratio of DNS traffic over UDP and TCP. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
 coremask
 ^^^^^^^^
 
@@ -199,16 +209,6 @@ entirety, and suffix ``.gz`` is appended to their names. Parquet
 format implementation used by DNS Probe compresses only selected parts
 of the file, and there is no ``.gz``.
 
-concurrent-connections
-^^^^^^^^^^^^^^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/tcp-table/concurrent-connections``
-:default: 131072
-
-The value of this parameter must be a power of 2. It specifies the maximum number of TCP connections that DNS Probe can handle at any given time, which in turn affects the size of in-memory data structures allocated for keeping the status of TCP connections.
-
-The default value of 131072 (2^17) was determined experimentally – it takes into account the default value for :ref:`max-transactions` and the current common ratio of DNS traffic over UDP and TCP. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
-
 .. _max-transactions:
 
 max-transactions
@@ -253,6 +253,25 @@ incoming packets to recognize DNS traffic.
 
 The default value of 53 is the standard DNS server port as defined
 in [RFC1035]_.
+
+file-name-prefix
+^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/file-name-prefix``
+:default: ``dns_``
+
+This option represents the prefix that is prepended to the name of all
+files exported by DNS Probe.
+
+file-size-limit
+^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/file-size-limit``
+:default: 0
+
+This parameter specifies the maximum size of export file in megabytes. It is currently used only for rotating files of the auxiliary PCAP export described in :ref:`pcap-export` below, because estimating the size of data in Parquet or C-DNS files is quite tricky if not impossible.
+
+The default value of 0 means that the export file will never be closed just based on its size.
 
 .. _ipv4-allowlist:
 
@@ -302,6 +321,14 @@ By default all IPv6 addresses are allowed.
 
 If :ref:`ipv6-allowlist` is not empty this configuration item doesn't have any effect.
 
+match-qname
+^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/transaction-table/match-qname``
+:default: **false**
+
+By default, the 5-tuple of source and destination IP address, source and destination port, and transport protocol is used to match a DNS query with the corresponding response. If this parameter is set to **true** the DNS QNAME (if present) is used as a secondary key for matching queries with responses.
+
 .. _parquet-records-per-file:
 
 parquet-records-per-file
@@ -315,38 +342,6 @@ This parameter takes effect only if ``parquet`` is set in :ref:`export-format`. 
 Parquet format buffers DNS records for one file in memory and then writes them to the file all at once. This can mean significant requirements for RAM as each worker thread buffers data for its own file.
 
 The default value was determined experimentally – the size of an uncompressed export file should then be as close to 128 MB as possible, which is ideal for Hadoop. However, in-memory representation of an exported file of this size can take as much as 1-1.5 GB of RAM!
-
-file-name-prefix
-^^^^^^^^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/export/file-name-prefix``
-:default: ``dns_``
-
-This option represents the prefix that is prepended to the name of all
-files exported by DNS Probe.
-
-timeout
-^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/export/timeout``
-:default: 0
-
-This paremeter specifies the time interval (in seconds) after which a newly opened export file will be closed and another one started.
-
-The default value of 0 means that the export file will never be
-closed just based on its age. It can however be closed based on other
-configuration options described above (:ref:`cdns-blocks-per-file` and
-:ref:`parquet-records-per-file`).
-
-file-size-limit
-^^^^^^^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/export/file-size-limit``
-:default: 0
-
-This parameter specifies the maximum size of export file in megabytes. It is currently used only for rotating files of the auxiliary PCAP export described in :ref:`pcap-export` below, because estimating the size of data in Parquet or C-DNS files is quite tricky if not impossible.
-
-The default value of 0 means that the export file will never be closed just based on its size.
 
 .. _pcap-export:
 
@@ -375,13 +370,18 @@ query-timeout
 
 This parameter specifies the time interval in miliseconds after which the query or response is removed from the transaction table if no corresponding response or query is observed.
 
-match-qname
-^^^^^^^^^^^
+timeout
+^^^^^^^
 
-:data node: ``/cznic-dns-probe:dns-probe/transaction-table/match-qname``
-:default: **false**
+:data node: ``/cznic-dns-probe:dns-probe/export/timeout``
+:default: 0
 
-By default, the 5-tuple of source and destination IP address, source and destination port, and transport protocol is used to match a DNS query with the corresponding response. If this parameter is set to **true** the DNS QNAME (if present) is used as a secondary key for matching queries with responses.
+This paremeter specifies the time interval (in seconds) after which a newly opened export file will be closed and another one started.
+
+The default value of 0 means that the export file will never be
+closed just based on its age. It can however be closed based on other
+configuration options described above (:ref:`cdns-blocks-per-file` and
+:ref:`parquet-records-per-file`).
 
 timeout
 ^^^^^^^       
