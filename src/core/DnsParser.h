@@ -19,7 +19,8 @@
 
 #include <exception>
 #include <vector>
-#include <list>
+#include <unordered_set>
+#include <array>
 
 #include <cstdint>
 #include <arpa/inet.h> // in6_addr
@@ -264,6 +265,11 @@ namespace DDP {
             m_export_invalid = cfg.pcap_export.value() == PcapExportCfg::INVALID;
             m_pcap_inv.update_configuration(cfg);
             m_tcp_table.set_timeout(cfg.tcp_ct_timeout);
+            m_dns_ports = cfg.dns_ports.value();
+            m_ipv4_allowlist = cfg.ipv4_allowlist.value();
+            m_ipv4_denylist = cfg.ipv4_denylist.value();
+            m_ipv6_allowlist = cfg.ipv6_allowlist.value();
+            m_ipv6_denylist = cfg.ipv6_denylist.value();
         }
 
         /**
@@ -303,11 +309,11 @@ namespace DDP {
         bool m_export_invalid;
         PcapWriter m_pcap_inv;
         const Packet* m_processed_packet;
-        std::list<uint16_t> m_dns_ports;
-        std::list<in_addr> m_ipv4_allowlist;
-        std::list<in_addr> m_ipv4_denylist;
-        std::list<in6_addr> m_ipv6_allowlist;
-        std::list<in6_addr> m_ipv6_denylist;
+        std::unordered_set<uint16_t> m_dns_ports;
+        std::unordered_set<uint32_t> m_ipv4_allowlist;
+        std::unordered_set<uint32_t> m_ipv4_denylist;
+        std::unordered_set<std::array<uint32_t, 4>> m_ipv6_allowlist;
+        std::unordered_set<std::array<uint32_t, 4>> m_ipv6_denylist;
         Statistics& m_stats;
 
         /**

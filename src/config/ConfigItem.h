@@ -19,7 +19,8 @@
 
 #include <string>
 #include <vector>
-#include <list>
+#include <unordered_set>
+#include <array>
 #include <sstream>
 #include <stdexcept>
 #include <algorithm>
@@ -50,6 +51,15 @@ namespace DDP {
          * @param value Value from sysrepo.
          */
         virtual void from_sysrepo(const boost::any& value) = 0;
+
+        /**
+         * Deletes given value from config item. Used mainly for deleting values from leaf-list.
+         * @param value Value to delete from config item.
+         */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+        virtual void delete_value(const boost::any& value) {}
+#pragma GCC diagnostic pop
 
         /**
          * Provides text representation of the saved value.
@@ -340,11 +350,11 @@ namespace DDP {
     };
 
     /**
-     * Specialized implementation for std::list<uint16_t> as config item.
+     * Specialized implementation for std::unordered_set<uint16_t> as config item.
      */
     class ConfigPortList: public ConfigItemBase
     {
-        using Type = std::list<uint16_t>;
+        using Type = std::unordered_set<uint16_t>;
     public:
         /**
          * Access saved value.
@@ -358,7 +368,16 @@ namespace DDP {
          */
         void from_sysrepo(const boost::any& value) override
         {
-            m_value.push_back(boost::any_cast<uint16_t>(value));
+            m_value.insert(boost::any_cast<uint16_t>(value));
+        }
+
+        /**
+         * Delete value from list.
+         * @param value Value from syrepo to delete.
+         */
+        void delete_value(const boost::any& value) override
+        {
+            m_value.erase(boost::any_cast<uint16_t>(value));
         }
 
         /**
@@ -391,11 +410,11 @@ namespace DDP {
     };
 
     /**
-     * Specialized implementation for std::list<in_addr> as config item.
+     * Specialized implementation for std::unordered_set<uint32_t> as config item.
      */
     class ConfigIPv4List: public ConfigItemBase
     {
-        using Type = std::list<in_addr>;
+        using Type = std::unordered_set<uint32_t>;
     public:
         /**
          * Access saved value.
@@ -409,11 +428,24 @@ namespace DDP {
          */
         void from_sysrepo(const boost::any& value) override
         {
-            in_addr addr;
+            uint32_t addr;
             int ret = inet_pton(AF_INET, boost::any_cast<std::string>(value).c_str(), &addr);
             if (ret != 1)
                 throw std::invalid_argument("IPv4 list doesn't contain valid IPv4 address.");
-            m_value.push_back(addr);
+            m_value.insert(addr);
+        }
+
+        /**
+         * Delete value from list.
+         * @param value Value from syrepo to delete.
+         */
+        void delete_value(const boost::any& value) override
+        {
+            uint32_t addr;
+            int ret = inet_pton(AF_INET, boost::any_cast<std::string>(value).c_str(), &addr);
+            if (ret != 1)
+                throw std::invalid_argument("IPv4 list doesn't contain valid IPv4 address to delete.");
+            m_value.erase(addr);
         }
 
         /**
@@ -448,13 +480,36 @@ namespace DDP {
     protected:
         Type m_value{}; //!< Saved value.
     };
+}
 
+/**
+ * Hash function for std::array.
+ * Used for storing IPv6 addresses as std::array<uint32_t, 4> in std::unordered_set.
+ */
+namespace std {
+    template<typename T, size_t N>
+    struct hash<array<T, N>>
+    {
+        size_t operator()(const array<T, N>& a) const
+        {
+            hash<T> hasher;
+            size_t h = 0;
+            for (size_t i = 0; i < N; ++i)
+            {
+                h = h * 31 + hasher(a[i]);
+            }
+            return h;
+        }
+    };
+}
+
+namespace DDP {
     /**
-     * Specialized implementation for std::list<in6_addr> as config item.
+     * Specialized implementation for std::unordered_set<std::array<uint32_t, 4>> as config item.
      */
     class ConfigIPv6List: public ConfigItemBase
     {
-        using Type = std::list<in6_addr>;
+        using Type = std::unordered_set<std::array<uint32_t, 4>>;
     public:
         /**
          * Access saved value.
@@ -468,11 +523,24 @@ namespace DDP {
          */
         void from_sysrepo(const boost::any& value) override
         {
-            in6_addr addr;
-            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), &addr);
+            std::array<uint32_t, 4> addr;
+            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), addr.data());
             if (ret != 1)
                 throw std::invalid_argument("IPv6 list doesn't contain valid IPv6 address.");
-            m_value.push_back(addr);
+            m_value.insert(addr);
+        }
+
+        /**
+         * Delete value from list.
+         * @param value Value from syrepo to delete.
+         */
+        void delete_value(const boost::any& value) override
+        {
+            std::array<uint32_t, 4> addr;
+            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), addr.data());
+            if (ret != 1)
+                throw std::invalid_argument("IPv6 list doesn't contain valid IPv6 address to delete.");
+            m_value.erase(addr);
         }
 
         /**
@@ -491,7 +559,7 @@ namespace DDP {
             bool first = true;
             for (auto& val : m_value) {
                 char buff[INET6_ADDRSTRLEN + 4];
-                auto* ret = inet_ntop(AF_INET6, &val, buff, INET6_ADDRSTRLEN + 4);
+                auto* ret = inet_ntop(AF_INET6, val.data(), buff, INET6_ADDRSTRLEN + 4);
                 if (!ret)
                     continue;
                 if (first) {

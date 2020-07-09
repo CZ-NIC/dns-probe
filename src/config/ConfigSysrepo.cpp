@@ -176,15 +176,20 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
     auto it = session->get_changes_iter("//.");
 
     while (auto change = session->get_change_tree_next(it)) {
+        auto node = change->node();
+        auto path = node->path();
+        auto pos = path.find('[');
+        if (pos != std::string::npos)
+            path = path.substr(0, pos);
+
         if (change->oper() == SR_OP_CREATED || change->oper() == SR_OP_MODIFIED) {
-            auto node = change->node();
             try {
-                auto& cfg = m_cfg.m_path_map.at(node->path());
+                auto& cfg = m_cfg.m_path_map.at(path);
 
                 if (event == SR_EV_DONE) {
                     m_cfg.m_logger.info() << "New configuration '" << node->path()
                                           << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
-                                          << "' replacing '"
+                                          << "' modifying '"
                                           << cfg.string() << "'";
 
                     cfg.from_sysrepo(conv_sysrepo_data(node));
@@ -193,6 +198,27 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
                 }
             } catch (std::out_of_range& e) {
                 m_cfg.m_logger.info() << "New configuration '" << node->path()
+                                      << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
+                                      << "'. Cannot be applied because this path doesn't have associated config item.";
+            }
+        }
+        else if (change->oper() == SR_OP_DELETED) {
+            try {
+                auto& cfg = m_cfg.m_path_map.at(path);
+
+                if (event == SR_EV_DONE) {
+                    m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
+                                        << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
+                                        << "' from '" << cfg.string() << "'";
+
+                    cfg.delete_value(conv_sysrepo_data(node));
+                }
+                else if (event == SR_EV_CHANGE) {
+
+                }
+            }
+            catch (std::out_of_range& e) {
+                m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
                                       << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
                                       << "'. Cannot be applied because this path doesn't have associated config item.";
             }
