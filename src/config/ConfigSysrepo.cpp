@@ -129,8 +129,14 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
                 m_logger.debug() << "New value for " << item.first << " is " << item.second.string();
             }
 
-            if (tree->find_path(item.first.c_str())->data().empty())
-                m_logger.info() << "Config for path '" << item.first << "' not found!";
+            if (tree->find_path(item.first.c_str())->data().empty()) {
+                std::string end("list");
+                if ((item.first.length() < end.length()) ||
+                    (item.first.length() >= end.length() &&
+                        item.first.compare(item.first.length() - end.length(), end.length(), end) != 0)) {
+                    m_logger.info() << "Config for path '" << item.first << "' not found!";
+                }
+            }
         } catch (sysrepo::sysrepo_exception& e) {
             m_logger.warning() << "Getting config for path '" << item.first << "' failed! (" << e.what() << ")";
         }
