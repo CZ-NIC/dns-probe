@@ -68,12 +68,6 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
     try {
         records = m_parser.parse_packet(pkt);
     }
-    catch (NonDnsException& e) {
-        if (!records.empty())
-            m_parser.put_back_records(records);
-
-        return DDP::WorkerRetCode::WORKER_NON_DNS_PACKET;
-    }
     catch (std::exception& e) {
         Logger("Parse error").debug() << e.what();
         if (!records.empty())
