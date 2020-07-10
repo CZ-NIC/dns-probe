@@ -134,7 +134,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
                 if ((item.first.length() < end.length()) ||
                     (item.first.length() >= end.length() &&
                         item.first.compare(item.first.length() - end.length(), end.length(), end) != 0)) {
-                    m_logger.info() << "Config for path '" << item.first << "' not found!";
+                    m_logger.warning() << "Config for path '" << item.first << "' not found!";
                 }
             }
         } catch (sysrepo::sysrepo_exception& e) {
