@@ -18,7 +18,6 @@
 #include <iostream>
 #include <sstream>
 #include <sys/eventfd.h>
-#include <boost/log/trivial.hpp>
 
 #include <rte_ethdev.h>
 #include <rte_mbuf.h>
@@ -128,7 +127,7 @@ uint16_t DDP::DPDKPort::read(Packet* batch, unsigned queue)
             rte_pktmbuf_free(rx_buffer[i]);
         }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(info) << "[WARNING] Packet: Unable to read packet data.";
+            Logger("Packet").warning() << "Unable to read packet data.";
             err++;
         }
     }

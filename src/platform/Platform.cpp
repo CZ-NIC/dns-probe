@@ -21,8 +21,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <boost/log/trivial.hpp>
 #include <rte_lcore.h>
+#include "utils/Logger.h"
 #endif
 
 #pragma GCC diagnostic push
@@ -67,7 +67,7 @@ void DDP::init_platform(const DDP::Arguments& args, const Config& cfg)
     for(auto arg: argv_char) {
         cmd += arg + std::string(" ");
     }
-    BOOST_LOG_TRIVIAL(info) << cmd;
+    logwriter.log_lvl("INFO", cmd);
 
     if(rte_eal_init(argv_char.size(), argv_char.data()) < 0) {
         throw std::runtime_error("Initialization of eal failed!");

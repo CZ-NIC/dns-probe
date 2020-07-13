@@ -19,7 +19,7 @@ find_package(Parquet REQUIRED)
 find_package(CDNS REQUIRED)
 find_package(LibYangCpp REQUIRED)
 find_package(SysrepoCpp REQUIRED)
-find_package(Boost REQUIRED COMPONENTS log log_setup)
+find_package(Boost REQUIRED)
 find_package(Doxygen)
 
 include(CheckCXXCompilerFlag)
@@ -51,7 +51,7 @@ add_library(DNSProbe INTERFACE)
 target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp CDNS::CDNS)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
 target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
-target_compile_options(DNSProbe INTERFACE -msse4 -DBOOST_LOG_DYN_LINK)
+target_compile_options(DNSProbe INTERFACE -msse4)
 
 # Add warning flags
 function(set_warning param)

@@ -23,7 +23,6 @@
 #include <fstream>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <boost/log/trivial.hpp>
 
 #include <rte_eal.h>
 #include <rte_ethdev.h>
@@ -32,12 +31,15 @@
 #include <rte_errno.h>
 
 #include "core/Probe.h"
+#include "utils/Logger.h"
 #include "dpdk/DpdkPort.h"
 #include "dpdk/DpdkPcapPort.h"
 
+DDP::LogWriter logwriter;
+
 static void signal_handler(int signum)
 {
-    BOOST_LOG_TRIVIAL(info) << "App exiting on signal " << signum;
+    logwriter.log_lvl("INFO", "App exiting on signal ", signum);
     DDP::Probe::getInstance().stop();
 }
 
@@ -254,7 +256,7 @@ int main(int argc, char** argv)
         arguments = DDP::Probe::process_args(argc, argv);
     } catch(std::invalid_argument& e) {
         DDP::Probe::print_help(argv[0]);
-        BOOST_LOG_TRIVIAL(error) << e.what();
+        logwriter.log_lvl("ERROR", e.what());
         return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
 
@@ -267,12 +269,12 @@ int main(int argc, char** argv)
         bind_interfaces(arguments.args);
         runner.init(arguments.args);
     } catch (std::exception& e) {
-        BOOST_LOG_TRIVIAL(error) << "Error: " << e.what() << std::endl << "Probe init failed!";
+        logwriter.log_lvl("ERROR", "Error: ", e.what(), "\nProbe init failed!");
         try {
             unbind_interfaces(arguments.args);
         }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+            logwriter.log_lvl("ERROR", "Couldn't unbind interfaces: ", e.what());
         }
         return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
@@ -324,26 +326,26 @@ int main(int argc, char** argv)
                 unbind_interfaces(arguments.args);
             }
             catch (std::exception& e) {
-                BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+                logwriter.log_lvl("ERROR", "Couldn't unbind interfaces: ", e.what());
             }
             return ret;
         } catch (std::exception &e) {
-            BOOST_LOG_TRIVIAL(error) << "Uncaught exception: " << e.what();
+            logwriter.log_lvl("ERROR", "Uncaught exception: ", e.what());
             try {
                 unbind_interfaces(arguments.args);
             }
             catch (std::exception& e) {
-                BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+                logwriter.log_lvl("ERROR", "Couldn't unbind interfaces: ", e.what());
             }
             return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);
         }
     } catch (std::exception& e) {
-        BOOST_LOG_TRIVIAL(error) << e.what();
+        logwriter.log_lvl("ERROR", e.what());
         try {
             unbind_interfaces(arguments.args);
         }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(error) << "Couldn't unbind interfaces: " << e.what();
+            logwriter.log_lvl("ERROR", "Couldn't unbind interfaces: ", e.what());
         }
         return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);
     }
