@@ -138,7 +138,7 @@ namespace DDP {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "DISABLED" || str_value == "INVALID" || str_value == "ALL";
-            } catch (...) {
+            } catch (std::exception& e) {
                 return false;
             }
         }
@@ -205,7 +205,7 @@ namespace DDP {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "PARQUET" || str_value == "CDNS";
-            } catch (...) {
+            } catch (std::exception& e) {
                 return false;
             }
         }
@@ -368,7 +368,7 @@ namespace DDP {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "AES" || str_value == "BLOWFISH" || str_value == "MD5" || str_value == "SHA1";
-            } catch (...) {
+            } catch (std::exception& e) {
                 return false;
             }
         }
