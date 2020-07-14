@@ -132,6 +132,11 @@ namespace DDP {
          */
         PcapExportCfg value() const { return m_value; }
 
+        /**
+         * Check if given value from sysrepo can be used in config.
+         * @param value Checked valued from sysrepo.
+         * @return True if value is valid otherwise false.
+         */
         bool validate(const boost::any& value) const override
         {
             try {
@@ -199,6 +204,11 @@ namespace DDP {
          */
         ExportFormat value() const { return m_value; }
 
+        /**
+         * Check if given value from sysrepo can be used in config.
+         * @param value Checked valued from sysrepo.
+         * @return True if value is valid otherwise false.
+         */
         bool validate(const boost::any& value) const override
         {
             try {
@@ -362,6 +372,11 @@ namespace DDP {
          */
         IpEncryption value() const { return m_value; }
 
+        /**
+         * Check if given value from sysrepo can be used in config.
+         * @param value Checked valued from sysrepo.
+         * @return True if value is valid otherwise false.
+         */
         bool validate(const boost::any& value) const override
         {
             try {
