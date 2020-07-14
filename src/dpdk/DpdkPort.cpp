@@ -103,7 +103,9 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
 
         m_fds.push_back(FileDescriptor(dummy));
         uint64_t buffer = 1;
-        ::write(dummy, &buffer, sizeof(uint64_t));
+        auto ret = ::write(dummy, &buffer, sizeof(uint64_t));
+        if (ret == -1)
+            throw std::runtime_error("Cannot write to dummy file descriptor");
     }
 
     rte_eth_promiscuous_enable(port);
@@ -133,7 +135,9 @@ uint16_t DDP::DPDKPort::read(Packet* batch, unsigned queue)
     }
 
     uint64_t buffer = 1;
-    ::write(m_fds[queue], &buffer, sizeof(uint64_t));
+    auto ret = ::write(m_fds[queue], &buffer, sizeof(uint64_t));
+    if (ret == -1)
+        throw std::runtime_error("Port: Couldn't write to dummy file descriptor!");
 
     return rx_count - err;
 }
