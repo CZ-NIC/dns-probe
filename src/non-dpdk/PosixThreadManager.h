@@ -67,19 +67,19 @@ namespace DDP {
          * Provides access to logical core id of master core
          * @return Logical ID of master core
          */
-        [[nodiscard]] static unsigned master_lcore() { return 0; }
+        static unsigned master_lcore() { return 0; }
 
         /**
         * Provides access to logical core id of current thread
         * @return Logical ID of current thread
         */
-        [[nodiscard]] static unsigned current_lcore() { return m_thread_local_id; }
+        static unsigned current_lcore() { return m_thread_local_id; }
 
         /**
         * Provides access to index of current thread calculated from 0
         * @return Index current thread
         */
-        [[nodiscard]] static unsigned index_impl() { return m_thread_local_id; }
+        static unsigned index_impl() { return m_thread_local_id; }
 
         /**
          * Start given callback on selected lcore.

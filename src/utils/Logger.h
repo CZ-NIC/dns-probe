@@ -19,6 +19,10 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <iomanip>
+#include <cstdio>
+#include <time.h>
 
 #include "core/Probe.h"
 
@@ -49,7 +53,7 @@ namespace DDP {
          */
         explicit EntryAssembler(const char* name) : m_msg()
         {
-            if constexpr (level == LogLevel::DEBUG) {
+            if (level == LogLevel::DEBUG) {
                 m_msg << "[DEBUG] ";
             } else if (level == LogLevel::INFO) {
                 m_msg << "[INFO] ";
@@ -65,11 +69,19 @@ namespace DDP {
         }
 
         /**
+         * @brief Move constructor. Moves the std::ostringstream member variable.
+         * @param other Source EntryAssembler
+         */
+        EntryAssembler(EntryAssembler&& other)
+        {
+            this->m_msg = std::move(other.m_msg);
+        }
+
+        /**
          * When the object is destroyed its content is send to master core for creating log message.
          */
         ~EntryAssembler()
         {
-            m_msg << std::endl;
             Probe::getInstance().log_link().send(MessageLog(std::move(m_msg)));
         }
 
@@ -102,7 +114,7 @@ namespace DDP {
          * Constructor has no effect.
          * @param name Kept only for compatibility.
          */
-        explicit EntryAssembler(const char* name) {}
+        explicit EntryAssembler(const char*) {}
 
         /**
          * Optimize out debug messages.
@@ -111,7 +123,7 @@ namespace DDP {
          * @return Reference to itself so it can be used for another concatenation.
          */
         template<typename T>
-        EntryAssembler& operator<<([[maybe_unused]] T&& msg)
+        EntryAssembler& operator<<(T&&)
         {
             return *this;
         }
@@ -157,4 +169,91 @@ namespace DDP {
     private:
         const char* m_name; //!< Name of associated subsystem.
     };
+
+    /**
+     * Log output stream. NOT thread-safe, use one object per thread.
+     */
+    class LogWriter {
+        using expander = int[];
+    public:
+        /**
+         * @brief Creates new logging output. Default to stdout.
+         */
+        explicit LogWriter() : m_out(std::cout.rdbuf()), m_os(std::make_unique<std::ostream>(m_out)) {}
+
+        ~LogWriter() {
+            m_of.close();
+        }
+        /**
+         * @brief Set new output target for the logs
+         * @param outfile New output target
+         */
+        void set_output(const std::string&& outfile) {
+            m_of.close();
+            m_of.open(outfile);
+            m_out = m_of.rdbuf();
+            m_os = std::make_unique<std::ostream>(m_out);
+        }
+
+        /**
+         * @brief Set new output target for the logs
+         * @param outbuf New output target
+         */
+        void set_output(std::ostream& outbuf) {
+            m_of.close();
+            m_out = outbuf.rdbuf();
+            m_os = std::make_unique<std::ostream>(m_out);
+        }
+
+        /**
+         * @brief Write given arguments to log output
+         * @tparam Args Arguments list
+         * @param args List of arguments to print as one log message
+         */
+        template<typename... Args>
+        void log(Args&&... args) {
+            pid_t pid = getpid();
+            *m_os << "[" << get_timestamp() << "] [0x" << std::setw(8) << std::hex
+                  << std::setfill('0') << pid << std::setfill(' ') << "] ";
+            (void)expander{0, (void(*m_os << std::forward<Args>(args)), 0)...};
+            *m_os << std::endl;
+        }
+
+        /**
+         * @brief Write given arguments to log output
+         * @tparam Args Arguments list
+         * @param lvl Importance level of log message
+         * @param args List of arguments to print as one log message
+         */
+        template<class... Args>
+        void log_lvl(const char* lvl, Args&&... args) {
+            pid_t pid = getpid();
+            *m_os << "[" << get_timestamp() << "] [0x" << std::setw(8) << std::hex
+                  << std::setfill('0') << pid << std::setfill(' ') << "] [" << lvl << "] ";
+            (void)expander{0, (void(*m_os << std::forward<Args>(args)), 0)...};
+            *m_os << std::endl;
+        }
+
+    protected:
+        /**
+         * @brief Get current timestamp as formated string
+         * @return Formated timestamp
+         */
+        std::string get_timestamp() {
+            timespec timestamp;
+            char time[30];
+            tm tmp_tm;
+            clock_gettime(CLOCK_REALTIME, &timestamp);
+            localtime_r(&timestamp.tv_sec, &tmp_tm);
+            auto pos = strftime(time, 30, "%Y-%m-%d %H:%M:%S.", &tmp_tm);
+            std::snprintf(time + pos, sizeof(time) - pos, "%06lu", timestamp.tv_nsec / 1000);
+            return std::string(time);
+        }
+
+        std::ofstream m_of;
+        std::streambuf* m_out;
+        std::unique_ptr<std::ostream> m_os;
+    };
 }
+
+extern DDP::LogWriter logwriter; //!< NOT thread-safe, use only on configuration thread

@@ -17,6 +17,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <sys/eventfd.h>
 
 #include <rte_ethdev.h>
 #include <rte_mbuf.h>
@@ -40,15 +41,24 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
     // Port configuration
     rte_eth_conf port_conf{};
     port_conf.rxmode.split_hdr_size = 0;
+
+#ifndef DPDK_LEGACY
     port_conf.rxmode.offloads = 0;
 
     if (port >= rte_eth_dev_count_avail())
+#else
+    port_conf.rxmode.jumbo_frame = 1;
+    port_conf.rxmode.hw_ip_checksum = 1;
+    port_conf.rxmode.max_rx_pkt_len = 9192;
+
+    if (port >= rte_eth_dev_count())
+#endif
         throw std::runtime_error("Trying to initialize a non-existing port");
 
     rte_eth_dev_info info{};
     rte_eth_dev_info_get(port, &info);
     info.default_rxconf.rx_drop_en = 1;
-    if ((strcmp(info.driver_name, "net_pcap") != 0) &&
+    if ((strcmp(info.driver_name, "net_pcap") != 0 && strcmp(info.driver_name, "Pcap PMD") != 0) &&
         ((info.flow_type_rss_offloads & (ETH_RSS_UDP | ETH_RSS_TCP)) != (ETH_RSS_UDP | ETH_RSS_TCP)))
         throw std::runtime_error("Minimal required RSS hash calculation level not supported by NIC");
 
@@ -56,6 +66,7 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
     port_conf.rx_adv_conf.rss_conf.rss_key = rss_hash_key;
     port_conf.rx_adv_conf.rss_conf.rss_hf = info.flow_type_rss_offloads;
 
+#ifndef DPDK_LEGACY
     if (info.rx_offload_capa & DEV_RX_OFFLOAD_CHECKSUM)
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_CHECKSUM;
 
@@ -63,24 +74,38 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_JUMBO_FRAME;
         port_conf.rxmode.max_rx_pkt_len = 9192;
     }
+#endif
 
     if (rte_eth_dev_configure(port, num_queues, 0, &port_conf) < 0) {
         throw std::runtime_error("Cannot configure interfaces!");
     }
     
     uint16_t nb_rxd = RX_RING_SIZE;
-    if (rte_eth_dev_adjust_nb_rx_tx_desc(port, &nb_rxd, nullptr) < 0)
-        throw std::runtime_error("Cannot modify rx/tx descriptor count!");
-
     rte_eth_rxconf rxq_conf{};
     rxq_conf = info.default_rxconf;
+
+#ifndef DPDK_LEGACY
     rxq_conf.offloads = port_conf.rxmode.offloads;
+
+    if (rte_eth_dev_adjust_nb_rx_tx_desc(port, &nb_rxd, nullptr) < 0)
+        throw std::runtime_error("Cannot modify rx/tx descriptor count!");
+#endif
 
     /* Initialize RX queues for each port */
     for (unsigned i = 0; i < num_queues; i++) {
         if (rte_eth_rx_queue_setup(port, i, nb_rxd, rte_eth_dev_socket_id(port), &rxq_conf,
                                    mbuf_mempool.get()) < 0)
             throw std::runtime_error("Cannot setup queue for RX");
+
+        int dummy = eventfd(0, EFD_SEMAPHORE | EFD_NONBLOCK);
+        if (dummy == -1)
+            throw std::runtime_error("Cannot setup queue for RX");
+
+        m_fds.push_back(FileDescriptor(dummy));
+        uint64_t buffer = 1;
+        auto ret = ::write(dummy, &buffer, sizeof(uint64_t));
+        if (ret == -1)
+            throw std::runtime_error("Cannot write to dummy file descriptor");
     }
 
     rte_eth_promiscuous_enable(port);
@@ -104,12 +129,25 @@ uint16_t DDP::DPDKPort::read(Packet* batch, unsigned queue)
             rte_pktmbuf_free(rx_buffer[i]);
         }
         catch (std::exception& e) {
-            std::cerr << "[WARNING] Packet: Unable to read packet data." << std::endl;
+            Logger("Packet").warning() << "Unable to read packet data.";
             err++;
         }
     }
 
+    uint64_t buffer = 1;
+    auto ret = ::write(m_fds[queue], &buffer, sizeof(uint64_t));
+    if (ret == -1)
+        throw std::runtime_error("Port: Couldn't write to dummy file descriptor!");
+
     return rx_count - err;
+}
+
+std::vector<int> DDP::DPDKPort::fds() {
+    std::vector<int> ret;
+    for (auto&& fd: m_fds) {
+        ret.push_back(fd);
+    }
+    return ret;
 }
 
 std::string DDP::DPDKPort::selected_link_status()

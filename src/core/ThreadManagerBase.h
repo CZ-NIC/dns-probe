@@ -62,19 +62,19 @@ namespace DDP {
          * Provides access to logical core id of master core
          * @return Logical ID of master core
          */
-        [[nodiscard]] static unsigned master_lcore() { return T::master_lcore_impl(); }
+        static unsigned master_lcore() { return T::master_lcore_impl(); }
 
         /**
         * Provides access to logical core id of current thread
         * @return Logical ID of current thread
         */
-        [[nodiscard]] static unsigned current_lcore() { return T::current_lcore_impl(); }
+        static unsigned current_lcore() { return T::current_lcore_impl(); }
 
         /**
         * Provides access to index of current thread calculated from 0
         * @return Index current thread
         */
-        [[nodiscard]] static unsigned index() { return T::index_impl(); }
+        static unsigned index() { return T::index_impl(); }
 
         /**
          * Start given callback on selected lcore.
@@ -89,7 +89,7 @@ namespace DDP {
         {
             check_slave_lcore_id(lcore);
 
-            static_assert(std::is_same<std::invoke_result_t<CB, Args...>, int>::value,
+            static_assert(std::is_same<decltype(f(args...)), int>::value,
                           "Core function has to return int!");
 
             static_cast<T*>(this)->run_on_thread_impl(lcore, std::forward<CB>(f), std::forward<Args>(args)...);
@@ -105,7 +105,7 @@ namespace DDP {
         template<typename CB, typename... Args>
         void run_on_all(CB&& f, Args&& ... args)
         {
-            static_assert(std::is_same<std::invoke_result_t<CB, Args...>, int>::value,
+            static_assert(std::is_same<decltype(f(args...)), int>::value,
                           "Core function has to return int!");
 
             static_cast<T*>(this)->run_on_thread_impl(std::forward<CB>(f), std::forward<Args>(args)...);

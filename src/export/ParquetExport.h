@@ -20,6 +20,7 @@
 #include <exception>
 #include <cstring>
 #include <functional>
+#include <unordered_map>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <arrow/api.h>
@@ -79,13 +80,13 @@ namespace DDP {
          * @throw EdnsParseException when parsing of EDNS options fails
          * @return Shared pointer with Table in Arrow format or nullptr if there's nothing to export
          */
-        std::any buffer_record(DnsRecord& record) override;
+        boost::any buffer_record(DnsRecord& record) override;
 
         /**
          * @brief Rotate current Arrow table (export current one and start a new one)
-         * @return std::any Current Arrow table to export
+         * @return boost::any Current Arrow table to export
          */
-        std::any rotate_export() override {
+        boost::any rotate_export() override {
             return write_table();
         }
 
@@ -123,7 +124,7 @@ namespace DDP {
          * @throw EdnsParseException
          * @return Map containing all found and parsed EDNS options
          */
-        std::unordered_map<EDNSOptions, std::any> parse_edns_options(const uint8_t* ptr, uint16_t size);
+        std::unordered_map<uint16_t, boost::any> parse_edns_options(const uint8_t* ptr, uint16_t size);
 
         /**
          * @brief Parse DNSSEC algorithm's list into comma separated values

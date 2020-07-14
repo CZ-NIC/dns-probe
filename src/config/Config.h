@@ -19,7 +19,6 @@
 
 
 #include <string>
-#include <unordered_map>
 #include <forward_list>
 #include <functional>
 
@@ -33,7 +32,11 @@ namespace DDP {
     struct Config
     {
         ConfigItem<ThreadManager::MaskType> coremask; //!< Coremask used fo selecting cores where application will be running.
-        ConfigItem<uint16_t> dns_port; //!< TCP/UDP port used for identifying DNS traffic
+        ConfigPortList dns_ports; //!< TCP/UDP port list used for identifying DNS traffic
+        ConfigIPv4List ipv4_allowlist; //!< List of allowed IPv4 addresses to process traffic from
+        ConfigIPv4List ipv4_denylist; //!< List of IPv4 addresses from which to NOT process traffic
+        ConfigIPv6List ipv6_allowlist; //!< List of allowed IPv6 addresses to process traffic from
+        ConfigIPv6List ipv6_denylist; //!< List of IPv6 addresses from which to NOT process traffic
 
         ConfigItem<uint32_t> tt_size; //!< Number of items in the transaction table
         ConfigItem<uint64_t> tt_timeout; //!< Timeout for orphaned items transaction table in milliseconds

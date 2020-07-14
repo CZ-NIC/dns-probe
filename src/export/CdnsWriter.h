@@ -54,11 +54,11 @@ namespace DDP {
          * @param item Item with DNS records ready for export to output
          * @return Number of DNS records written to output
          */
-        int64_t write(std::any item) override {
+        int64_t write(boost::any item) override {
             if (item.type() != typeid(std::shared_ptr<CDNS::CdnsBlock>))
                 return 0;
 
-            return write(std::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(item));
+            return write(boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(item));
         }
 
         /**

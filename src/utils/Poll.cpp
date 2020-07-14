@@ -29,13 +29,17 @@ DDP::Poll::PollAbleInterrupt::PollAbleInterrupt() : PollAble(), m_fd(eventfd(0, 
 void DDP::Poll::PollAbleInterrupt::ready_read()
 {
     uint64_t cnt = 0;
-    read(m_fd, &cnt, sizeof(cnt));
+    auto ret = read(m_fd, &cnt, sizeof(cnt));
+    if (ret == -1)
+        std::runtime_error("Poll: Couldn't read from file descriptor!");
 }
 
 void DDP::Poll::PollAbleInterrupt::interrupt()
 {
     uint64_t cnt = 1;
-    write(m_fd, &cnt, sizeof(cnt));
+    auto ret = write(m_fd, &cnt, sizeof(cnt));
+    if (ret == -1)
+        std::runtime_error("Poll: Couldn't write to file descriptor!");
 }
 
 DDP::Poll::Poll() : m_stop(false), m_pollables(), m_poll_fds(), m_interrupt(nullptr), m_poll_version(0)
@@ -47,15 +51,15 @@ void DDP::Poll::rebuild_poll_fds()
 {
     m_poll_fds.clear();
 
-    for (auto&&[fd, pollable] : m_pollables) {
+    for (auto&& pollable : m_pollables) {
         pollfd pfd{};
-        pfd.fd = fd;
+        pfd.fd = pollable.first;
         pfd.events = 0;
 
-        if(pollable->events() == PollEvents::READ)
+        if(pollable.second->events() == PollEvents::READ)
             pfd.events |= POLLIN;
 
-        if(pollable->events() == PollEvents::WRITE)
+        if(pollable.second->events() == PollEvents::WRITE)
             pfd.events |= POLLOUT;
 
         m_poll_fds.push_back(pfd);

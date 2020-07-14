@@ -34,7 +34,7 @@ DDP::CdnsExport::CdnsExport(Config& cfg)
     }
 }
 
-std::any DDP::CdnsExport::buffer_record(DnsRecord& record)
+boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
 {
     CDNS::QueryResponse qr;
     CDNS::QueryResponseSignature qrs;

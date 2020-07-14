@@ -62,7 +62,7 @@ namespace DDP {
              * @return Reference to newly constructed object.
              */
         template<typename... Args>
-        [[nodiscard]] E& get(Args&& ...args) { return static_cast<T*>(this)->get_impl(std::forward(args)...); }
+        E& get(Args&& ...args) { return static_cast<T*>(this)->get_impl(std::forward(args)...); }
 
         /**
          * Destroy and return it's space to the mempool.

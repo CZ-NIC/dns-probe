@@ -69,7 +69,7 @@ namespace DDP {
         /**
          * @brief Destructor. Closes all open sockets (queues).
          */
-        ~AFPacketPort() {
+        ~AFPacketPort() override {
             int i = 0;
             for (auto info : m_info) {
                 close(info.socket);
@@ -98,6 +98,8 @@ namespace DDP {
          * @param queue RX queue from which the packets originate
          */
         void free_packets(unsigned queue) override;
+
+        std::vector<int> fds() override;
 
     private:
         std::vector<QueueInfo> m_info;

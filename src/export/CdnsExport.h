@@ -40,13 +40,13 @@ namespace DDP {
          * @param record DNS record to store
          * @return Shared pointer with C-DNS Block to export or nullptr if there's nothing to export
          */
-        std::any buffer_record(DnsRecord& record) override;
+        boost::any buffer_record(DnsRecord& record) override;
 
         /**
          * @brief Rotate current C-DNS block (export current one and start a new one)
-         * @return std::any Current C-DNS block to export
+         * @return boost::any Current C-DNS block to export
          */
-        std::any rotate_export() override {
+        boost::any rotate_export() override {
             if (m_block->get_item_count() == 0)
                 return nullptr;
 
@@ -76,7 +76,7 @@ namespace DDP {
          * @brief Update export configuration (nothing is done here)
          * @param cfg New configuration
          */
-        void update_configuration(Config& cfg [[maybe_unused]]) override {}
+        void update_configuration(Config&) override {}
 
         private:
         std::shared_ptr<CDNS::CdnsBlock> m_block;

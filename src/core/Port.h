@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "platform/Packet.h"
+#include "utils/Logger.h"
 
 namespace DDP {
     class PortEOF : public std::runtime_error
@@ -62,6 +63,8 @@ namespace DDP {
          * @param queue RX queue from which the packets originate
          */
         virtual void free_packets(unsigned queue) = 0;
+
+        virtual std::vector<int> fds() {return {};}
 
     protected:
         uint16_t m_num_queues;

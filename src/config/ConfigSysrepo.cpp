@@ -19,7 +19,7 @@
 #include <libyang/Libyang.hpp>
 
 #include <stdexcept>
-#include <any>
+#include <boost/any.hpp>
 #include <utility>
 
 #include "core/Probe.h"
@@ -40,7 +40,7 @@
 #define SYSCONF_CFG_ROOT "/" SYSCONF_MODULE ":" SYSCONF_CFG_CONTAINER
 #define SYSCONF_STATS_ROOT "/" SYSCONF_MODULE ":" SYSCONF_STATISTICS_CONTAINER
 
-static std::any conv_sysrepo_data(libyang::S_Data_Node data)
+static boost::any conv_sysrepo_data(libyang::S_Data_Node data)
 {
     libyang::Data_Node_Leaf_List leaf(std::move(data));
     auto value = leaf.value();
@@ -87,7 +87,11 @@ static std::any conv_sysrepo_data(libyang::S_Data_Node data)
 
 DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_map{
         {SYSCONF_CFG_ROOT "/coremask",                           m_cfg.coremask},
-        {SYSCONF_CFG_ROOT "/dns-port",                           m_cfg.dns_port},
+        {SYSCONF_CFG_ROOT "/dns-ports",                          m_cfg.dns_ports},
+        {SYSCONF_CFG_ROOT "/ipv4-allowlist",                     m_cfg.ipv4_allowlist},
+        {SYSCONF_CFG_ROOT "/ipv4-denylist",                      m_cfg.ipv4_denylist},
+        {SYSCONF_CFG_ROOT "/ipv6-allowlist",                     m_cfg.ipv6_allowlist},
+        {SYSCONF_CFG_ROOT "/ipv6-denylist",                      m_cfg.ipv6_denylist},
         {SYSCONF_CFG_ROOT "/transaction-table/max-transactions", m_cfg.tt_size},
         {SYSCONF_CFG_ROOT "/transaction-table/query-timeout",    m_cfg.tt_timeout},
         {SYSCONF_CFG_ROOT "/transaction-table/match-qname",      m_cfg.match_qname},
@@ -120,18 +124,24 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
 
     auto tree = m_sysrepo_session->get_data(SYSCONF_CFG_ROOT);
 
-    for (auto&&[xpath, cfg]: m_path_map) {
+    for (auto&& item : m_path_map) {
         try {
-            auto val = tree->find_path(xpath.c_str())->data()[0];
+            for (auto& val : tree->find_path(item.first.c_str())->data()) {
+                m_logger.debug() << "Setting new value for " << item.first << " (old value: " << item.second.string() << ")";
+                item.second.from_sysrepo(conv_sysrepo_data(val));
+                m_logger.debug() << "New value for " << item.first << " is " << item.second.string();
+            }
 
-            if (val) {
-                m_logger.debug() << "Setting new value for " << xpath << " (old value: " << cfg.string() << ")";
-                cfg.from_sysrepo(conv_sysrepo_data(val));
-                m_logger.debug() << "New value for " << xpath << " is " << cfg.string();
-            } else
-                m_logger.warning() << "Config for path '" << xpath << "' not found!";
+            if (tree->find_path(item.first.c_str())->data().empty()) {
+                std::string end("list");
+                if ((item.first.length() < end.length()) ||
+                    (item.first.length() >= end.length() &&
+                        item.first.compare(item.first.length() - end.length(), end.length(), end) != 0)) {
+                    m_logger.warning() << "Config for path '" << item.first << "' not found!";
+                }
+            }
         } catch (sysrepo::sysrepo_exception& e) {
-            m_logger.warning() << "Getting config for path '" << xpath << "' failed! (" << e.what() << ")";
+            m_logger.warning() << "Getting config for path '" << item.first << "' failed! (" << e.what() << ")";
         }
     }
 
@@ -166,24 +176,29 @@ void DDP::ConfigSysrepo::hup()
 }
 
 int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session session,
-                                                       const char* module_name [[maybe_unused]],
-                                                       const char* xpath [[maybe_unused]],
+                                                       const char*,
+                                                       const char*,
                                                        sr_event_t event,
-                                                       uint32_t request_id [[maybe_unused]],
-                                                       void* private_data [[maybe_unused]])
+                                                       uint32_t,
+                                                       void*)
 {
     auto it = session->get_changes_iter("//.");
 
     while (auto change = session->get_change_tree_next(it)) {
+        auto node = change->node();
+        auto path = node->path();
+        auto pos = path.find('[');
+        if (pos != std::string::npos)
+            path = path.substr(0, pos);
+
         if (change->oper() == SR_OP_CREATED || change->oper() == SR_OP_MODIFIED) {
-            auto node = change->node();
             try {
-                auto& cfg = m_cfg.m_path_map.at(node->path());
+                auto& cfg = m_cfg.m_path_map.at(path);
 
                 if (event == SR_EV_DONE) {
                     m_cfg.m_logger.info() << "New configuration '" << node->path()
                                           << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
-                                          << " replacing '"
+                                          << "' modifying '"
                                           << cfg.string() << "'";
 
                     cfg.from_sysrepo(conv_sysrepo_data(node));
@@ -196,6 +211,27 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
                                       << "'. Cannot be applied because this path doesn't have associated config item.";
             }
         }
+        else if (change->oper() == SR_OP_DELETED) {
+            try {
+                auto& cfg = m_cfg.m_path_map.at(path);
+
+                if (event == SR_EV_DONE) {
+                    m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
+                                        << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
+                                        << "' from '" << cfg.string() << "'";
+
+                    cfg.delete_value(conv_sysrepo_data(node));
+                }
+                else if (event == SR_EV_CHANGE) {
+
+                }
+            }
+            catch (std::out_of_range& e) {
+                m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
+                                      << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
+                                      << "'. Cannot be applied because this path doesn't have associated config item.";
+            }
+        }
     }
 
     Probe::getInstance().update_config();
@@ -203,12 +239,12 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
 }
 
 int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session session,
-                                                        const char* module_name [[maybe_unused]],
-                                                        const char* path [[maybe_unused]],
-                                                        const char* request_xpath [[maybe_unused]],
-                                                        uint32_t request_id [[maybe_unused]],
-                                                        libyang::S_Data_Node& parent [[maybe_unused]],
-                                                        void* private_data [[maybe_unused]])
+                                                        const char* module_name,
+                                                        const char*,
+                                                        const char*,
+                                                        uint32_t,
+                                                        libyang::S_Data_Node& parent,
+                                                        void*)
 {
     auto stats = DDP::Probe::getInstance().statistics();
 
@@ -230,20 +266,20 @@ int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session sessi
 
     parent.reset(new libyang::Data_Node(ctx, SYSCONF_STATS_ROOT, nullptr, LYD_ANYDATA_CONSTSTRING, 0));
 
-    for (auto&&[name, val]: stats_map) {
-        libyang::S_Data_Node element(new libyang::Data_Node(parent, mod, name.c_str(), val.c_str()));
+    for (auto&& item : stats_map) {
+        libyang::S_Data_Node element(new libyang::Data_Node(parent, mod, item.first.c_str(), item.second.c_str()));
     }
 
     return SR_ERR_OK;
 }
 
-int DDP::ConfigSysrepo::SysrepoCallback::rpc(sysrepo::S_Session session [[maybe_unused]],
-                                         const char* op_path [[maybe_unused]],
-                                         const sysrepo::S_Vals input [[maybe_unused]],
-                                         sr_event_t event [[maybe_unused]],
-                                         uint32_t request_id [[maybe_unused]],
-                                         sysrepo::S_Vals_Holder output [[maybe_unused]],
-                                         void* private_data [[maybe_unused]])
+int DDP::ConfigSysrepo::SysrepoCallback::rpc(sysrepo::S_Session,
+                                         const char*,
+                                         const sysrepo::S_Vals,
+                                         sr_event_t,
+                                         uint32_t,
+                                         sysrepo::S_Vals_Holder,
+                                         void*)
 {
     m_cfg.m_logger.info() << "Received request to restart.";
     Probe::getInstance().stop(true);

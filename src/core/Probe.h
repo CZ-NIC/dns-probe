@@ -31,6 +31,7 @@
 #include "core/DnsTcpConnection.h"
 #include "core/Arguments.h"
 #include "platform/MempoolFwdDecl.h"
+#include "utils/PollAbleRing.h"
 
 namespace DDP {
     class TimerInterface;
@@ -59,7 +60,9 @@ namespace DDP {
          */
         enum class ReturnValue {
             STOP, //!< Application gracefully stopped.
-            RESTART //!< Application stopped due to restart request.
+            RESTART, //!< Application stopped due to restart request.
+            ERROR, //!< Application gracefully stopped due to caught error
+            UNCAUGHT_ERROR = 128 //!< Application stopped due to uncaught error
         };
 
         Probe(const Probe&) = delete;
@@ -133,7 +136,7 @@ namespace DDP {
          * Provides access to communication link for sending log messages.
          * @return Endpoint for sending messages.
          */
-        CommLink::CommLinkWorkerEP& log_link() { return m_log_link->worker_endpoint(); }
+        CommLink::CommLinkEP& log_link() { return m_log_link->worker_endpoint(); }
 
         /**
          * @brief Get number of slave threads
@@ -170,13 +173,15 @@ namespace DDP {
         Config m_cfg; //!< Application configuration.
         ConfigSysrepo* m_sysrepo; //!< Sysrepo connection reference.
         TimerInterface* m_aggregated_timer; //!< Timer for automatic aggregating statistics and calculating qps.
+        TimerInterface* m_output_timer; //!< Timer for automatic rotation of output files
 
         std::unique_ptr<ThreadManager> m_thread_manager; //!< Thread manager for worker cores.
         std::unordered_map<unsigned, CommLink> m_comm_links; //!< Communication links between master core and workers.
         std::unique_ptr<CommLink> m_log_link; //!< Communication for sending log messages.
         std::unique_ptr<Mempool<DnsRecord>> m_dns_record_mempool; //!< Mempool for DNS records.
         std::unique_ptr<Mempool<DnsTcpConnection>> m_tcp_connection_mempool; //!< Mempool for TCP connections.
-        std::unordered_map<unsigned, std::unique_ptr<Ring<std::any>>> m_export_rings; //!< Rings for sending data from workers to exporter.
+        std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>> m_export_rings; //!< Rings for sending data from workers to exporter.
+        std::unordered_map<unsigned, PollAbleRingFactory<boost::any>> m_factory_rings;
 
         std::vector<Statistics> m_stats; //!< Statistics structure for workers. One item in vector per worker.
         AggregatedStatistics m_aggregated_stats; //!< Aggregated statistics from workers.
