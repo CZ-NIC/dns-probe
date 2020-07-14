@@ -13,7 +13,7 @@
 #
 # Variables defined by this module:
 #
-#  cryptopANT_FOUND                System has libcryptopaANT, include and library dirs found
+#  cryptopANT_FOUND                System has libcryptopANT, include and library dirs found
 #  cryptopANT_INCLUDE_DIR          The libcryptopANT include directories.
 #  cryptopANT_LIBRARY              The libcryptopANT library
 
@@ -30,7 +30,7 @@ mark_as_advanced(
         cryptopANT_LIBRARY
 )
 
-if(PCAP_FOUND)
+if(cryptopANT_FOUND)
     add_library(cryptopANT::cryptopANT INTERFACE IMPORTED)
     set_property(TARGET cryptopANT::cryptopANT PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${cryptopANT_INCLUDE_DIR})
     set_property(TARGET cryptopANT::cryptopANT PROPERTY INTERFACE_LINK_LIBRARIES ${cryptopANT_LIBRARY})
