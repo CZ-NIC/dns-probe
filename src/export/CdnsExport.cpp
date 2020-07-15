@@ -18,7 +18,7 @@
 #include "CdnsExport.h"
 
 DDP::CdnsExport::CdnsExport(Config& cfg)
-    : DnsExport(cfg), m_fields(cfg.cdns_fields.value()), m_parameters()
+    : DnsExport(cfg.anonymize_ip.value()), m_fields(cfg.cdns_fields.value()), m_parameters()
 {
     m_parameters.storage_parameters.max_block_items = cfg.cdns_records_per_block.value();
     set_cdns_hints(m_parameters.storage_parameters.storage_hints.query_response_hints,
@@ -26,12 +26,6 @@ DDP::CdnsExport::CdnsExport(Config& cfg)
                    m_fields);
 
     m_block = std::make_shared<CDNS::CdnsBlock>(CDNS::CdnsBlock(m_parameters, 0));
-
-    if (m_anonymize_ip) {
-        if (scramble_init_from_file(m_ip_enc_key.c_str(), static_cast<scramble_crypt_t>(m_ip_encryption),
-            static_cast<scramble_crypt_t>(m_ip_encryption), nullptr) != 0)
-            throw std::runtime_error("Couldn't initialize source IP anonymization!");
-    }
 }
 
 boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)

@@ -39,9 +39,7 @@ namespace DDP {
     class DnsExport
     {
     public:
-        explicit DnsExport(Config& cfg) : m_anonymize_ip(cfg.anonymize_ip.value()),
-                                          m_ip_encryption(cfg.ip_encryption.value()),
-                                          m_ip_enc_key(cfg.ip_enc_key.value()) {}
+        explicit DnsExport(bool anonymize_ip) : m_anonymize_ip(anonymize_ip) {}
 
         virtual ~DnsExport() {};
 
@@ -73,7 +71,5 @@ namespace DDP {
 
     protected:
         bool m_anonymize_ip;
-        IpEncryption m_ip_encryption;
-        std::string m_ip_enc_key;
     };
 }

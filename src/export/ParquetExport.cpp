@@ -29,7 +29,7 @@
 constexpr char DDP::ParquetExport::DIGITS[];
 
 DDP::ParquetExport::ParquetExport(Config& cfg)
-                                  : DnsExport(cfg), m_records_limit(cfg.parquet_records.value())
+                                  : DnsExport(cfg.anonymize_ip.value()), m_records_limit(cfg.parquet_records.value())
 {
     m_DnsSchema = arrow::schema({arrow::field("id", arrow::int32()),
                                 arrow::field("unixtime", arrow::int64()),
@@ -92,12 +92,6 @@ DDP::ParquetExport::ParquetExport(Config& cfg)
                                 arrow::field("dns_res_len", arrow::int32()),
                                 arrow::field("server_location", arrow::utf8())
     });
-
-    if (m_anonymize_ip) {
-        if (scramble_init_from_file(m_ip_enc_key.c_str(), static_cast<scramble_crypt_t>(m_ip_encryption),
-            static_cast<scramble_crypt_t>(m_ip_encryption), nullptr) != 0)
-            throw std::runtime_error("Couldn't initialize source IP anonymization!");
-    }
 }
 
 boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)

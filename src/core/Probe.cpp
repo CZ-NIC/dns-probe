@@ -19,6 +19,7 @@
 #include <utility>
 #include <tuple>
 #include <getopt.h>
+#include <cryptopANT.h>
 
 #include "Probe.h"
 #include "Worker.h"
@@ -203,6 +204,13 @@ void DDP::Probe::init(const Arguments& args)
                 }
             };
             m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
+        }
+
+        if (m_cfg.anonymize_ip) {
+            if (scramble_init_from_file(m_cfg.ip_enc_key.value().c_str(),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()), nullptr) != 0)
+                throw std::runtime_error("Couldn't initialize IP address anonymization!");
         }
 
         m_initialized = true;
