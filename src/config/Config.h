@@ -59,7 +59,7 @@ namespace DDP {
         ConfigItem<uint64_t> cdns_records_per_block; //!< Number of records in one block in CDNS file
         ConfigItem<uint64_t> cdns_blocks_per_file; //!< Number of blocks in CDNS file
 
-        ConfigItem<bool> anonymize_ip; //!< Enable source IP anonymization in exported data
+        ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
         ConfigItem<std::string> ip_enc_key; //!< File with encryption key for IP anonymization
     };

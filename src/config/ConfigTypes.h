@@ -67,7 +67,7 @@ namespace DDP {
     };
 
     /**
-     * Encryption algorithm used for optional source IP anonymization
+     * Encryption algorithm used for optional client IP anonymization
      */
     enum class IpEncryption : uint8_t {
         NONE = 0x00,

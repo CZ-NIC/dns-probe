@@ -35,6 +35,11 @@ module cznic-dns-probe {
      records about DNS transactions in C-DNS or Apache Parquet
      format.";
 
+  revision 2020-07-15 {
+    description
+      "Add IP anonymization";
+  }
+
   revision 2020-07-09 {
     description
       "Add IP and port filtering";
@@ -259,13 +264,14 @@ module cznic-dns-probe {
     }
     container ip-anonymization {
       description
-        "Configuration of source IP anonymization in exported data.";
+        "Configuration of client IP anonymization in exported data (Parquet or C-DNS).
+         The optional PCAP export does NOT get anonymized!!!";
 
       leaf anonymize-ip {
         type boolean;
         default "false";
         description
-          "If this flag is true, source IP addresses in exported data will be anonymized
+          "If this flag is true, client IP addresses in exported data will be anonymized
            using Crypto-PAn prefix-preserving algorithm.
 
            This is a static configuration parameter that is applied
@@ -297,7 +303,7 @@ module cznic-dns-probe {
 
         default "aes";
         description
-          "Encryption algorithm to be used during anonymization of source IP addresses if enabled.
+          "Encryption algorithm to be used during anonymization of client IP addresses if enabled.
 
            This is a static configuration parameter that is applied
            only upon restarting the probe.";
@@ -308,10 +314,11 @@ module cznic-dns-probe {
         default "key.cryptopant";
         description
           "Path (including file's name) to the file with encryption key that is to be used
-           for source IP anonymization if enabled.
+           for client IP anonymization if enabled. If the file doesn't exist, it is generated
+           by the probe.
 
            The key needs to be compatible with the encryption algorithm set in the 'encryption'
-           option above. User should generate the key using 'scramble_ips' tool intalled by
+           option above. User should generate the key using 'scramble_ips' tool installed by
            the cryptopANT dependency like this:
 
            scramble_ips --newkey --type=<encryption> <key_file>
