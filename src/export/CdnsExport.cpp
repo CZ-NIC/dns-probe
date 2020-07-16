@@ -70,11 +70,13 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_ADDRESS)]) {
         in6_addr* addr = record.client_address();
         if (record.m_addr_family == DnsRecord::AddrFamily::IP4) {
-            *reinterpret_cast<uint32_t*>(addr) = scramble_ip4(*reinterpret_cast<uint32_t*>(addr), 0);
+            if (m_anonymize_ip)
+                *reinterpret_cast<uint32_t*>(addr) = scramble_ip4(*reinterpret_cast<uint32_t*>(addr), 0);
             qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 4));
         }
         else if (record.m_addr_family == DnsRecord::AddrFamily::IP6) {
-            scramble_ip6(addr, 0);
+            if (m_anonymize_ip)
+                scramble_ip6(addr, 0);
             qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 16));
         }
     }
