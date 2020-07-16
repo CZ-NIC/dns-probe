@@ -18,11 +18,11 @@
 #  cryptopANT_LIBRARY              The libcryptopANT library
 
 find_path(cryptopANT_ROOT_DIR NAMES include/cryptopANT.h)
-find_path(cryptopANT_INCLUDE_DIR NAMES cryptopANT.h HINTS ${cryptopANT_ROOT_DIR}/include)
-find_library(cryptopANT_LIBRARY NAMES cryptopANT HINTS ${cryptopANT_ROOT_DIR}/lib)
+find_path(cryptopANT_INCLUDE_DIR NAMES cryptopANT.h cryptopant.h HINTS ${cryptopANT_ROOT_DIR}/include)
+find_library(cryptopANT_LIBRARY NAMES cryptopANT cryptopant HINTS ${cryptopANT_ROOT_DIR}/lib)
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(cryptopANT DEFAULT_MSG cryptopANT_ROOT_DIR)
+find_package_handle_standard_args(cryptopANT DEFAULT_MSG cryptopANT_ROOT_DIR cryptopANT_LIBRARY)
 
 mark_as_advanced(
         cryptopANT_ROOT_DIR
