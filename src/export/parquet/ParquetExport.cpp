@@ -29,7 +29,7 @@
 constexpr char DDP::ParquetExport::DIGITS[];
 
 DDP::ParquetExport::ParquetExport(Config& cfg)
-                                  : DnsExport(cfg.anonymize_ip.value()), m_records_limit(cfg.parquet_records.value())
+                                  : BaseExport(cfg.anonymize_ip.value()), m_records_limit(cfg.parquet_records.value())
 {
     m_DnsSchema = arrow::schema({arrow::field("id", arrow::int32()),
                                 arrow::field("unixtime", arrow::int64()),

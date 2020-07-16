@@ -19,13 +19,22 @@
 
 #include <cdns/cdns.h>
 
-#include "DnsWriter.h"
+#include "export/BaseWriter.h"
 
 namespace DDP {
+
+    /**
+     * @brief Set the C-DNS QueryResponse and QueryResponseSignature hints according to given C-DNS fields
+     * @param qr_hints QueryResponse hints to set
+     * @param qr_sig_hints QueryResponseSignature hints to set
+     * @param fields C-DNS fields according to which the hints will be set
+     */
+    void set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<23> fields);
+
     /**
      * @brief Class for writing finished C-DNS Blocks to output
      */
-    class CdnsWriter : public DnsWriter {
+    class CdnsWriter : public BaseWriter {
         public:
         /**
          * @brief Construct a new CdnsWriter object

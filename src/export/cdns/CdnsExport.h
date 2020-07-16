@@ -20,14 +20,14 @@
 #include <bitset>
 #include <cdns/cdns.h>
 
-#include "DnsExport.h"
+#include "export/BaseExport.h"
 #include "CdnsWriter.h"
 
 namespace DDP {
     /**
      * @brief Class for buffering DNS records to C-DNS block
      */
-    class CdnsExport : public DnsExport {
+    class CdnsExport : public BaseExport {
         public:
         /**
          * @brief Constructor creates new C-DNS block configured for given C-DNS fields
@@ -60,7 +60,7 @@ namespace DDP {
          * @param writer CdnsWriter!!! object thaht handles writing C-DNS Block to output
          * @param stats Statistics for update
          */
-        void write_leftovers(DnsWriter* writer, Statistics& stats) override {
+        void write_leftovers(BaseWriter* writer, Statistics& stats) override {
             if (writer)
                 write_leftovers(*dynamic_cast<CdnsWriter*>(writer), stats);
         };

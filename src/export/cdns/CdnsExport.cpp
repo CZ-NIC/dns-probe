@@ -18,7 +18,7 @@
 #include "CdnsExport.h"
 
 DDP::CdnsExport::CdnsExport(Config& cfg)
-    : DnsExport(cfg.anonymize_ip.value()), m_fields(cfg.cdns_fields.value()), m_parameters()
+    : BaseExport(cfg.anonymize_ip.value()), m_fields(cfg.cdns_fields.value()), m_parameters()
 {
     m_parameters.storage_parameters.max_block_items = cfg.cdns_records_per_block.value();
     set_cdns_hints(m_parameters.storage_parameters.storage_hints.query_response_hints,

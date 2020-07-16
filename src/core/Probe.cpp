@@ -209,6 +209,16 @@ void DDP::Probe::init(const Arguments& args)
             m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
         }
 
+#ifndef PROBE_PARQUET
+        if (m_cfg.export_format.value() == ExportFormat::PARQUET)
+            throw std::runtime_error("DNS Probe was built without Parquet support! Use C-DNS as export format!");
+#endif
+
+#ifndef PROBE_CDNS
+        if (m_cfg.export_format.value() == ExportFormat::CDNS)
+            throw std::runtime_error("DNS Probe was built without C-DNS support! Use Parquet as export format!");
+#endif
+
         if (m_cfg.anonymize_ip) {
 #ifdef PROBE_CRYPTOPANT
             if (scramble_init_from_file(m_cfg.ip_enc_key.value().c_str(),

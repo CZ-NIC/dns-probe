@@ -36,10 +36,18 @@ DDP::Exporter::Exporter(DDP::Config& cfg, DDP::Statistics& stats,
         m_mark_count(0)
 {
     if (cfg.export_format.value() == ExportFormat::PARQUET) {
+#ifdef PROBE_PARQUET
         m_writer = new ParquetWriter(cfg, process_id);
+#else
+        throw std::runtime_error("DNS Probe was built without Parquet support!");
+#endif
     }
     else {
+#ifdef PROBE_CDNS
         m_writer = new CdnsWriter(cfg, process_id);
+#else
+        throw std::runtime_error("DNS Probe was built without C-DNS support!");
+#endif
     }
 
     // Prepare PollAble rings
