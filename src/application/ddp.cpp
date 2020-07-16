@@ -269,7 +269,7 @@ int main(int argc, char** argv)
         bind_interfaces(arguments.args);
         runner.init(arguments.args);
     } catch (std::exception& e) {
-        logwriter.log_lvl("ERROR", "Error: ", e.what(), "\nProbe init failed!");
+        logwriter.log_lvl("ERROR", "Probe init failed: ", e.what());
         try {
             unbind_interfaces(arguments.args);
         }
