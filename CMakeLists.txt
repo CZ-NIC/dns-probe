@@ -6,6 +6,7 @@ set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
 set(DPDK_LEGACY_MEM OFF CACHE BOOL "Enable legacy memory management for DPDK")
 set(BUILD_TESTING OFF CACHE BOOL "Enable build testing binaries")
 set(BUILD_DOC ON CACHE BOOL "Generate Sphinx and Doxygen documentation")
+set(PROBE_CRYPTOPANT ON CACHE BOOL "Enable IP anonymization with cryptopANT library")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 14)
@@ -17,7 +18,6 @@ find_package(PCAP REQUIRED)
 find_package(Arrow REQUIRED)
 find_package(Parquet REQUIRED)
 find_package(CDNS REQUIRED)
-find_package(cryptopANT REQUIRED)
 find_package(LibYangCpp REQUIRED)
 find_package(SysrepoCpp REQUIRED)
 find_package(Boost REQUIRED)
@@ -49,10 +49,16 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp CDNS::CDNS cryptopANT::cryptopANT)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Arrow::Arrow Parquet::Parquet Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp CDNS::CDNS)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
 target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 target_compile_options(DNSProbe INTERFACE -msse4)
+
+if (PROBE_CRYPTOPANT)
+    find_package(cryptopANT REQUIRED)
+    target_link_libraries(DNSProbe INTERFACE cryptopANT::cryptopANT)
+    target_compile_definitions(DNSProbe INTERFACE PROBE_CRYPTOPANT)
+endif()
 
 # Add warning flags
 function(set_warning param)

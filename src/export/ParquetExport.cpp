@@ -149,12 +149,16 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     char addrBuf[buf_len];
     in6_addr* addr = record.client_address();
     int ipv = record.m_addr_family == DDP::DnsRecord::AddrFamily::IP4 ? AF_INET : AF_INET6;
+
+#ifdef PROBE_CRYPTOPANT
     if (m_anonymize_ip) {
         if (ipv == AF_INET)
             *reinterpret_cast<uint32_t*>(addr) = scramble_ip4(*reinterpret_cast<uint32_t*>(addr), 0);
         else
             scramble_ip6(addr, 0);
     }
+#endif
+
     inet_ntop(ipv, addr, addrBuf, sizeof(addrBuf));
     PARQUET_THROW_NOT_OK(Src.Append(addrBuf, strlen(addrBuf)));
 

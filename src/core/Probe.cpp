@@ -19,7 +19,10 @@
 #include <utility>
 #include <tuple>
 #include <getopt.h>
+
+#ifdef PROBE_CRYPTOPANT
 #include <cryptopANT.h>
+#endif
 
 #include "Probe.h"
 #include "Worker.h"
@@ -207,10 +210,14 @@ void DDP::Probe::init(const Arguments& args)
         }
 
         if (m_cfg.anonymize_ip) {
+#ifdef PROBE_CRYPTOPANT
             if (scramble_init_from_file(m_cfg.ip_enc_key.value().c_str(),
                 static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()),
                 static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()), nullptr) != 0)
                 throw std::runtime_error("Couldn't initialize IP address anonymization!");
+#else
+            throw std::runtime_error("DNS Probe was built without IP anonymization support!");
+#endif
         }
 
         m_initialized = true;

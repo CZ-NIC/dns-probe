@@ -21,7 +21,10 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+
+#ifdef PROBE_CRYPTOPANT
 #include <cryptopANT.h>
+#endif
 
 #include "core/DnsRecord.h"
 #include "core/Statistics.h"
