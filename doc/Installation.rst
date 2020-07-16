@@ -170,6 +170,22 @@ C-DNS Library
    make install
    cd "$DEP_DIR"
 
+cryptopANT
+----------
+
+`Library <https://ant.isi.edu/software/cryptopANT/index.html>`_ for anonymization of IP addresses.
+
+.. code:: shell
+
+   curl -L https://ant.isi.edu/software/cryptopANT/cryptopANT-1.2.2.tar.gz > dl/cryptopant.tgz
+   mkdir build/cryptopant
+   tar -xf dl/cryptopant.tgz -C build/cryptopant --strip-components=1
+   cd build/cryptopant
+   ./configure --prefix="$DEP_DIR"
+   make -j
+   make install
+   cd "$DEP_DIR"
+
 DNS Probe
 ---------
 

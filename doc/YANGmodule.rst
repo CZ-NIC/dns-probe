@@ -29,10 +29,10 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
 
     contact
       "Editor: Ladislav Lhotka
-               <mailto:lhotka@nic.cz>
+               <mailto:lhotka@nic.cz>
 
        Editor: Jan Dražil
-               <mailto:idrazil@fit.vutbr.cz>
+               <mailto:idrazil@fit.vutbr.cz>
 
        Editor: Pavel Doležal
                <mailto:pavel.dolezal@nic.cz>";
@@ -44,6 +44,11 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
        responses from network traffic (both UDP and TCP) and exports
        records about DNS transactions in C-DNS or Apache Parquet
        format.";
+
+    revision 2020-07-15 {
+      description
+        "Add IP anonymization";
+    }
 
     revision 2020-07-09 {
       description
@@ -100,10 +105,7 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
         type uint16;
         default "53";
         description
-          "List of ports used for identifying DNS traffic.
-
-           This is a static configuration parameter that is applied
-           only upon restarting the probe.";
+          "List of ports used for identifying DNS traffic.";
       }
       container export {
         description
@@ -268,6 +270,71 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
           description
             "Selection of packets to be stored in PCAP files, in
              addition to normal Parquet or C-DNS export.";
+        }
+      }
+      container ip-anonymization {
+        description
+          "Configuration of client IP anonymization in exported data (Parquet or C-DNS).
+           The optional PCAP export does NOT get anonymized!!!";
+
+        leaf anonymize-ip {
+          type boolean;
+          default "false";
+          description
+            "If this flag is true, client IP addresses in exported data will be anonymized
+             using Crypto-PAn prefix-preserving algorithm.
+
+             This is a static configuration parameter that is applied
+             only upon restarting the probe.";
+        }
+
+        leaf encryption {
+          type enumeration {
+            enum aes {
+              description
+                "AES encryption algorithm.";
+            }
+
+            enum blowfish {
+              description
+                "Blowfish encryption algorithm.";
+            }
+
+            enum md5 {
+              description
+                "MD5 hash function.";
+            }
+
+            enum sha1 {
+              description
+                "SHA1 hash function.";
+            }
+          }
+
+          default "aes";
+          description
+            "Encryption algorithm to be used during anonymization of client IP addresses if enabled.
+
+             This is a static configuration parameter that is applied
+             only upon restarting the probe.";
+        }
+
+        leaf key-path {
+          type string;
+          default "key.cryptopant";
+          description
+            "Path (including file's name) to the file with encryption key that is to be used
+             for client IP anonymization if enabled. If the file doesn't exist, it is generated
+             by the probe.
+
+             The key needs to be compatible with the encryption algorithm set in the 'encryption'
+             option above. User should generate the key using 'scramble_ips' tool installed by
+             the cryptopANT dependency like this:
+
+             scramble_ips --newkey --type=<encryption> <key_file>
+
+             This is a static configuration parameter that is applied
+             only upon restarting the probe.";
         }
       }
       container transaction-table {
