@@ -193,6 +193,8 @@ DNS Probe
 
    # Replace <GIT_REPO> with path to this repository
    # For disabling DPDK BACKEND remove `-DDPDK_BACKEND=On`
+   # For building without IP anonymization support add `-DPROBE_CRYPTOPANT=Off`
+   # For building without support for one of the export formats add `-DPROBE_PARQUET=Off` or `-DPROBE_CDNS=Off`
    cmake <GIT_REPO> -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DAF_PACKET_BACKEND=On -DDPDK_BACKEND=On
    make -j
    make install
