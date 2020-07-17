@@ -22,10 +22,14 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+#ifdef PROBE_CRYPTOPANT
+#include <cryptopANT.h>
+#endif
+
 #include "core/DnsRecord.h"
 #include "core/Statistics.h"
 #include "config/Config.h"
-#include "DnsWriter.h"
+#include "BaseWriter.h"
 
 namespace DDP {
 
@@ -35,12 +39,12 @@ namespace DDP {
      * @brief Abstract class serving as interface for classes buffering
      * DNS records to export structures
      */
-    class DnsExport
+    class BaseExport
     {
     public:
-        explicit DnsExport() {}
+        explicit BaseExport(bool anonymize_ip) : m_anonymize_ip(anonymize_ip) {}
 
-        virtual ~DnsExport() {};
+        virtual ~BaseExport() {};
 
         /**
          * @brief Store DNS record into export structure
@@ -60,12 +64,15 @@ namespace DDP {
          * @param writer Object that handles writing to output
          * @param stats Statistics for update
          */
-        virtual void write_leftovers(DnsWriter* writer, Statistics& stats) = 0;
+        virtual void write_leftovers(BaseWriter* writer, Statistics& stats) = 0;
 
         /**
          * @brief Update export configuration
          * @param cfg New configuration
          */
         virtual void update_configuration(Config& cfg) = 0;
+
+    protected:
+        bool m_anonymize_ip;
     };
 }

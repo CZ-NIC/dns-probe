@@ -39,6 +39,7 @@ build_and_test:
       libyang-cpp-dev
       sysrepo-dev
       sysrepo-cpp-dev
+      libcryptopant-dev
       dpdk-dev
     - pip3 install pyarrow
   script:
@@ -75,6 +76,7 @@ pages:
       libyang-cpp-dev
       sysrepo-dev
       sysrepo-cpp-dev
+      libcryptopant-dev
   script:
     - mkdir build
     - cd build

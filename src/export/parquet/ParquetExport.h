@@ -30,7 +30,7 @@
 #include <parquet/exception.h>
 
 #include "core/DnsRecord.h"
-#include "DnsExport.h"
+#include "export/BaseExport.h"
 #include "core/Statistics.h"
 #include "ParquetWriter.h"
 
@@ -44,7 +44,7 @@ namespace DDP {
         explicit EdnsParseException( const std::string& what_arg ) : std::runtime_error(what_arg) {}
         explicit EdnsParseException( const char* what_arg ) : std::runtime_error(what_arg) {}
     };
-    class ParquetExport : public DnsExport
+    class ParquetExport : public BaseExport
     {
     public:
         static constexpr char DIGITS[] = "0001020304050607080910111213141516171819"
@@ -69,10 +69,9 @@ namespace DDP {
 
         /**
          * @brief Constructor creates Parquet file schema
-         * @param records_limit Maximum number of DNS records in one parquet file
-         * @param process_id Process identifier, used in generation of parquet file's name
+         * @param cfg Object with configuration options
          */
-        explicit ParquetExport(uint64_t records_limit);
+        explicit ParquetExport(Config& cfg);
 
         /**
          * @brief Store DNS record into arrow columns.
@@ -96,7 +95,7 @@ namespace DDP {
          * @param writer ParquetWriter!!! object thaht handles writing Arrow table to output
          * @param stats Statistics for update
          */
-        void write_leftovers(DnsWriter* writer, Statistics& stats) override {
+        void write_leftovers(BaseWriter* writer, Statistics& stats) override {
             if (writer)
                 write_leftovers(*dynamic_cast<ParquetWriter*>(writer), stats);
         };

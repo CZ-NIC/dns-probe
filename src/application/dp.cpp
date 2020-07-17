@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     try {
         runner.init(arguments.args);
     } catch (std::exception& e) {
-        logwriter.log_lvl("ERROR", "Error: ", e.what(), "\nProbe init failed!");
+        logwriter.log_lvl("ERROR", "Probe init failed: ", e.what());
         return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
 

@@ -20,6 +20,10 @@
 #include <tuple>
 #include <getopt.h>
 
+#ifdef PROBE_CRYPTOPANT
+#include <cryptopANT.h>
+#endif
+
 #include "Probe.h"
 #include "Worker.h"
 #include "Exporter.h"
@@ -203,6 +207,27 @@ void DDP::Probe::init(const Arguments& args)
                 }
             };
             m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
+        }
+
+#ifndef PROBE_PARQUET
+        if (m_cfg.export_format.value() == ExportFormat::PARQUET)
+            throw std::runtime_error("DNS Probe was built without Parquet support! Use C-DNS as export format!");
+#endif
+
+#ifndef PROBE_CDNS
+        if (m_cfg.export_format.value() == ExportFormat::CDNS)
+            throw std::runtime_error("DNS Probe was built without C-DNS support! Use Parquet as export format!");
+#endif
+
+        if (m_cfg.anonymize_ip) {
+#ifdef PROBE_CRYPTOPANT
+            if (scramble_init_from_file(m_cfg.ip_enc_key.value().c_str(),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()), nullptr) != 0)
+                throw std::runtime_error("Couldn't initialize IP address anonymization!");
+#else
+            throw std::runtime_error("DNS Probe was built without IP anonymization support!");
+#endif
         }
 
         m_initialized = true;

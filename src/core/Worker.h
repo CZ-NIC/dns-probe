@@ -18,8 +18,8 @@
 #pragma once
 
 #include <set>
-#include "export/DnsExport.h"
-#include "export/DnsWriter.h"
+#include "export/BaseExport.h"
+#include "export/BaseWriter.h"
 #include "core/DnsRecord.h"
 #include "Process.h"
 #include "utils/Logger.h"
@@ -27,14 +27,20 @@
 #include "core/TransactionTable.h"
 #include "core/DnsParser.h"
 #include "core/DnsTcpConnection.h"
-#include "export/ParquetExport.h"
-#include "export/ParquetWriter.h"
-#include "export/CdnsExport.h"
-#include "export/CdnsWriter.h"
 #include "export/PcapWriter.h"
 #include "utils/PollAbleRing.h"
 #include "core/Statistics.h"
 #include "core/Port.h"
+
+#ifdef PROBE_PARQUET
+#include "export/parquet/ParquetExport.h"
+#include "export/parquet/ParquetWriter.h"
+#endif
+
+#ifdef PROBE_CDNS
+#include "export/cdns/CdnsExport.h"
+#include "export/cdns/CdnsWriter.h"
+#endif
 
 namespace DDP {
     // Number of processed packets after which transaction table timetout is triggered
@@ -107,22 +113,42 @@ namespace DDP {
                 m_total_rx_count(0),
                 m_process_id(process_id)
         {
-            if (cfg.export_format.value() == ExportFormat::PARQUET)
-                m_exporter = new ParquetExport(cfg.parquet_records.value());
-            else
-                m_exporter = new CdnsExport(cfg.cdns_fields.value(), cfg.cdns_records_per_block.value());
+            if (cfg.export_format.value() == ExportFormat::PARQUET) {
+#ifdef PROBE_PARQUET
+                m_exporter = new ParquetExport(cfg);
+#else
+                throw std::runtime_error("DNS Probe was built without Parquet support!");
+#endif
+            }
+            else {
+#ifdef PROBE_CDNS
+                m_exporter = new CdnsExport(cfg);
+#else
+                throw std::runtime_error("DNS Probe was built without C-DNS support!");
+#endif
+            }
         }
 
         /**
          * @brief Destructor. Writes leftover buffered records to Parquet file
          */
         ~Worker() override {
-            DnsWriter* writer = nullptr;
+            BaseWriter* writer = nullptr;
             try {
-                if (m_cfg.export_format.value() == ExportFormat::PARQUET)
+                if (m_cfg.export_format.value() == ExportFormat::PARQUET) {
+#ifdef PROBE_PARQUET
                     writer = new ParquetWriter(m_cfg, m_process_id);
-                else
+#else
+                    throw std::runtime_error("DNS Probe was built without Parquet support!");
+#endif
+                }
+                else {
+#ifdef PROBE_CDNS
                     writer = new CdnsWriter(m_cfg, m_process_id);
+#else
+                    throw std::runtime_error("DNS Probe was built without C-DNS support!");
+#endif
+                }
 
                 m_exporter->write_leftovers(writer, m_stats);
                 delete writer;
@@ -199,7 +225,7 @@ namespace DDP {
         uint32_t m_tt_timeout_count; //!< Currently processed packets before triggering timeout check.
         TransactionTable<DnsRecord> m_transaction_table; //!< Transaction table for records extracted from DNS packets.
         DnsParser m_parser; //!< DnsParser for creating records into transaction table.
-        DnsExport* m_exporter; //!< Exporter instance preparing records for exporter thread.
+        BaseExport* m_exporter; //!< Exporter instance preparing records for exporter thread.
         uint64_t m_output_rotation_counter; //!< Distinct different files when export file has time based rotation enabled.
         PcapWriter m_pcap_all; //!< PCAP writer for saving processed packets.
         unsigned m_lcore_queue; //!< Specify packet queue for worker.

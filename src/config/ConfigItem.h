@@ -132,13 +132,18 @@ namespace DDP {
          */
         PcapExportCfg value() const { return m_value; }
 
+        /**
+         * Check if given value from sysrepo can be used in config.
+         * @param value Checked valued from sysrepo.
+         * @return True if value is valid otherwise false.
+         */
         bool validate(const boost::any& value) const override
         {
             try {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "DISABLED" || str_value == "INVALID" || str_value == "ALL";
-            } catch (...) {
+            } catch (std::exception& e) {
                 return false;
             }
         }
@@ -199,13 +204,18 @@ namespace DDP {
          */
         ExportFormat value() const { return m_value; }
 
+        /**
+         * Check if given value from sysrepo can be used in config.
+         * @param value Checked valued from sysrepo.
+         * @return True if value is valid otherwise false.
+         */
         bool validate(const boost::any& value) const override
         {
             try {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
                 return str_value == "PARQUET" || str_value == "CDNS";
-            } catch (...) {
+            } catch (std::exception& e) {
                 return false;
             }
         }
@@ -347,6 +357,87 @@ namespace DDP {
 
     protected:
         Type m_value{0x0}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::IpEncryption as config item.
+     */
+    template<>
+    class ConfigItem<IpEncryption>: public ConfigItemBase
+    {
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        IpEncryption value() const { return m_value; }
+
+        /**
+         * Check if given value from sysrepo can be used in config.
+         * @param value Checked valued from sysrepo.
+         * @return True if value is valid otherwise false.
+         */
+        bool validate(const boost::any& value) const override
+        {
+            try {
+                auto str_value = boost::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "AES" || str_value == "BLOWFISH" || str_value == "MD5" || str_value == "SHA1";
+            } catch (std::exception& e) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo.
+         */
+        void from_sysrepo(const boost::any& value) override
+        {
+            auto str_value = boost::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if(str_value == "AES")
+                m_value = IpEncryption::AES;
+            else if(str_value == "BLOWFISH")
+                m_value = IpEncryption::BLOWFISH;
+            else if(str_value == "MD5")
+                m_value = IpEncryption::MD5;
+            else if(str_value == "SHA1")
+                m_value = IpEncryption::SHA1;
+            else
+                throw std::invalid_argument("Invalid argument for IpEncryption");
+        }
+
+        /**
+         * Implicit conversion to IpEncryption.
+         * @return Saved value.
+         */
+        operator IpEncryption() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == IpEncryption::NONE)
+                return {"NONE"};
+            else if (m_value == IpEncryption::AES)
+                return {"AES"};
+            else if (m_value == IpEncryption::BLOWFISH)
+                return {"BLOWFISH"};
+            else if (m_value == IpEncryption::MD5)
+                return {"MD5"};
+            else if (m_value == IpEncryption::SHA1)
+                return {"SHA1"};
+            else
+                return {"NONE"};
+        }
+
+
+    protected:
+        IpEncryption m_value{IpEncryption::NONE}; //!< Saved value.
     };
 
     /**

@@ -170,6 +170,22 @@ C-DNS Library
    make install
    cd "$DEP_DIR"
 
+cryptopANT
+----------
+
+`Library <https://ant.isi.edu/software/cryptopANT/index.html>`_ for anonymization of IP addresses.
+
+.. code:: shell
+
+   curl -L https://ant.isi.edu/software/cryptopANT/cryptopANT-1.2.2.tar.gz > dl/cryptopant.tgz
+   mkdir build/cryptopant
+   tar -xf dl/cryptopant.tgz -C build/cryptopant --strip-components=1
+   cd build/cryptopant
+   ./configure --prefix="$DEP_DIR"
+   make -j
+   make install
+   cd "$DEP_DIR"
+
 DNS Probe
 ---------
 
@@ -177,6 +193,8 @@ DNS Probe
 
    # Replace <GIT_REPO> with path to this repository
    # For disabling DPDK BACKEND remove `-DDPDK_BACKEND=On`
+   # For building without IP anonymization support add `-DPROBE_CRYPTOPANT=Off`
+   # For building without support for one of the export formats add `-DPROBE_PARQUET=Off` or `-DPROBE_CDNS=Off`
    cmake <GIT_REPO> -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DAF_PACKET_BACKEND=On -DDPDK_BACKEND=On
    make -j
    make install

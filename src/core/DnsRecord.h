@@ -151,14 +151,14 @@ namespace DDP {
             }
         }
 
-        const in6_addr& client_address()
+        in6_addr* client_address()
         {
-            return m_addr[static_cast<int>(m_client_index)];
+            return &m_addr[static_cast<int>(m_client_index)];
         }
 
-        const in6_addr& server_address()
+        in6_addr* server_address()
         {
-            return m_addr[!static_cast<int>(m_client_index)];
+            return &m_addr[!static_cast<int>(m_client_index)];
         }
 
         uint16_t client_port()
