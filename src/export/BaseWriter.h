@@ -25,34 +25,25 @@
 #include "config/Config.h"
 
 namespace DDP {
-
-    /**
-     * @brief Set the C-DNS QueryResponse and QueryResponseSignature hints according to given C-DNS fields
-     * @param qr_hints QueryResponse hints to set
-     * @param qr_sig_hints QueryResponseSignature hints to set
-     * @param fields C-DNS fields according to which the hints will be set
-     */
-    void set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<23> fields);
-
     /**
      * @brief Abstract class serving as interface for output writing classes
      */
-    class DnsWriter {
+    class BaseWriter {
         public:
         /**
-         * @brief Construct a new DnsWriter object
+         * @brief Construct a new BaseWriter object
          * @param cfg Configuration of the output
          * @param process_id Process ID used for generating names of the output files
          * @param sufix Sufix of the generated names for export files
          */
-        explicit DnsWriter(Config& cfg, uint32_t process_id, std::string sufix = "") :
+        explicit BaseWriter(Config& cfg, uint32_t process_id, std::string sufix = "") :
             m_cfg(cfg),
             m_id("_p" + std::to_string(process_id)),
             m_sufix(sufix),
             m_filename_counter(0),
             m_filename() {}
 
-        virtual ~DnsWriter() {};
+        virtual ~BaseWriter() {};
 
         /**
          * @brief Write given item with buffered DNS records to output

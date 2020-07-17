@@ -160,20 +160,26 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
                 try {
                     auto block = m_exporter->buffer_record(*to_export);
                     if (!block.empty()) {
+#ifdef PROBE_PARQUET
                         if (block.type() == typeid(std::shared_ptr<arrow::Table>) &&
                             boost::any_cast<std::shared_ptr<arrow::Table>>(block) != nullptr) {
                             enqueue(block);
                         }
-                        else if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
+#endif
+#ifdef PROBE_CDNS
+                        if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
                                  boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(block) != nullptr) {
                             enqueue(block);
                         }
+#endif
                     }
                 }
+#ifdef PROBE_PARQUET
                 catch(EdnsParseException& e) {
                     Logger("Parse error").debug() << e.what();
                     m_parser.export_invalid(pkt);
                 }
+#endif
                 catch(std::exception& e) {
                     Logger("Export").warning() << "Buffering new DNS record failed: " << e.what();
                 }
@@ -210,14 +216,18 @@ void DDP::Worker::rotate_output()
         // Send currently buffered DNS records to exporter core
         auto block = m_exporter->rotate_export();
         if (!block.empty()) {
+#ifdef PROBE_PARQUET
             if (block.type() == typeid(std::shared_ptr<arrow::Table>) &&
                 boost::any_cast<std::shared_ptr<arrow::Table>>(block) != nullptr) {
                 enqueue(block);
             }
-            else if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
+#endif
+#ifdef PROBE_CDNS
+            if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
                      boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(block) != nullptr) {
                 enqueue(block);
             }
+#endif
         }
 
         // Send mark to exporter core

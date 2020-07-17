@@ -108,6 +108,9 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/export/cdns-fields",                 m_cfg.cdns_fields},
         {SYSCONF_CFG_ROOT "/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
         {SYSCONF_CFG_ROOT "/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/encryption",        m_cfg.ip_encryption},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/key-path",          m_cfg.ip_enc_key},
 }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     try {

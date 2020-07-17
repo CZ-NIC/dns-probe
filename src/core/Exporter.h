@@ -23,9 +23,16 @@
 #include "config/Config.h"
 #include "utils/Logger.h"
 #include "Statistics.h"
-#include "export/ParquetWriter.h"
-#include "export/CdnsWriter.h"
 #include "Process.h"
+#include "export/BaseWriter.h"
+
+#ifdef PROBE_PARQUET
+#include "export/parquet/ParquetWriter.h"
+#endif
+
+#ifdef PROBE_CDNS
+#include "export/cdns/CdnsWriter.h"
+#endif
 
 namespace DDP {
 
@@ -77,7 +84,7 @@ namespace DDP {
         void new_config(Config& cfg) override;
 
     private:
-        DnsWriter* m_writer;
+        BaseWriter* m_writer;
         unsigned m_process_id;
         std::vector<Ring<boost::any>*> m_rings;
 

@@ -24,20 +24,20 @@
 #include <parquet/arrow/writer.h>
 #include <parquet/exception.h>
 
-#include "DnsWriter.h"
+#include "export/BaseWriter.h"
 
 namespace DDP {
     /**
      * @brief Class for writing finished Arrow tables to output
      */
-    class ParquetWriter : public DnsWriter {
+    class ParquetWriter : public BaseWriter {
         public:
         /**
          * @brief Construct a new ParquetWriter object
          * @param cfg Configuration of the output
          * @param process_id Process ID used for generating names of the output files
          */
-        explicit ParquetWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id),
+        explicit ParquetWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id),
                                                                    m_compress(cfg.file_compression.value()) {}
 
         /**
