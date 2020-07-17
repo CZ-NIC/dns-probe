@@ -1,0 +1,7 @@
+{
+  "cznic-dns-probe:dns-probe": {
+    "ipv4-denylist": [
+        "147.229.8.12"
+    ]
+  }
+}
