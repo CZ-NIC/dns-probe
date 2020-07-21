@@ -17,10 +17,9 @@ build_and_test:
   before_script:
     - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
     - apt-get update
-    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install gnupg wget
-    - echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' > /etc/apt/sources.list.d/dns-probe.list
-    - wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/Debian_10/Release.key -O Release.key
-    - apt-key add - < Release.key
+    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install gnupg curl
+    - echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | tee /etc/apt/sources.list.d/dns-probe.list
+    - curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
     - apt-get update
     - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install
       g++
@@ -55,10 +54,9 @@ pages:
   before_script:
     - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
     - apt-get update
-    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install gnupg wget
-    - echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' > /etc/apt/sources.list.d/dns-probe.list
-    - wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/Debian_10/Release.key -O Release.key
-    - apt-key add - < Release.key
+    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install gnupg curl
+    - echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | tee /etc/apt/sources.list.d/dns-probe.list
+    - curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
     - apt-get update
     - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install
       g++
