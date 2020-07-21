@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - 0.5
+     - 1.4
+     - :doc:`Installation <Installation>`
+     - Update instructions for installation from packages
+   * -
      - 1.3
      - :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`, :doc:`YANG module <YANGmodule>`
      - Add client IP anonymization

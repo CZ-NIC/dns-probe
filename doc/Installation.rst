@@ -20,56 +20,54 @@ Installation from packages
 ==========================
 
 The first two steps are to add the OBS repository for the given
-distribution to the system's repository list, and download the
-repository's signing key:
+distribution to the system's repository list, and add the
+repository's signing key to the system keyring:
 
 Debian 10
 ---------
 
 .. code:: shell
 
-   sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' > /etc/apt/sources.list.d/dns-probe.list
-   wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/Debian_10/Release.key -O Release.key
+   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
+   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
 Debian 9
 --------
 
 .. code:: shell
 
-   sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_9.0/ /' > /etc/apt/sources.list.d/dns-probe.list
-   wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/Debian_9.0/Release.key -O Release.key
+   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_9.0/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
+   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_9.0/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
 Ubuntu 20.04
 ------------
 
 .. code:: shell
 
-   sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_20.04/ /' > /etc/apt/sources.list.d/dns-probe.list
-   wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_20.04/Release.key -O Release.key
+   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_20.04/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
+   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/xUbuntu_20.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
 Ubuntu 18.04
 ------------
 
 .. code:: shell
 
-   sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_18.04/ /' > /etc/apt/sources.list.d/dns-probe.list
-   wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_18.04/Release.key -O Release.key
+   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_18.04/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
+   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/xUbuntu_18.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
 Ubuntu 16.04
 ------------
 
 .. code:: shell
 
-   sudo echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_16.04/ /' > /etc/apt/sources.list.d/dns-probe.list
-   wget -nv http://download.opensuse.org/repositories/home:CZ-NIC:dns-probe/xUbuntu_16.04/Release.key -O Release.key
+   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
+   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/xUbuntu_16.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
-The remaining steps are then identical for all distributions: the
-signing key is added to the system keyring, the repository list is
+The remaining steps are then identical for all distributions: the repository list is
 updated, and finally the DNS Probe package is installed:
 
 .. code:: shell
 
-   sudo apt-key add - < Release.key
    sudo apt-get update
    sudo apt-get install dns-probe-af dns-probe-dpdk
 
