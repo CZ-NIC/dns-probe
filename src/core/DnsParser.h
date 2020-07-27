@@ -19,6 +19,8 @@
 
 #include <exception>
 #include <vector>
+#include <unordered_set>
+#include <array>
 
 #include <cstdint>
 #include <arpa/inet.h> // in6_addr
@@ -55,16 +57,6 @@ namespace DDP {
     public:
         explicit DnsParseException( const std::string& what_arg ) : std::runtime_error(what_arg) {}
         explicit DnsParseException( const char* what_arg ) : std::runtime_error(what_arg) {}
-    };
-
-    /**
-     * @brief Exception thrown if non-DNS packet is encountered in DNS Parser
-     */
-    class NonDnsException : public std::runtime_error
-    {
-    public:
-        explicit NonDnsException( const std::string& what_arg ) : std::runtime_error(what_arg) {}
-        explicit NonDnsException( const char* what_arg ) : std::runtime_error(what_arg) {}
     };
 
     /**
@@ -189,46 +181,51 @@ namespace DDP {
          * @brief Parse packet's L2 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_l2(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_l2(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's L3 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_l3(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_l3(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's IPv4 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_ipv4(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_ipv4(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's IPv6 header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_ipv6(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_ipv6(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's UDP header
          * @param pkt Pointer to the start of unparsed part of packet
          * @param record DnsRecord to fill with packet's information
+         * @param drop Sets this flag to true if packet is to be dropped
          * @throw DnsParseException
          * @return Pointer to the next unparsed part of packet
          */
-        MemView<uint8_t> parse_l4_udp(const MemView<uint8_t>& pkt, DnsRecord& record);
+        MemView<uint8_t> parse_l4_udp(const MemView<uint8_t>& pkt, DnsRecord& record, bool& drop);
 
         /**
          * @brief Parse packet's TCP header
@@ -266,9 +263,13 @@ namespace DDP {
          */
         void update_configuration(Config& cfg) {
             m_export_invalid = cfg.pcap_export.value() == PcapExportCfg::INVALID;
-            m_dns_port = cfg.dns_port;
             m_pcap_inv.update_configuration(cfg);
             m_tcp_table.set_timeout(cfg.tcp_ct_timeout);
+            m_dns_ports = cfg.dns_ports.value();
+            m_ipv4_allowlist = cfg.ipv4_allowlist.value();
+            m_ipv4_denylist = cfg.ipv4_denylist.value();
+            m_ipv6_allowlist = cfg.ipv6_allowlist.value();
+            m_ipv6_denylist = cfg.ipv6_denylist.value();
         }
 
         /**
@@ -308,7 +309,11 @@ namespace DDP {
         bool m_export_invalid;
         PcapWriter m_pcap_inv;
         const Packet* m_processed_packet;
-        uint16_t m_dns_port;
+        std::unordered_set<uint16_t> m_dns_ports;
+        std::unordered_set<uint32_t> m_ipv4_allowlist;
+        std::unordered_set<uint32_t> m_ipv4_denylist;
+        std::unordered_set<std::array<uint32_t, 4>> m_ipv6_allowlist;
+        std::unordered_set<std::array<uint32_t, 4>> m_ipv6_denylist;
         Statistics& m_stats;
 
         /**

@@ -1,0 +1,88 @@
+image: debian:stable
+
+variables:
+  DEBIAN_FRONTEND: noninteractive
+
+cache:
+  key: apt-cache
+  paths:
+    - apt-cache/
+
+stages:
+  - build_and_test
+  - deploy
+
+build_and_test:
+  stage: build_and_test
+  before_script:
+    - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
+    - apt-get update
+    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install gnupg curl
+    - echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | tee /etc/apt/sources.list.d/dns-probe.list
+    - curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
+    - apt-get update
+    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install
+      g++
+      pkg-config
+      cmake
+      procps
+      python3
+      python3-pip
+      python3-pandas
+      libboost-all-dev
+      libcdns-dev
+      libpcap-dev
+      libarrow-dev
+      libparquet-dev
+      libyang-dev
+      libyang-cpp-dev
+      sysrepo-dev
+      sysrepo-cpp-dev
+      libcryptopant-dev
+      dpdk-dev
+    - pip3 install pyarrow
+  script:
+    - sysrepoctl -i data-model/cznic-dns-probe.yang
+    - mkdir build
+    - cd build
+    - cmake -DDPDK_BACKEND=ON -DAF_PACKET_BACKEND=ON ..
+    - make
+    - cd ../tests
+    - python3 ./run_tests.py -p ../build/dns-probe-af
+
+pages:
+  stage: deploy
+  before_script:
+    - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
+    - apt-get update
+    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install gnupg curl
+    - echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | tee /etc/apt/sources.list.d/dns-probe.list
+    - curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
+    - apt-get update
+    - apt-get -o dir::cache::archives="$APT_CACHE_DIR" -y install
+      g++
+      pkg-config
+      cmake
+      doxygen
+      python3-sphinx
+      libboost-all-dev
+      libcdns-dev
+      libarrow-dev
+      libparquet-dev
+      libpcap-dev
+      libyang-dev
+      libyang-cpp-dev
+      sysrepo-dev
+      sysrepo-cpp-dev
+      libcryptopant-dev
+  script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make doc
+    - mv doc/html/ ../public/
+  artifacts:
+    paths:
+      - public
+  only:
+    - master

@@ -18,7 +18,6 @@
 #include <iostream>
 #include <sstream>
 #include <sys/eventfd.h>
-#include <boost/log/trivial.hpp>
 
 #include <rte_ethdev.h>
 #include <rte_mbuf.h>
@@ -104,7 +103,9 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
 
         m_fds.push_back(FileDescriptor(dummy));
         uint64_t buffer = 1;
-        ::write(dummy, &buffer, sizeof(uint64_t));
+        auto ret = ::write(dummy, &buffer, sizeof(uint64_t));
+        if (ret == -1)
+            throw std::runtime_error("Cannot write to dummy file descriptor");
     }
 
     rte_eth_promiscuous_enable(port);
@@ -128,13 +129,15 @@ uint16_t DDP::DPDKPort::read(Packet* batch, unsigned queue)
             rte_pktmbuf_free(rx_buffer[i]);
         }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(info) << "[WARNING] Packet: Unable to read packet data.";
+            Logger("Packet").warning() << "Unable to read packet data.";
             err++;
         }
     }
 
     uint64_t buffer = 1;
-    ::write(m_fds[queue], &buffer, sizeof(uint64_t));
+    auto ret = ::write(m_fds[queue], &buffer, sizeof(uint64_t));
+    if (ret == -1)
+        throw std::runtime_error("Port: Couldn't write to dummy file descriptor!");
 
     return rx_count - err;
 }

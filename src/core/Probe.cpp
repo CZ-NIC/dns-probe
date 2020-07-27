@@ -18,12 +18,11 @@
 #include <iostream>
 #include <utility>
 #include <tuple>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/console.hpp>
-
 #include <getopt.h>
+
+#ifdef PROBE_CRYPTOPANT
+#include <cryptopANT.h>
+#endif
 
 #include "Probe.h"
 #include "Worker.h"
@@ -60,7 +59,7 @@ namespace DDP {
                     break;
 
                 case Message::Type::LOG:
-                    BOOST_LOG_TRIVIAL(info) << dynamic_cast<MessageLog*>(message.get())->msg.str();
+                    logwriter.log(dynamic_cast<MessageLog*>(message.get())->msg.str());
                     break;
 
                 case Message::Type::WORKER_STOPPED:
@@ -87,7 +86,6 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     DDP::Arguments args{};
     args.app = argv[0];
     int opt;
-    bool logfile = false;
 
     while ((opt = getopt(argc, argv, "hi:p:rl:")) != EOF) {
 
@@ -110,27 +108,12 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
                 break;
 
             case 'l':
-                boost::log::add_file_log(
-                    boost::log::keywords::file_name = optarg,
-                    boost::log::keywords::auto_flush = true,
-                    boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
-                );
-                boost::log::add_common_attributes();
-                logfile = true;
+                logwriter.set_output(std::string(optarg));
                 break;
 
             default:
                 throw std::invalid_argument("Invalid arguments");
         }
-    }
-
-    if (!logfile) {
-        boost::log::add_console_log(
-            std::cout,
-            boost::log::keywords::auto_flush = true,
-            boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
-        );
-        boost::log::add_common_attributes();
     }
 
     if (!args.exit) {
@@ -153,11 +136,11 @@ void DDP::Probe::print_help(const char* app)
     if (BACKEND == PacketBackend::Socket)
         interface = "interface name e.g. eth0";
     else
-        interface = "interface PCI ID e.g. 00:1f.6";
+        interface = "interface name e.g. eth0 or PCI ID e.g. 00:1f.6";
 
     std::cout << std::endl << app << std::endl
-              << "\t-p PCAP      : input pcap files; parameter can repeat" << std::endl
-              << "\t-i INTERFACE : " << interface << std::endl
+              << "\t-p PCAP      : input pcap files. Parameter can repeat." << std::endl
+              << "\t-i INTERFACE : " << interface << ". Parameter can repeat." << std::endl
               << "\t-r           : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
               << "\t-l LOGFILE   : redirect probe's logs to LOGFILE instead of standard output" << std::endl
               << "\t-h           : this help message" << std::endl;
@@ -208,7 +191,7 @@ void DDP::Probe::init(const Arguments& args)
                                            std::forward_as_tuple(slave),
                                            std::forward_as_tuple(32, true));
             m_poll.emplace<CommLinkProxy>(cl.first->second.config_endpoint());
-            m_stats.emplace_back();
+            m_stats.push_back(Statistics());
         }
 
         auto cb = [this] {
@@ -224,6 +207,27 @@ void DDP::Probe::init(const Arguments& args)
                 }
             };
             m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
+        }
+
+#ifndef PROBE_PARQUET
+        if (m_cfg.export_format.value() == ExportFormat::PARQUET)
+            throw std::runtime_error("DNS Probe was built without Parquet support! Use C-DNS as export format!");
+#endif
+
+#ifndef PROBE_CDNS
+        if (m_cfg.export_format.value() == ExportFormat::CDNS)
+            throw std::runtime_error("DNS Probe was built without C-DNS support! Use Parquet as export format!");
+#endif
+
+        if (m_cfg.anonymize_ip) {
+#ifdef PROBE_CRYPTOPANT
+            if (scramble_init_from_file(m_cfg.ip_enc_key.value().c_str(),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()), nullptr) != 0)
+                throw std::runtime_error("Couldn't initialize IP address anonymization!");
+#else
+            throw std::runtime_error("DNS Probe was built without IP anonymization support!");
+#endif
         }
 
         m_initialized = true;
@@ -311,7 +315,7 @@ void DDP::Probe::process_log_messages() const
 {
     std::unique_ptr<DDP::Message> message;
     while ((message = std::move(this->m_log_link->config_endpoint().recv())).get())
-        BOOST_LOG_TRIVIAL(info) << dynamic_cast<DDP::MessageLog*>(message.get())->msg.str();
+        logwriter.log(dynamic_cast<DDP::MessageLog*>(message.get())->msg.str());
 }
 
 void DDP::Probe::stop(bool restart)

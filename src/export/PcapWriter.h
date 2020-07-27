@@ -20,7 +20,7 @@
 #include <string>
 #include <pcap.h>
 
-#include "DnsWriter.h"
+#include "BaseWriter.h"
 #include "platform/Packet.h"
 
 namespace DDP {
@@ -28,7 +28,7 @@ namespace DDP {
     /**
      * @brief Class for writing packets to output PCAPs
      */
-    class PcapWriter : public DnsWriter {
+    class PcapWriter : public BaseWriter {
         constexpr static int PCAP_PACKET_HEADER_LENGTH = 16;
     public:
         /**
@@ -38,7 +38,7 @@ namespace DDP {
          * @param process_id Process identifier, used in generation of PCAP file's name
          */
         explicit PcapWriter(Config& cfg, bool invalid, uint32_t process_id) :
-                DnsWriter(cfg, process_id),
+                BaseWriter(cfg, process_id),
                 m_invalid(invalid),
                 m_out(nullptr),
                 m_exported_bytes(0) {}

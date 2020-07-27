@@ -21,6 +21,7 @@
 #include <vector>
 
 #include "platform/Packet.h"
+#include "utils/Logger.h"
 
 namespace DDP {
     class PortEOF : public std::runtime_error

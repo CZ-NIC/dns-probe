@@ -17,7 +17,6 @@
 
 #include <iostream>
 #include <sys/eventfd.h>
-#include <boost/log/trivial.hpp>
 #include "PcapPort.h"
 
 DDP::PCAPPort::PCAPPort(const char* port, uint16_t num_queues) : Port(1), m_handle(nullptr)
@@ -51,7 +50,7 @@ uint16_t DDP::PCAPPort::read(Packet* batch, unsigned queue)
             rx_count++;
         }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(info) << "[WARNING] Packet: Unable to read packet data.";
+            Logger("Packet").warning() << "Unable to read packet data.";
         }
     }
 

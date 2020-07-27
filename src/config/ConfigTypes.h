@@ -83,4 +83,15 @@ namespace DDP {
         RESPONSE_ADDITIONAL_SECTIONS,
         RESPONSE_SIZE
     };
+
+    /**
+     * Encryption algorithm used for optional client IP anonymization
+     */
+    enum class IpEncryption : uint8_t {
+        NONE = 0x00,
+        MD5 = 0x01,
+        BLOWFISH = 0x02,
+        AES = 0x03,
+        SHA1 = 0x04
+    };
 }

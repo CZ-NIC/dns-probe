@@ -335,7 +335,6 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                 try {
                     parser->parse_dns(segment.offset(2), record);
                 }
-                catch (NonDnsException& e) {}
                 catch (std::exception& e) {
                     Logger("Parse error").debug() << e.what();
                     parser->export_invalid(packet);
@@ -363,7 +362,6 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
 
                 while (len <= seg_len_left) {
                     DnsRecord& msg = parser->get_empty();
-                    records->push_back(&msg);
                     fill_record_L3_L4(msg, record);
 
                     try {
@@ -371,13 +369,10 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                         msg.m_dns_len = len;
                         msg.m_len = packet.size();
                         parser->parse_dns({msg_buffer, len}, msg);
-                    }
-                    catch (NonDnsException& e) {
-                        records->pop_back();
+                        records->push_back(&msg);
                     }
                     catch (std::exception& e) {
                         Logger("Parse error").debug() << e.what();
-                        records->pop_back();
                         parser->export_invalid(packet);
                     }
 
@@ -459,7 +454,6 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                 while (true) {
                     while (len <= seg_len_left) {
                         DnsRecord &msg = parser->get_empty();
-                        records->push_back(&msg);
                         fill_record_L3_L4(msg, record);
 
                         const uint8_t *msg_buffer;
@@ -507,13 +501,10 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
 
                             msg.m_dns_len = total_len;
                             parser->parse_dns({msg_buffer, total_len}, msg);
-                        }
-                        catch (NonDnsException& e) {
-                            records->pop_back();
+                            records->push_back(&msg);
                         }
                         catch (std::exception& e) {
                             Logger("Parse error").debug() << e.what();
-                            records->pop_back();
                             if (parser->is_export_invalid()) {
                                 TcpSegment* tmp = msg_start;
                                 while (tmp != next) {

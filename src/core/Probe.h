@@ -60,7 +60,9 @@ namespace DDP {
          */
         enum class ReturnValue {
             STOP, //!< Application gracefully stopped.
-            RESTART //!< Application stopped due to restart request.
+            RESTART, //!< Application stopped due to restart request.
+            ERROR, //!< Application gracefully stopped due to caught error
+            UNCAUGHT_ERROR = 128 //!< Application stopped due to uncaught error
         };
 
         Probe(const Probe&) = delete;
