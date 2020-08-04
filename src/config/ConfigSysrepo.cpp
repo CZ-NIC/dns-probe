@@ -101,6 +101,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/export/remote-ip-version",           m_cfg.export_ip_version},
         {SYSCONF_CFG_ROOT "/export/remote-ip-address",           m_cfg.export_ip},
         {SYSCONF_CFG_ROOT "/export/remote-port",                 m_cfg.export_port},
+        {SYSCONF_CFG_ROOT "/export/remote-ca-cert",              m_cfg.export_ca_cert},
         {SYSCONF_CFG_ROOT "/export/export-dir",                  m_cfg.target_directory},
         {SYSCONF_CFG_ROOT "/export/file-name-prefix",            m_cfg.file_prefix},
         {SYSCONF_CFG_ROOT "/export/timeout",                     m_cfg.file_rot_timeout},

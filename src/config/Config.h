@@ -63,6 +63,7 @@ namespace DDP {
         ConfigItem<ExportIpVersion> export_ip_version; //!< Version of the IP address for remote export
         ConfigItem<std::string> export_ip; //!< IP address for remote export of DNS records
         ConfigItem<uint16_t> export_port; //!< Transport protocol port for remote export of DNS records
+        ConfigItem<std::string> export_ca_cert; //!< CA certificate for authentication of remote server's certificate
 
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
