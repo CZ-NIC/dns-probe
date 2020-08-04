@@ -75,10 +75,16 @@ if __name__ == "__main__":
 
     try:
         while True:
-            print("Waiting...")
-            newsocket, fromaddr = bindsocket.accept()
-            connstream = context.wrap_socket(newsocket, server_side=True)
-            threading.Thread(target=handle_conn, args=(connstream,)).start()
+            try:
+                print("Waiting...")
+                newsocket, fromaddr = bindsocket.accept()
+                connstream = context.wrap_socket(newsocket, server_side=True)
+                threading.Thread(target=handle_conn, args=(connstream,)).start()
+            except KeyboardInterrupt:
+                raise
+            except Exception as e:
+                print(repr(e))
+                continue
     except KeyboardInterrupt:
         print("Ending on KeyboardInterrupt")
     except:
