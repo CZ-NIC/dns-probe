@@ -81,11 +81,16 @@ DDP::Exporter::Exporter(DDP::Config& cfg, DDP::Statistics& stats,
 DDP::Exporter::~Exporter()
 {
     int i = 0;
-    for (auto&& ring : m_rings) {
-        while (!ring->empty()) {
-            dequeue(*ring, i);
+    try {
+        for (auto&& ring : m_rings) {
+            while (!ring->empty()) {
+                dequeue(*ring, i);
+            }
+            i++;
         }
-        i++;
+    }
+    catch (std::exception& e) {
+        Logger("ExportDestructor").warning() << "Couldn't write to file: " << e.what();
     }
 
     delete m_writer;
@@ -126,6 +131,7 @@ DDP::ExporterRetCode DDP::Exporter::dequeue(Ring<boost::any>& ring, unsigned wor
     }
     catch(std::exception& e) {
         Logger("Writer").warning() << "Couldn't write to file: " << e.what();
+        m_writer->rotate_output();
         return ExporterRetCode::EXPORTER_WRITE_ERROR;
     }
 
