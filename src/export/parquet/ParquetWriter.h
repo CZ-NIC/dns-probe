@@ -26,73 +26,75 @@
 
 #include "export/BaseWriter.h"
 
-namespace arrow::io {
-    /**
-     * @brief Parquet output stream writing data to TLS connection
-     */
-    class TlsOutputStream : public OutputStream {
-        public:
+namespace arrow {
+    namespace io {
         /**
-         * @brief Create new Parquet output stream
-         * @param ssl TLS connection to bind to this output stream
-         * @return New Parquet output stream bound to given TLS connection
+         * @brief Parquet output stream writing data to TLS connection
          */
-        static Result<std::shared_ptr<TlsOutputStream>> Open(std::shared_ptr<DDP::TlsConnection> ssl) {
-            return Result<std::shared_ptr<TlsOutputStream>>(std::make_shared<TlsOutputStream>(ssl));
-        }
-
-        TlsOutputStream(std::shared_ptr<DDP::TlsConnection> ssl) : OutputStream(), m_out(ssl), m_pos(0) {}
-        ~TlsOutputStream() override { Close(); }
-
-        /**
-         * @brief Close the Parquet output stream. Closes the internal TLS connection
-         * @return Status message
-         */
-        Status Close() override {
-            if (m_out) {
-                m_out->close();
-                m_out = nullptr;
+        class TlsOutputStream : public OutputStream {
+            public:
+            /**
+             * @brief Create new Parquet output stream
+             * @param ssl TLS connection to bind to this output stream
+             * @return New Parquet output stream bound to given TLS connection
+             */
+            static Result<std::shared_ptr<TlsOutputStream>> Open(std::shared_ptr<DDP::TlsConnection> ssl) {
+                return Result<std::shared_ptr<TlsOutputStream>>(std::make_shared<TlsOutputStream>(ssl));
             }
-            m_pos = 0;
-            return Status::OK();
-        }
 
-        /**
-         * @brief Return the position in this stream
-         * @return Current position in this stream
-         */
-        Result<int64_t> Tell() const override { return Result<int64_t>(m_pos); }
+            TlsOutputStream(std::shared_ptr<DDP::TlsConnection> ssl) : OutputStream(), m_out(ssl), m_pos(0) {}
+            ~TlsOutputStream() override { Close(); }
 
-        /**
-         * @brief Return whether the stream is closed
-         * @return TRUE if the stream is closed, FALSE otherwise
-         */
-        bool closed() const override {
-            if (!m_out)
-                return true;
-            else
-                return m_out->closed();
-        }
+            /**
+             * @brief Close the Parquet output stream. Closes the internal TLS connection
+             * @return Status message
+             */
+            Status Close() override {
+                if (m_out) {
+                    m_out->close();
+                    m_out = nullptr;
+                }
+                m_pos = 0;
+                return Status::OK();
+            }
 
-        /**
-         * @brief Write given data to the output stream i.e. to the TLS connection
-         * @param data Buffer with data to write
-         * @param n_bytes Length of the data buffer
-         * @return Status message
-         */
-        Status Write(const void* data, int64_t n_bytes) override {
-            if (!m_out || m_out->closed())
-                return Status::IOError("No valid TLS connection established!");
+            /**
+             * @brief Return the position in this stream
+             * @return Current position in this stream
+             */
+            Result<int64_t> Tell() const override { return Result<int64_t>(m_pos); }
 
-            m_pos += m_out->write(data, n_bytes);
+            /**
+             * @brief Return whether the stream is closed
+             * @return TRUE if the stream is closed, FALSE otherwise
+             */
+            bool closed() const override {
+                if (!m_out)
+                    return true;
+                else
+                    return m_out->closed();
+            }
 
-            return Status::OK();
-        }
+            /**
+             * @brief Write given data to the output stream i.e. to the TLS connection
+             * @param data Buffer with data to write
+             * @param n_bytes Length of the data buffer
+             * @return Status message
+             */
+            Status Write(const void* data, int64_t n_bytes) override {
+                if (!m_out || m_out->closed())
+                    return Status::IOError("No valid TLS connection established!");
 
-        private:
-        std::shared_ptr<DDP::TlsConnection> m_out;
-        int m_pos;
-    };
+                m_pos += m_out->write(data, n_bytes);
+
+                return Status::OK();
+            }
+
+            private:
+            std::shared_ptr<DDP::TlsConnection> m_out;
+            int m_pos;
+        };
+    }
 }
 
 
