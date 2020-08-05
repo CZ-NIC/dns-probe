@@ -139,9 +139,9 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
 
             if (tree->find_path(item.first.c_str())->data().empty()) {
                 std::string end("list");
-                if ((item.first.length() < end.length()) ||
-                    (item.first.length() >= end.length() &&
-                        item.first.compare(item.first.length() - end.length(), end.length(), end) != 0)) {
+                if (!((item.first.length() >= end.length() &&
+                       item.first.compare(item.first.length() - end.length(), end.length(), end) == 0) ||
+                      (item.first == "/cznic-dns-probe:dns-probe/export/remote-ca-cert"))) {
                     m_logger.warning() << "Config for path '" << item.first << "' not found!";
                 }
             }

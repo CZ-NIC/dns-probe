@@ -147,13 +147,12 @@ module cznic-dns-probe {
       }
       leaf remote-ca-cert {
         type string;
-        default "";
         description
           "Path (including file's name) to the CA certificate against which the remote
            server's certificate will be authenticated during SSL handshake.
 
-           The default empty string means that server's certificate will be
-           authenticated against OpenSSL's default directory with CA certificates.
+           By default server's certificate will be authenticated against OpenSSL's
+           default directory with CA certificates.
 
            This is a static configuration parameter that is applied
            only upon restarting the probe.";
