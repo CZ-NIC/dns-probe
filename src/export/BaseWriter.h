@@ -87,8 +87,6 @@ namespace DDP {
         std::string m_ip;
         uint16_t m_port;
         std::string m_ca_cert;
-        std::string m_cert;
-        std::string m_key;
     };
 
     /**
