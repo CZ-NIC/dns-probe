@@ -70,24 +70,33 @@ namespace DDP {
             throw std::runtime_error("Error creating TLS context!");
 
         if (!m_ca_cert.empty()) {
-            if (!SSL_CTX_load_verify_locations(ctx, m_ca_cert.c_str(), NULL))
+            if (!SSL_CTX_load_verify_locations(ctx, m_ca_cert.c_str(), NULL)) {
+                SSL_CTX_free(ctx);
                 throw std::runtime_error("Error loading CA certificate!");
+            }
         }
         else {
-            if (!SSL_CTX_set_default_verify_paths(ctx))
+            if (!SSL_CTX_set_default_verify_paths(ctx)) {
+                SSL_CTX_free(ctx);
                 throw std::runtime_error("Error loading default CA certificates!");
+            }
         }
 
         SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
         SSL* ssl = SSL_new(ctx);
-        if (!ssl)
+        if (!ssl) {
+            SSL_CTX_free(ctx);
             throw std::runtime_error("Error creating TLS structure!");
+        }
 
         SSL_set_fd(ssl, m_fd);
         int err = SSL_connect(ssl);
-        if (err <= 0)
+        if (err <= 0) {
+            SSL_CTX_free(ctx);
+            SSL_free(ssl);
             throw std::runtime_error("Error creating TLS connection to server for remote export!");
+        }
 
         m_ssl = ssl;
         SSL_CTX_free(ctx);
