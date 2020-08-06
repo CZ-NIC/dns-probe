@@ -54,6 +54,10 @@ target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
 target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 target_compile_options(DNSProbe INTERFACE -msse4)
 
+if (OPENSSL_VERSION VERSION_LESS "1.1.0")
+    target_compile_definitions(DNSProbe INTERFACE PROBE_OPENSSL_LEGACY)
+endif()
+
 if ((NOT PROBE_PARQUET) AND (NOT PROBE_CDNS))
     message(FATAL_ERROR "You must set at least one of available export formats (PROBE_PARQUET, PROBE_CDNS)!")
 endif()

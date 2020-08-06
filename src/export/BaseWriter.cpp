@@ -75,7 +75,11 @@ namespace DDP {
 
         SSL_library_init();
         SSL_load_error_strings();
+#ifndef PROBE_OPENSSL_LEGACY
         const SSL_METHOD* method = TLS_client_method();
+#else
+        const SSL_METHOD* method = TLSv1_2_client_method();
+#endif
         SSL_CTX* ctx = SSL_CTX_new(method);
         if (!ctx)
             throw std::runtime_error("Error creating TLS context!");
