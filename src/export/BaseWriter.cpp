@@ -18,10 +18,22 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <openssl/ssl.h>
 
 #include "BaseWriter.h"
 
 namespace DDP {
+    void TlsConnection::close()
+    {
+        if (m_ssl) {
+            SSL_shutdown(m_ssl);
+            SSL_shutdown(m_ssl);
+            SSL_free(m_ssl);
+            ::close(m_fd);
+            m_ssl = nullptr;
+        }
+    }
+
     int TlsConnection::write(const void* data, int64_t n_bytes)
     {
         if (!m_ssl)

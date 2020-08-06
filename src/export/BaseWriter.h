@@ -21,9 +21,11 @@
 #include <cstdint>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <openssl/ssl.h>
 
 #include "config/Config.h"
+
+struct ssl_st;
+typedef struct ssl_st SSL;
 
 namespace DDP {
     /**
@@ -51,15 +53,7 @@ namespace DDP {
         /**
          * @brief Gracefully close the TLS connection
          */
-        void close() {
-            if (m_ssl) {
-                SSL_shutdown(m_ssl);
-                SSL_shutdown(m_ssl);
-                SSL_free(m_ssl);
-                ::close(m_fd);
-                m_ssl = nullptr;
-            }
-        }
+        void close();
 
         /**
          * @brief Send given data through the TLS connection
