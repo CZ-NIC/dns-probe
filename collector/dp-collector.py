@@ -47,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("-s", dest="SERVER_CERT", help="Server certificate", required=True)
     parser.add_argument("-k", dest="SERVER_KEY", help="Server private key", required=True)
     parser.add_argument("-c", dest="CLIENT_CERT", help="Client certificate")
-    parser.add_argument("-a", dest="IP", default='127.0.0.1', help="Server IP address (default: 127.0.0.1)")
+    parser.add_argument("-a", dest="IP", help="Choose specific server IP address")
     parser.add_argument("-p", dest="PORT", default=6378, help="Server port to listen on (default: 6378)")
     args = parser.parse_args()
 
@@ -70,7 +70,11 @@ if __name__ == "__main__":
         context.load_default_certs()
 
     bindsocket = socket.socket()
-    bindsocket.bind((args.IP, args.PORT))
+    bindsocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    if args.IP:
+        bindsocket.bind((args.IP, args.PORT))
+    else:
+        bindsocket.bind(('', args.PORT))
     bindsocket.listen(5)
 
     try:
