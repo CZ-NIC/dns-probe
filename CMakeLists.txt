@@ -4,6 +4,7 @@ project("DNS Probe" VERSION 0.5.0)
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
 set(DPDK_LEGACY_MEM OFF CACHE BOOL "Enable legacy memory management for DPDK")
+set(BUILD_COLLECTOR ON CACHE BOOL "Build collector for data from probe's remote export")
 set(BUILD_TESTING OFF CACHE BOOL "Enable build testing binaries")
 set(BUILD_DOC ON CACHE BOOL "Generate Sphinx and Doxygen documentation")
 set(PROBE_CRYPTOPANT ON CACHE BOOL "Enable IP anonymization with cryptopANT library")
@@ -152,6 +153,11 @@ endif ()
 add_custom_target(install_module COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang)
 
 add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/Uninstall.cmake")
+
+#Build collector
+if (BUILD_COLLECTOR)
+    add_subdirectory("collector")
+endif()
 
 #Add tests
 enable_testing()
