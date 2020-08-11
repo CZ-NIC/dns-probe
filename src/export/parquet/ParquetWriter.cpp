@@ -15,6 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/stat.h>
+
 #include "ParquetWriter.h"
 
 int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)

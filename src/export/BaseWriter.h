@@ -19,8 +19,6 @@
 
 #include <string>
 #include <cstdint>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 #include "config/Config.h"
 
@@ -129,39 +127,7 @@ namespace DDP {
          * @param invalid TRUE only for PCAP files with invalid packets
          * @return Newly generated filename
          */
-        std::string filename(std::string sufix, bool invalid) {
-            std::string inv;
-            char time[20];
-            timespec timestamp;
-            tm tmp_tm;
-
-            clock_gettime(CLOCK_REALTIME, &timestamp);
-            gmtime_r(&timestamp.tv_sec, &tmp_tm);
-            strftime(time, 20, "%Y%m%d-%H%M%S", &tmp_tm);
-
-            if (invalid) {
-                inv = "_inv";
-            }
-            std::string counter = "_" + std::to_string(m_filename_counter);
-            std::string full_sufix = sufix.empty() ? "" : ("." + sufix);
-            std::string filename = m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() +
-                                   std::string(time) + m_id + inv + counter + full_sufix;
-
-            struct stat buffer;
-            if (stat((filename + m_sufix).c_str(), &buffer) == 0) {
-                return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() + std::string(time) +
-                    m_id + inv + "_" + std::to_string(++m_filename_counter) + full_sufix;
-            } else {
-                if (m_filename_counter == 0) {
-                    return filename;
-                }
-                else {
-                    m_filename_counter = 0;
-                    return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() +
-                        std::string(time) + m_id + inv + "_" + std::to_string(m_filename_counter) + full_sufix;
-                }
-            }
-        }
+        std::string filename(std::string sufix, bool invalid);
 
         protected:
         Config m_cfg;
