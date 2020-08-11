@@ -23,6 +23,8 @@
 #include <future>
 #include <fstream>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <openssl/ssl.h>
 
 namespace DDP {
@@ -60,6 +62,11 @@ namespace DDP {
 
             if (m_fd >= 0)
                 ::close(m_fd);
+
+            struct stat buffer;
+            if (stat((m_file_name + ".part").c_str(), &buffer) == 0) {
+                std::remove((m_file_name + ".part").c_str());
+            }
         }
 
         /**
