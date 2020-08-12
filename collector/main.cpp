@@ -53,6 +53,10 @@ int main(int argc, char** argv)
     sigfillset(&sig.sa_mask);
     sigaction(SIGINT, &sig, nullptr);
     sigaction(SIGTERM, &sig, nullptr);
+    sigset_t set;
+    sigemptyset(&set);
+    sigaddset(&set, SIGPIPE);
+    pthread_sigmask(SIG_BLOCK, &set, NULL);
 
     std::string srv_cert;
     std::string srv_key;
