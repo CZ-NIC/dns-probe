@@ -154,7 +154,8 @@ namespace DDP {
                 delete writer;
             }
             catch (std::exception& e) {
-                delete writer;
+                if (writer)
+                    delete writer;
                 Logger("Export").warning() << "Couldn't write leftovers on worker " << m_process_id
                                          << " (" << e.what() << ")";
             }

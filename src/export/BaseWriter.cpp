@@ -41,8 +41,11 @@ namespace DDP {
         if (!m_ssl)
             return 0;
 
+        if (n_bytes == 0)
+            return 0;
+
         int written = SSL_write(m_ssl, data, n_bytes);
-        if (written < 0) {
+        if (written <= 0) {
             int err = SSL_get_error(m_ssl, written);
             throw std::runtime_error("Couldn't write to output! SSL error code: " + std::to_string(err));
         }
