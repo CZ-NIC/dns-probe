@@ -75,9 +75,12 @@ int main(int argc, char** argv)
         struct sigaction sa = {};
         sa.sa_handler = &signal_handler;
         sigfillset(&sa.sa_mask);
-
         sigaction(SIGINT, &sa, nullptr);
         sigaction(SIGTERM, &sa, nullptr);
+        sigset_t set;
+        sigemptyset(&set);
+        sigaddset(&set, SIGPIPE);
+        pthread_sigmask(SIG_BLOCK, &set, NULL);
 
         // Poll on configuration core
         try {
