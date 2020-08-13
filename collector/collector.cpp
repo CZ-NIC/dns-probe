@@ -221,8 +221,10 @@ void DDP::Collector::run()
     int i = 0;
     while (run_flag.load()) {
         if (i >= TIMEOUT_LIMIT) {
-            m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
-                [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
+            if (!m_threads.empty()) {
+                m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
+                    [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
+            }
             i = 0;
         }
         int conn = accept(m_fd, NULL, NULL);
