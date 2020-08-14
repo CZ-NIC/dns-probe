@@ -19,13 +19,61 @@
 
 #include <string>
 #include <cstdint>
+#include <vector>
+#include <future>
 
 #include "config/Config.h"
 
+struct ssl_ctx_st;
+typedef struct ssl_ctx_st SSL_CTX;
 struct ssl_st;
 typedef struct ssl_st SSL;
 
 namespace DDP {
+    /**
+     * @brief Send local file to remote server via TLS connection
+     * @param cfg Configuration (server IP, port)
+     * @param filename Name of the file to send WITHOUT the ".part" sufix
+     */
+    void send_file(Config cfg, std::string filename);
+
+    /**
+     * @brief Singleton RAII wrapper around SSL_CTX structure from OpenSSL library
+     */
+    class TlsCtx {
+        public:
+
+        TlsCtx(const TlsCtx&) = delete;
+        TlsCtx& operator=(const TlsCtx&) = delete;
+
+        /**
+         * @brief Get the singleton intance of TlsCtx
+         * @return Singleton instance
+         */
+        static TlsCtx& getInstance() {
+            static TlsCtx instance;
+            return instance;
+        }
+
+        /**
+         * @brief Initialize SSL/TLS context. Needs to be called before using the context
+         * @param ca_cert CA certificate to verify server for TLS connection
+         */
+        void init(std::string ca_cert);
+
+        SSL_CTX* get() { return m_ctx; }
+
+        private:
+        TlsCtx() : m_ctx(nullptr) {}
+
+        /**
+         * @brief Free the SSL/TLX context
+         */
+        ~TlsCtx();
+
+        SSL_CTX* m_ctx;
+    };
+
     /**
      * @brief RAII wrapper around TLS connection using OpenSSL library
      */
@@ -36,12 +84,10 @@ namespace DDP {
          * @brief Construct a new TLS connection from given configuration
          * @param cfg Configuration to use for new TLS connection
          */
-        TlsConnection(Config& cfg) : m_fd(0), m_ssl(nullptr), m_ca_cert(cfg.export_ca_cert.value()) {
-            m_ipv = cfg.export_ip_version.value();
-            m_ip = cfg.export_ip.value();
-            m_port = cfg.export_port.value();
-            open();
-        }
+        TlsConnection(Config& cfg) : m_fd(-1), m_ssl(nullptr), m_ctx(nullptr),
+                                     m_ipv(cfg.export_ip_version.value()),
+                                     m_ip(cfg.export_ip.value()),
+                                     m_port(cfg.export_port.value()) { open(); }
 
         /**
          * @brief Destructor. Closes the TLS connection if it's still opened
@@ -75,10 +121,10 @@ namespace DDP {
 
         int m_fd;
         SSL* m_ssl;
+        SSL_CTX* m_ctx;
         ExportIpVersion m_ipv;
         std::string m_ip;
         uint16_t m_port;
-        std::string m_ca_cert;
     };
 
     /**
@@ -97,9 +143,10 @@ namespace DDP {
             m_id("_p" + std::to_string(process_id)),
             m_sufix(sufix),
             m_filename_counter(0),
-            m_filename() {}
+            m_filename(),
+            m_threads() {}
 
-        virtual ~BaseWriter() {};
+        virtual ~BaseWriter() {}
 
         /**
          * @brief Write given item with buffered DNS records to output
@@ -135,5 +182,6 @@ namespace DDP {
         std::string m_sufix;
         uint8_t m_filename_counter;
         std::string m_filename;
+        std::vector<std::future<void>> m_threads;
     };
 }

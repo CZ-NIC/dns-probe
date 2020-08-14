@@ -95,8 +95,7 @@ void DDP::set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset
 DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id,
                                                                 cfg.file_compression.value() ? ".gz" : ""),
                                                                 m_writer(nullptr), m_bytes_written(0),
-                                                                m_blocks_written(0),
-                                                                m_tls(nullptr)
+                                                                m_blocks_written(0)
 {
     CDNS::FilePreamble fp;
 
@@ -106,68 +105,40 @@ DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, 
                    cfg.cdns_fields.value());
 
     m_filename = filename("cdns", false);
-    if (m_cfg.file_compression.value()) {
-        if (m_cfg.export_location.value() == ExportLocation::LOCAL)
-            m_writer = new CDNS::CdnsExporter(fp, m_filename, CDNS::CborOutputCompression::GZIP);
-        else {
-            m_tls = std::make_shared<TlsConnection>(m_cfg);
-            m_writer = new CDNS::CdnsExporter(fp, m_tls, CDNS::CborOutputCompression::GZIP);
-        }
-    }
-    else {
-        if (m_cfg.export_location.value() == ExportLocation::LOCAL)
-            m_writer = new CDNS::CdnsExporter(fp, m_filename, CDNS::CborOutputCompression::NO_COMPRESSION);
-        else {
-            m_tls = std::make_shared<TlsConnection>(m_cfg);
-            m_writer = new CDNS::CdnsExporter(fp, m_tls, CDNS::CborOutputCompression::NO_COMPRESSION);
-        }
-    }
+
+    if (m_cfg.file_compression.value())
+        m_writer = std::make_unique<CDNS::CdnsExporter>(fp, m_filename, CDNS::CborOutputCompression::GZIP);
+    else
+        m_writer = std::make_unique<CDNS::CdnsExporter>(fp, m_filename, CDNS::CborOutputCompression::NO_COMPRESSION);
 
     m_filename += m_sufix;
-
-    // Have to write filename length and filename directly to TLS connection
-    if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
-        write_filename();
-    }
 }
 
 void DDP::CdnsWriter::rotate_output()
 {
     std::string rotated = m_filename;
     m_filename = filename("cdns", false);
-    if (m_cfg.export_location.value() == ExportLocation::LOCAL) {
-        m_bytes_written += m_writer->rotate_output(m_filename, false);
-        m_filename += m_sufix;
+    m_bytes_written += m_writer->rotate_output(m_filename, false);
+    m_filename += m_sufix;
 
-        struct stat buffer;
-        if (m_bytes_written == 0 && stat(rotated.c_str(), &buffer) == 0)
-            remove(rotated.c_str());
-        else
-            chmod(rotated.c_str(), 0666);
-    }
+    struct stat buffer;
+    if (m_bytes_written == 0 && stat(rotated.c_str(), &buffer) == 0)
+        remove(rotated.c_str());
     else {
-        m_tls = std::make_shared<TlsConnection>(m_cfg);
-        m_bytes_written += m_writer->rotate_output(m_tls, false);
-        m_filename += m_sufix;
+        chmod(rotated.c_str(), 0666);
+        if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
+            if (std::rename(rotated.c_str(), (rotated + ".part").c_str()))
+                throw std::runtime_error("Couldn't rename the output file!");
 
-        write_filename();
+            if (!m_threads.empty()) {
+                m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
+                    [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
+            }
+
+            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, rotated));
+        }
     }
 
     m_blocks_written = 0;
     m_bytes_written = 0;
-}
-
-void DDP::CdnsWriter::write_filename()
-{
-    auto pos = m_filename.find_last_of('/');
-    if (pos == std::string::npos) {
-        uint8_t length = m_filename.size();
-        m_tls->write(&length, 1);
-        m_tls->write(m_filename.data(), m_filename.size());
-    }
-    else {
-        uint8_t length = m_filename.size() - pos - 1;
-        m_tls->write(&length, 1);
-        m_tls->write(m_filename.data() + pos + 1, length);
-    }
 }

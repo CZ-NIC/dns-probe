@@ -20,85 +20,7 @@
 #include <cdns/cdns.h>
 
 #include "export/BaseWriter.h"
-
-namespace CDNS {
-    /**
-     * @brief Writes given data to output TLS connection
-     * @tparam std::shared_ptr<DDP::TlsConnection> Output TLS connection
-     */
-    template<>
-    class Writer<std::shared_ptr<DDP::TlsConnection>> : public BaseCborOutputWriter {
-        public:
-        /**
-         * @brief Construct a new Writer object for writing data to output TLS connection
-         * @param value Outputs TLS connection
-         * @param extension Extension for the output file's name
-         * @throw CborOutputExtension if the output TLS connection isn't valid
-         */
-        Writer(const std::shared_ptr<DDP::TlsConnection>& value, const std::string extension = "")
-            : BaseCborOutputWriter(), m_value(value), m_extension(extension) { open(); }
-
-        /**
-         * @brief Destroy the Writer object and close the current output TLS connection
-         */
-        ~Writer() override { close(); }
-
-        /** Delete copy and move constructors */
-        Writer(Writer& copy) = delete;
-        Writer(Writer&& copy) = delete;
-
-        /**
-         * @brief Write data in buffer to output TLS connection
-         * @param p Start of the buffer with data
-         * @param size Size of the data in bytes
-         * @throw CborOutputException if output TLS connection is closed
-         * @throw std::runtime_error if writing to output TLS connection fails
-         */
-        void write(const char* p, std::size_t size) override {
-            if (!m_value || m_value->closed())
-                throw CborOutputException("No valid TLS connection established!");
-
-            m_value->write(p, size);
-        }
-
-        /**
-         * @brief Rotate the output TLS connection (currently opened connection is closed)
-         * @param value New output TLS connection
-         * @throw CborOutputException if the output TLS connection isn't valid
-         */
-        void rotate_output(const boost::any& value) override {
-            if (value.type() != typeid(std::shared_ptr<DDP::TlsConnection>))
-                return;
-
-            close();
-            m_value = boost::any_cast<std::shared_ptr<DDP::TlsConnection>>(value);
-            open();
-        }
-
-        protected:
-        /**
-         * @brief Check if the given TLS connection is valid
-         * @throw CborOutputException if output TLS connection isn't valid
-         */
-        void open() override {
-            if (!m_value || m_value->closed())
-                throw CborOutputException("Given SSL connection handle is invalid!");
-        }
-
-        /**
-         * @brief Close the opened output TLS connection
-         */
-        void close() override {
-            if (m_value) {
-                m_value->close();
-                m_value = nullptr;
-            }
-        }
-
-        std::shared_ptr<DDP::TlsConnection> m_value;
-        std::string m_extension;
-    };
-}
+#include "utils/Logger.h"
 
 namespace DDP {
 
@@ -127,15 +49,26 @@ namespace DDP {
          * @brief Delete C-DNS writer object and exported file if it's empty
          */
         ~CdnsWriter() {
-            if (m_writer)
-                delete m_writer;
+            m_writer = nullptr;
 
-            if (m_cfg.export_location.value() == ExportLocation::LOCAL) {
+            try {
                 struct stat buffer;
                 if (m_bytes_written == 0 && stat(m_filename.c_str(), &buffer) == 0)
                     remove(m_filename.c_str());
-                else
+                else {
                     chmod(m_filename.c_str(), 0666);
+                    if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
+                        if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str()))
+                            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename));
+                    }
+                }
+            }
+            catch (std::exception& e) {
+                Logger("Writer").warning() << "Destructor error: " << e.what();
+            }
+
+            for (auto&& th : m_threads) {
+                th.wait();
             }
         }
 
@@ -182,9 +115,8 @@ namespace DDP {
          */
         void write_filename();
 
-        CDNS::CdnsExporter* m_writer;
+        std::unique_ptr<CDNS::CdnsExporter> m_writer;
         uint64_t m_bytes_written;
         uint64_t m_blocks_written;
-        std::shared_ptr<TlsConnection> m_tls;
     };
 }

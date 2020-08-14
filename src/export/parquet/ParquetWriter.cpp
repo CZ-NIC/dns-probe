@@ -28,32 +28,10 @@ int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)
     std::string full_name;
     std::shared_ptr<arrow::io::OutputStream> outfile;
 
-    if (m_cfg.export_location.value() == ExportLocation::LOCAL) {
-        full_name = m_filename + ".part";
-        auto res = arrow::io::FileOutputStream::Open(full_name);
-        PARQUET_THROW_NOT_OK(res);
-        outfile = res.ValueOrDie();
-    }
-    else {
-        auto tls = std::make_shared<TlsConnection>(m_cfg);
-        auto res = arrow::io::TlsOutputStream::Open(tls);
-        PARQUET_THROW_NOT_OK(res);
-        outfile = res.ValueOrDie();
-
-        // Have to write filename size and filename directly to TLS connection instead of
-        // Parquet output because parquet::arrow::WriteTable() doesn't support appending to output
-        auto pos = m_filename.find_last_of('/');
-        if (pos == std::string::npos) {
-            uint8_t length = m_filename.size();
-            tls->write(&length, 1);
-            tls->write(m_filename.data(), m_filename.size());
-        }
-        else {
-            uint8_t length = m_filename.size() - pos - 1;
-            tls->write(&length, 1);
-            tls->write(m_filename.data() + pos + 1, length);
-        }
-    }
+    full_name = m_filename + ".part";
+    auto res = arrow::io::FileOutputStream::Open(full_name);
+    PARQUET_THROW_NOT_OK(res);
+    outfile = res.ValueOrDie();
 
     if (m_compress) {
         parquet::WriterProperties::Builder propsBuilder;
@@ -66,11 +44,18 @@ int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)
 
     outfile->Close();
 
+    chmod(full_name.c_str(), 0666);
     if (m_cfg.export_location.value() == ExportLocation::LOCAL) {
-        chmod(full_name.c_str(), 0666);
         if (std::rename(full_name.c_str(), m_filename.c_str()))
             throw std::runtime_error("Couldn't rename the output file!");
+    }
+    else {
+        if (!m_threads.empty()) {
+            m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
+                [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
+        }
 
+        m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename));
     }
 
     return item->num_rows();

@@ -33,6 +33,7 @@
 #include "utils/Logger.h"
 #include "platform/Platform.h"
 #include "platform/Mempool.h"
+#include "export/BaseWriter.h"
 
 namespace DDP {
     class CommLinkProxy : public PollAble
@@ -229,6 +230,9 @@ void DDP::Probe::init(const Arguments& args)
             throw std::runtime_error("DNS Probe was built without IP anonymization support!");
 #endif
         }
+
+        if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+            TlsCtx::getInstance().init(m_cfg.export_ca_cert.value());
 
         m_initialized = true;
     } catch (...) {

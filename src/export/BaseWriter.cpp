@@ -23,8 +23,82 @@
 #include <openssl/ssl.h>
 
 #include "BaseWriter.h"
+#include "utils/Logger.h"
 
 namespace DDP {
+    void send_file(Config cfg, std::string filename)
+    {
+        try {
+            TlsConnection tls(cfg);
+            std::ifstream ifs(filename + ".part", std::ifstream::binary);
+
+            auto pos = filename.find_last_of('/');
+            if (pos == std::string::npos) {
+                uint8_t length = filename.size();
+                tls.write(&length, 1);
+                tls.write(filename.data(), filename.size());
+            }
+            else {
+                uint8_t length = filename.size() - pos - 1;
+                tls.write(&length, 1);
+                tls.write(filename.data() + pos + 1, length);
+            }
+
+            unsigned char buffer[4096];
+            while (!ifs.eof()) {
+                ifs.read(reinterpret_cast<char*>(buffer), 4096);
+                tls.write(buffer, ifs.gcount());
+            }
+
+            ifs.close();
+            std::remove((filename + ".part").c_str());
+        }
+        catch (std::exception& e) {
+            Logger("Writer").warning() << "Couldn't send output file to remote server: " << e.what();
+            if (std::rename((filename + ".part").c_str(), filename.c_str()))
+                Logger("Writer").warning() << "Couldn't rename the output file!";
+        }
+    }
+
+    void TlsCtx::init(std::string ca_cert)
+    {
+        if (m_ctx)
+            return;
+
+        SSL_library_init();
+        SSL_load_error_strings();
+#ifndef PROBE_OPENSSL_LEGACY
+        const SSL_METHOD* method = TLS_client_method();
+#else
+        const SSL_METHOD* method = TLSv1_2_client_method();
+#endif
+        SSL_CTX* ctx = SSL_CTX_new(method);
+        if (!ctx)
+            throw std::runtime_error("Error creating TLS context!");
+
+        if (!ca_cert.empty()) {
+            if (!SSL_CTX_load_verify_locations(ctx, ca_cert.c_str(), NULL)) {
+                SSL_CTX_free(ctx);
+                throw std::runtime_error("Error loading CA certificate!");
+            }
+        }
+        else {
+            if (!SSL_CTX_set_default_verify_paths(ctx)) {
+                SSL_CTX_free(ctx);
+                throw std::runtime_error("Error loading default CA certificates!");
+            }
+        }
+
+        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+        m_ctx = ctx;
+    }
+
+    TlsCtx::~TlsCtx()
+    {
+        if (m_ctx)
+            SSL_CTX_free(m_ctx);
+    }
+
     void TlsConnection::close()
     {
         if (m_ssl) {
@@ -33,15 +107,16 @@ namespace DDP {
             SSL_free(m_ssl);
             ::close(m_fd);
             m_ssl = nullptr;
+            m_fd = -1;
         }
     }
 
     int TlsConnection::write(const void* data, int64_t n_bytes)
     {
-        if (!m_ssl)
+        if (n_bytes == 0)
             return 0;
 
-        if (n_bytes == 0)
+        if (!m_ssl)
             return 0;
 
         int written = SSL_write(m_ssl, data, n_bytes);
@@ -78,48 +153,19 @@ namespace DDP {
                 throw std::runtime_error("Error connecting to server for remote export!");
         }
 
-        SSL_library_init();
-        SSL_load_error_strings();
-#ifndef PROBE_OPENSSL_LEGACY
-        const SSL_METHOD* method = TLS_client_method();
-#else
-        const SSL_METHOD* method = TLSv1_2_client_method();
-#endif
-        SSL_CTX* ctx = SSL_CTX_new(method);
-        if (!ctx)
-            throw std::runtime_error("Error creating TLS context!");
-
-        if (!m_ca_cert.empty()) {
-            if (!SSL_CTX_load_verify_locations(ctx, m_ca_cert.c_str(), NULL)) {
-                SSL_CTX_free(ctx);
-                throw std::runtime_error("Error loading CA certificate!");
-            }
-        }
-        else {
-            if (!SSL_CTX_set_default_verify_paths(ctx)) {
-                SSL_CTX_free(ctx);
-                throw std::runtime_error("Error loading default CA certificates!");
-            }
-        }
-
-        SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-
-        SSL* ssl = SSL_new(ctx);
-        if (!ssl) {
-            SSL_CTX_free(ctx);
+        m_ctx = TlsCtx::getInstance().get();
+        SSL* ssl = SSL_new(m_ctx);
+        if (!ssl)
             throw std::runtime_error("Error creating TLS structure!");
-        }
 
         SSL_set_fd(ssl, m_fd);
         int err = SSL_connect(ssl);
         if (err <= 0) {
-            SSL_CTX_free(ctx);
             SSL_free(ssl);
             throw std::runtime_error("Error creating TLS connection to server for remote export!");
         }
 
         m_ssl = ssl;
-        SSL_CTX_free(ctx);
     }
 
     std::string BaseWriter::filename(std::string sufix, bool invalid)
