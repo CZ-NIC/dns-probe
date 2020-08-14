@@ -122,7 +122,7 @@ module cznic-dns-probe {
         type string;
         default ".";
         description
-          "Local directory for exported data when local export is enabled.
+          "Local directory for exported data.
 
            This is a static configuration parameter that is applied
            only upon restarting the probe.";
