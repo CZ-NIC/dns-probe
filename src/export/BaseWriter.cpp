@@ -28,36 +28,40 @@
 namespace DDP {
     void send_file(Config cfg, std::string filename)
     {
-        try {
-            TlsConnection tls(cfg);
-            std::ifstream ifs(filename + ".part", std::ifstream::binary);
+        auto pos = filename.find_last_of('/');
 
-            auto pos = filename.find_last_of('/');
-            if (pos == std::string::npos) {
-                uint8_t length = filename.size();
-                tls.write(&length, 1);
-                tls.write(filename.data(), filename.size());
-            }
-            else {
-                uint8_t length = filename.size() - pos - 1;
-                tls.write(&length, 1);
-                tls.write(filename.data() + pos + 1, length);
-            }
+        for (int i = 0; i < 3; i++) {
+            try {
+                TlsConnection tls(cfg);
+                std::ifstream ifs(filename + ".part", std::ifstream::binary);
 
-            unsigned char buffer[4096];
-            while (!ifs.eof()) {
-                ifs.read(reinterpret_cast<char*>(buffer), 4096);
-                tls.write(buffer, ifs.gcount());
-            }
+                if (pos == std::string::npos) {
+                    uint8_t length = filename.size();
+                    tls.write(&length, 1);
+                    tls.write(filename.data(), filename.size());
+                }
+                else {
+                    uint8_t length = filename.size() - pos - 1;
+                    tls.write(&length, 1);
+                    tls.write(filename.data() + pos + 1, length);
+                }
 
-            ifs.close();
-            std::remove((filename + ".part").c_str());
+                unsigned char buffer[4096];
+                while (!ifs.eof()) {
+                    ifs.read(reinterpret_cast<char*>(buffer), 4096);
+                    tls.write(buffer, ifs.gcount());
+                }
+
+                ifs.close();
+                std::remove((filename + ".part").c_str());
+                return;
+            }
+            catch (std::exception& e) {}
         }
-        catch (std::exception& e) {
-            Logger("Writer").warning() << "Couldn't send output file to remote server: " << e.what();
-            if (std::rename((filename + ".part").c_str(), filename.c_str()))
-                Logger("Writer").warning() << "Couldn't rename the output file!";
-        }
+
+        Logger("Writer").warning() << "Couldn't send output file to remote server!";
+        if (std::rename((filename + ".part").c_str(), filename.c_str()))
+            Logger("Writer").warning() << "Couldn't rename the output file!";
     }
 
     void TlsCtx::init(std::string ca_cert)
