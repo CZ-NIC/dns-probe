@@ -47,15 +47,6 @@ namespace DDP {
     };
 
     /**
-     * Version of the IP address for remote export
-     */
-    enum class ExportIpVersion : uint8_t {
-        UNKNOWN = 0, //!< No IP address version specified
-        IPV4 = AF_INET, //!< Indicates IPv4 address
-        IPV6 = AF_INET6 //!< Indicates IPv6 address
-    };
-
-    /**
      * Specify bits positions in bit set for CDNS fields.
      */
     enum class CDNSField : uint32_t {

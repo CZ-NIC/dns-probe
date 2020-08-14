@@ -130,26 +130,35 @@ namespace DDP {
 
     void TlsConnection::open()
     {
-        m_fd = socket(static_cast<int>(m_ipv), SOCK_STREAM, 0);
-        if (m_fd < 0)
-            throw std::runtime_error("Couldn't open socket for remote export");
+        sockaddr_in sa4;
+        std::memset(&sa4, 0, sizeof(sa4));
+        int ret = inet_pton(AF_INET, m_ip.c_str(), &sa4.sin_addr.s_addr);
+        if (ret == 1) {
+            sa4.sin_family = AF_INET;
+            sa4.sin_port = htons(m_port);
 
-        if (m_ipv == ExportIpVersion::IPV4) {
-            sockaddr_in sa;
-            std::memset(&sa, 0, sizeof(sa));
-            sa.sin_family = static_cast<int>(m_ipv);
-            inet_pton(static_cast<int>(m_ipv), m_ip.c_str(), &sa.sin_addr.s_addr);
-            sa.sin_port = htons(m_port);
-            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa), sizeof(sa)))
+            m_fd = socket(AF_INET, SOCK_STREAM, 0);
+            if (m_fd < 0)
+                throw std::runtime_error("Couldn't open socket for remote export!");
+
+            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa4), sizeof(sa4)))
                 throw std::runtime_error("Error connecting to server for remote export!");
         }
         else {
-            sockaddr_in6 sa;
-            std::memset(&sa, 0, sizeof(sa));
-            sa.sin6_family = static_cast<int>(m_ipv);
-            inet_pton(static_cast<int>(m_ipv), m_ip.c_str(), &sa.sin6_addr);
-            sa.sin6_port = htons(m_port);
-            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa), sizeof(sa)))
+            sockaddr_in6 sa6;
+            std::memset(&sa6, 0, sizeof(sa6));
+            ret = inet_pton(AF_INET6, m_ip.c_str(), &sa6.sin6_addr);
+            if (ret != 1)
+                throw std::runtime_error("Invalid IP address of remote server");
+
+            sa6.sin6_family = AF_INET6;
+            sa6.sin6_port = htons(m_port);
+
+            m_fd = socket(AF_INET6, SOCK_STREAM, 0);
+            if (m_fd < 0)
+                throw std::runtime_error("Couldn't open socket for remote export!");
+
+            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa6), sizeof(sa6)))
                 throw std::runtime_error("Error connecting to server for remote export!");
         }
 

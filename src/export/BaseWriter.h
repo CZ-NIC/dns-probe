@@ -85,7 +85,6 @@ namespace DDP {
          * @param cfg Configuration to use for new TLS connection
          */
         TlsConnection(Config& cfg) : m_fd(-1), m_ssl(nullptr), m_ctx(nullptr),
-                                     m_ipv(cfg.export_ip_version.value()),
                                      m_ip(cfg.export_ip.value()),
                                      m_port(cfg.export_port.value()) { open(); }
 
@@ -122,7 +121,6 @@ namespace DDP {
         int m_fd;
         SSL* m_ssl;
         SSL_CTX* m_ctx;
-        ExportIpVersion m_ipv;
         std::string m_ip;
         uint16_t m_port;
     };

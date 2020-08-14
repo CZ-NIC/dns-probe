@@ -98,7 +98,6 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
         {SYSCONF_CFG_ROOT "/tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
         {SYSCONF_CFG_ROOT "/export/location",                    m_cfg.export_location},
-        {SYSCONF_CFG_ROOT "/export/remote-ip-version",           m_cfg.export_ip_version},
         {SYSCONF_CFG_ROOT "/export/remote-ip-address",           m_cfg.export_ip},
         {SYSCONF_CFG_ROOT "/export/remote-port",                 m_cfg.export_port},
         {SYSCONF_CFG_ROOT "/export/remote-ca-cert",              m_cfg.export_ca_cert},
