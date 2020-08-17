@@ -72,7 +72,7 @@ int64_t DDP::PcapWriter::write(const Packet* pkt)
 
     packet_header.ts = ts;
 
-    if (m_cfg.raw_pcap.value()) {
+    if (m_raw_pcap) {
         if (!pkt->size())
             return 0;
         packet_header.caplen = pkt->size();
