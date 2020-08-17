@@ -19,25 +19,25 @@ The *systemd* service can be run like this:
 
 Other ``systemctl`` subcommands can be used to stop, enable or restart the service.
 
-By default the *systemd* service reads packets from loopback interface. To make the service
-read packets from different network interface the unit file should be modified like this:
+With default configuration DNS Probe doesn't have any network interface to process traffic from configured.
+User should therefore modify Sysrepo configuration before running the *systemd* service
+for the first time. For example like this:
 
-.. code:: shell
+.. code-block:: shell
 
-    sudo systemctl edit dns-probe-<BACKEND>.service
+    sysrepocfg -E vim -m cznic-dns-probe
 
-This command creates an override file for the *systemd* service in
-``/etc/systemd/system/dns-probe-<BACKEND>.service.d/override.conf`` and opens it in default text editor.
-The ``ExecStart=...`` line from original *systemd* service should be overwritten here to include
-the desired network interface from which to read packets. The override file can look like this:
+.. code-block:: xml
 
-::
+    <dns-probe xmlns="https://www.nic.cz/ns/yang/dns-probe">
+        <interface-list>eth0</interface-list>
+        <interface-list>eth1</interface-list>
+        <log-file>/var/log/dns-probe-af.log</log-file>
+    </dns-probe>
 
-    [Service]
-    ExecStart=
-    ExecStart=/path/to/dns-probe-<BACKEND> -i <NETWORK_INTERFACE> -l /var/log/dns-probe-<BACKEND>.log
-
-After the modification is done the *systemd* service can be started as usual.
+This configuration will have DNS Probe process traffic from `eth0` and `eth1` interfaces and
+write its logs to `/var/log/dns-probe-af.log` file. After this modification is done
+the *systemd* service can be started as usual.
 
 Running from command line
 =========================

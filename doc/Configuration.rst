@@ -24,6 +24,10 @@ Data model
 Sysrepo uses the YANG language [RFC7950]_ for modelling configuration and state data, RPC operations and notifications. Section :ref:`YANG module <yang-module>` contains the complete YANG module *cznic-dns-probe* that is used for DNS Probe. Its schema tree looks as follows::
 
    +--rw cznic-dns-probe:dns-probe
+   |  +--rw interface-list? <string>
+   |  +--rw pcap-list? <string>
+   |  +--rw raw-pcap? <boolean>
+   |  +--rw log-file? <string>
    |  +--rw coremask? <uint64>
    |  +--rw dns-ports? <uint16>
    |  +--rw export
@@ -91,7 +95,7 @@ The contents of the configuration datastore can be manipulated using the **sysre
 
 opens the `Vim <https://www.vim.org/>`_ editor on an empty document. Changes to the running configuration datastore can be specified in the XML representation. For example, the following snippet
 
-* changes the :ref:`dns-ports` list parameter to 64,65
+* changes the :ref:`dns-ports` list parameter to 64, 65
 * selects C-DNS as the :ref:`export-format`
 * sets :ref:`cdns-records-per-block` to 1000
 
@@ -243,6 +247,20 @@ entirety, and suffix ``.gz`` is appended to their names. Parquet
 format implementation used by DNS Probe compresses only selected parts
 of the file, and there is no ``.gz``.
 
+.. _interface-list:
+
+interface-list
+^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/interface-list``
+:default: empty
+
+List of network interfaces to process traffic from in addition to interfaces passed with `-i`
+command line parameter.
+
+Fill either with NIC interface names such as `eth0` or alternatively with PCI IDs when using DPDK backend
+and binding NICs to DPDK-compatible drivers manually.
+
 key-path
 ^^^^^^^^
 
@@ -259,6 +277,17 @@ the key using `scramble_ips` tool installed by the cryptopANT dependency like th
 
    scramble_ips --newkey --type=<encryption> <key_file>
 
+log-file
+^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/log-file``
+:default: empty
+
+Path (including file's name) to log file for storing probe's logs (e.g. `/var/log/dns-probe.log`).
+Might get overriden by `-l` command line parameter.
+
+By default logs are written to `stdout`.
+
 .. _max-transactions:
 
 max-transactions
@@ -270,6 +299,27 @@ max-transactions
 The value of this parameter must be a power of 2. It specifies the maximum number of pending DNS transactions that DNS Probe can handle at any given time, which in turn affects the size of in-memory transaction table.
 
 The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS traffic at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
+.. _pcap-list:
+
+pcap-list
+^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/pcap-list``
+:default: empty
+
+List of PCAPs to process in addition to PCAPs passed with `-p` command line parameter.
+
+raw-pcap
+^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/raw-pcap``
+:default: **false**
+
+Indicates RAW PCAPs as input in :ref:`pcap-list` or from command line with `-p` parameter. Might get
+overriden by `-r` command line parameter.
+
+MUST be set to **false** if :ref:`interface-list` or `-i` command line parameter are used.
 
 .. _dynamic-conf-par:
 
