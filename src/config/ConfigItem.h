@@ -441,17 +441,17 @@ namespace DDP {
     };
 
     /**
-     * Specialized implementation for std::unordered_set<uint16_t> as config item.
+     * Specialized implementation for DDP::CList<port_t> as config item.
      */
-    class ConfigPortList: public ConfigItemBase
+    template<>
+    class ConfigItem<CList<Port_t>>: public ConfigItemBase
     {
-        using Type = std::unordered_set<uint16_t>;
     public:
         /**
          * Access saved value.
          * @return Value inside config item.
          */
-        Type value() const { return m_value; }
+        CList<Port_t> value() const { return m_value; }
 
         /**
          * Save value from sysrepo.
@@ -459,7 +459,7 @@ namespace DDP {
          */
         void from_sysrepo(const boost::any& value) override
         {
-            m_value.insert(boost::any_cast<uint16_t>(value));
+            m_value.insert(boost::any_cast<Port_t>(value));
         }
 
         /**
@@ -468,14 +468,14 @@ namespace DDP {
          */
         void delete_value(const boost::any& value) override
         {
-            m_value.erase(boost::any_cast<uint16_t>(value));
+            m_value.erase(boost::any_cast<Port_t>(value));
         }
 
         /**
-         * Implicit conversion to PortList.
+         * Implicit conversion to CList<port_t>.
          * @return Saved value.
          */
-        operator Type() const { return m_value; }
+        operator CList<Port_t>() { return m_value; }
 
         /**
          * Provides text representation of the saved value.
@@ -497,21 +497,22 @@ namespace DDP {
         }
 
     protected:
-        Type m_value{}; //!< Saved value.
+        CList<Port_t> m_value{}; //!< Saved value.
     };
 
+
     /**
-     * Specialized implementation for std::unordered_set<uint32_t> as config item.
+     * Specialized implementation for DDP::CList<ipv4_t> as config item.
      */
-    class ConfigIPv4List: public ConfigItemBase
+    template<>
+    class ConfigItem<CList<IPv4_t>>: public ConfigItemBase
     {
-        using Type = std::unordered_set<uint32_t>;
     public:
         /**
          * Access saved value.
          * @return Value inside config item.
          */
-        Type value() const { return m_value; }
+        CList<IPv4_t> value() const { return m_value; }
 
         /**
          * Save value from sysrepo.
@@ -519,7 +520,7 @@ namespace DDP {
          */
         void from_sysrepo(const boost::any& value) override
         {
-            uint32_t addr;
+            IPv4_t addr;
             int ret = inet_pton(AF_INET, boost::any_cast<std::string>(value).c_str(), &addr);
             if (ret != 1)
                 throw std::invalid_argument("IPv4 list doesn't contain valid IPv4 address.");
@@ -532,18 +533,18 @@ namespace DDP {
          */
         void delete_value(const boost::any& value) override
         {
-            uint32_t addr;
+            IPv4_t addr;
             int ret = inet_pton(AF_INET, boost::any_cast<std::string>(value).c_str(), &addr);
             if (ret != 1)
-                throw std::invalid_argument("IPv4 list doesn't contain valid IPv4 address to delete.");
+                throw std::invalid_argument("IPv4 list doesnt't contain valid IPv4 address to delete.");
             m_value.erase(addr);
         }
 
         /**
-         * Implicit conversion to IPv4List
+         * Implicit conversion to CList<ipv4_t>
          * @return Save value.
          */
-        operator Type() const { return m_value; }
+        operator CList<IPv4_t>() const { return m_value; }
 
         /**
          * Provides text representation of the saved value.
@@ -567,9 +568,8 @@ namespace DDP {
             }
             return str.str();
         }
-
     protected:
-        Type m_value{}; //!< Saved value.
+        CList<IPv4_t> m_value{}; //!< Saved value.
     };
 }
 
@@ -596,17 +596,17 @@ namespace std {
 
 namespace DDP {
     /**
-     * Specialized implementation for std::unordered_set<std::array<uint32_t, 4>> as config item.
+     * Specialized implementation for DDP::CList<ipv6_t> as config item.
      */
-    class ConfigIPv6List: public ConfigItemBase
+    template<>
+    class ConfigItem<CList<IPv6_t>>: public ConfigItemBase
     {
-        using Type = std::unordered_set<std::array<uint32_t, 4>>;
     public:
         /**
          * Access saved value.
          * @return Value inside config item.
          */
-        Type value() const { return m_value; }
+        CList<IPv6_t> value() const { return m_value; }
 
         /**
          * Save value from sysrepo.
@@ -614,7 +614,7 @@ namespace DDP {
          */
         void from_sysrepo(const boost::any& value) override
         {
-            std::array<uint32_t, 4> addr;
+            IPv6_t addr;
             int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), addr.data());
             if (ret != 1)
                 throw std::invalid_argument("IPv6 list doesn't contain valid IPv6 address.");
@@ -627,18 +627,18 @@ namespace DDP {
          */
         void delete_value(const boost::any& value) override
         {
-            std::array<uint32_t, 4> addr;
+            IPv6_t addr;
             int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), addr.data());
             if (ret != 1)
-                throw std::invalid_argument("IPv6 list doesn't contain valid IPv6 address to delete.");
+                throw std::invalid_argument("IPv6 list doesnt' contain valid IPv6 address to delete.");
             m_value.erase(addr);
         }
 
         /**
-         * Implicit conversion to IPv6List
+         * Implicit conversion to CList<ipv6_t>
          * @return Save value.
          */
-        operator Type() const { return m_value; }
+        operator CList<IPv6_t>() const { return m_value; }
 
         /**
          * Provides text representation of the saved value.
@@ -662,8 +662,66 @@ namespace DDP {
             }
             return str.str();
         }
-
     protected:
-        Type m_value{}; //!< Saved value.
+        CList<IPv6_t> m_value{}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::CList<std::string> as config item.
+     */
+    template<>
+    class ConfigItem<CList<std::string>>: public ConfigItemBase
+    {
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        CList<std::string> value() const { return m_value; }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo.
+         */
+        void from_sysrepo(const boost::any& value) override
+        {
+            m_value.insert(boost::any_cast<std::string>(value));
+        }
+
+        /**
+         * Delete value from list.
+         * @param value Value from syrepo to delete.
+         */
+        void delete_value(const boost::any& value) override
+        {
+            m_value.erase(boost::any_cast<std::string>(value));
+        }
+
+        /**
+         * Implicit conversion to CList<std::string>
+         * @return Save value.
+         */
+        operator CList<std::string>() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            std::stringstream str;
+            bool first = true;
+            for (auto& val : m_value) {
+                if (first) {
+                    str << val;
+                    first = false;
+                }
+                else
+                    str << ", " << val;
+            }
+            return str.str();
+        }
+    protected:
+        CList<std::string> m_value{}; //!< Saved value.
     };
 }

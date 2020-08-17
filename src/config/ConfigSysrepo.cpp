@@ -86,6 +86,10 @@ static boost::any conv_sysrepo_data(libyang::S_Data_Node data)
 }
 
 DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_map{
+        {SYSCONF_CFG_ROOT "/interface-list",                     m_cfg.interface_list},
+        {SYSCONF_CFG_ROOT "/pcap-list",                          m_cfg.pcap_list},
+        {SYSCONF_CFG_ROOT "/raw-pcap",                           m_cfg.raw_pcap},
+        {SYSCONF_CFG_ROOT "/log-file",                           m_cfg.log_file},
         {SYSCONF_CFG_ROOT "/coremask",                           m_cfg.coremask},
         {SYSCONF_CFG_ROOT "/dns-ports",                          m_cfg.dns_ports},
         {SYSCONF_CFG_ROOT "/ipv4-allowlist",                     m_cfg.ipv4_allowlist},
@@ -134,9 +138,10 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
 
             if (tree->find_path(item.first.c_str())->data().empty()) {
                 std::string end("list");
-                if ((item.first.length() < end.length()) ||
-                    (item.first.length() >= end.length() &&
-                        item.first.compare(item.first.length() - end.length(), end.length(), end) != 0)) {
+                if (!((item.first.length() >= end.length() &&
+                       item.first.compare(item.first.length() - end.length(), end.length(), end) == 0) ||
+                      (item.first == "/cznic-dns-probe:dns-probe/export/remote-ca-cert") ||
+                      (item.first == "/cznic-dns-probe:dns-probe/log-file"))) {
                     m_logger.warning() << "Config for path '" << item.first << "' not found!";
                 }
             }
