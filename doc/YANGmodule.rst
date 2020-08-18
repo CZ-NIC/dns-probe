@@ -162,10 +162,7 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
           type string;
           default ".";
           description
-            "Directory for exported data.
-
-             This is a static configuration parameter that is applied
-             only upon restarting the probe.";
+            "Directory for exported data.";
         }
         leaf export-format {
           type enumeration {

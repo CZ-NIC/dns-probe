@@ -208,16 +208,6 @@ Encryption algorithm to be used during anonymization of client IP addresses if e
 ``sha1``
    SHA1 hash function.
 
-export-dir
-^^^^^^^^^^
-
-:data node: ``/cznic-dns-probe:dns-probe/export/export-dir``
-:default: ``.``
-
-Path to an existing local directory for storing export files.
-
-The default value of ``.`` means that DNS Probe will use the current working directory from which it was launched.
-
 .. _export-format:
 
 export-format
@@ -353,6 +343,16 @@ incoming packets to recognize DNS traffic.
 
 The default value of 53 is the standard DNS server port as defined
 in [RFC1035]_.
+
+export-dir
+^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/export-dir``
+:default: ``.``
+
+Path to an existing local directory for storing export files.
+
+The default value of ``.`` means that DNS Probe will use the current working directory from which it was launched.
 
 file-name-prefix
 ^^^^^^^^^^^^^^^^
