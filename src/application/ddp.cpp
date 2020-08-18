@@ -266,6 +266,7 @@ int main(int argc, char** argv)
     auto& runner = DDP::Probe::getInstance();
 
     try {
+        runner.load_config(arguments.args);
         bind_interfaces(arguments.args);
         runner.init(arguments.args);
     } catch (std::exception& e) {

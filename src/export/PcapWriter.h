@@ -40,6 +40,7 @@ namespace DDP {
         explicit PcapWriter(Config& cfg, bool invalid, uint32_t process_id) :
                 BaseWriter(cfg, process_id),
                 m_invalid(invalid),
+                m_raw_pcap(cfg.raw_pcap.value()),
                 m_out(nullptr),
                 m_exported_bytes(0) {}
 
@@ -89,6 +90,7 @@ namespace DDP {
         void close_file();
 
         bool m_invalid;
+        bool m_raw_pcap;
         pcap_dumper_t* m_out;
         uint64_t m_exported_bytes;
     };

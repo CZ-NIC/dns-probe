@@ -52,6 +52,7 @@ int main(int argc, char** argv)
     auto& runner = DDP::Probe::getInstance();
 
     try {
+        runner.load_config(arguments.args);
         runner.init(arguments.args);
     } catch (std::exception& e) {
         logwriter.log_lvl("ERROR", "Probe init failed: ", e.what());

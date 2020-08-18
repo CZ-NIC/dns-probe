@@ -88,6 +88,12 @@ namespace DDP {
         static void print_help(const char* app = nullptr);
 
         /**
+         * @brief Loads configuration from Sysrepo.
+         * @param args Program arguments to be filled with network ports and PCAPs to process
+         */
+        void load_config(Arguments& args);
+
+        /**
          * @brief Initialize Probe singleton. Creates necessary memory pools and rings
          * @param workers Vector with IDs of worker cores
          * @throw std::runtime_error From multiple sources
@@ -166,6 +172,7 @@ namespace DDP {
          */
         void process_log_messages() const;
 
+        bool m_cfg_loaded; //!< Information that application loaded Sysrepo configuration.
         bool m_initialized; //!< Information that application is initialized with call DDP::Probe::init.
         bool m_running; //!< Information that main application is in main loop.
 
