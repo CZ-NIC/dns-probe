@@ -42,6 +42,7 @@ namespace DDP {
         std::list<std::string> interfaces; //<! List of interfaces used for listening for incoming DNS data
         std::list<PciDevice> devices; //<! List of PCI devices corresponding to interfaces list (used in DPDK version)
         std::list<std::string> pcaps; //<! List of PCAPs with data for processing
+        std::string log_file; //!< Log file to store probe's logs
         bool raw_pcap;
     };
 }

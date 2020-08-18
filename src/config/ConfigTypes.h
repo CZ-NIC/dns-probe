@@ -18,8 +18,17 @@
 #pragma once
 
 #include <string>
+#include <array>
+#include <unordered_set>
 
 namespace DDP {
+    template <typename T>
+    using CList = std::unordered_set<T>;
+
+    using Port_t = uint16_t;
+    using IPv4_t = uint32_t;
+    using IPv6_t = std::array<uint32_t, 4>;
+
     /**
      * Available values for PCAP export config.
      */

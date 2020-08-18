@@ -45,6 +45,11 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
        records about DNS transactions in C-DNS or Apache Parquet
        format.";
 
+    revision 2020-08-17 {
+      description
+        "Add probe's command line parameters as Sysrepo configuration items.";
+    }
+
     revision 2020-07-15 {
       description
         "Add IP anonymization";
@@ -65,6 +70,49 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
     container dns-probe {
       description
         "Configuration of DNS Probe.";
+      leaf-list interface-list {
+        type string;
+        description
+          "List of network interfaces to process traffic from in addition to
+           interfaces passed with '-i' command line parameter.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
+      leaf-list pcap-list {
+        type string;
+        description
+          "List of PCAPs to process in addition to PCAPs passed with
+           '-p' command line parameter.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
+      leaf raw-pcap {
+        type boolean;
+        default "false";
+        description
+          "Indicates RAW PCAPs as input in 'pcap-list' or from command line
+           with '-p' parameter. Might get overriden by '-r' command line
+           parameter.
+
+           MUST be set to 'false' if 'interface-list' or '-i' command line
+           parameter are used.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
+      leaf log-file {
+        type string;
+        description
+          "Path (including filename) to log file for storing logs.
+           Might get overriden by '-l' command line parameter.
+
+           By default logs are written to stdout.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
       leaf coremask {
         type uint64 {
           range "7..max";

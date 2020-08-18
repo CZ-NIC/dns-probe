@@ -31,12 +31,16 @@ namespace DDP {
      */
     struct Config
     {
+        ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
+        ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
+        ConfigItem<bool> raw_pcap; //!< Defines if input PCAP files are without ethernet headers
+        ConfigItem<std::string> log_file; //!< Log file for storing probe's logs
         ConfigItem<ThreadManager::MaskType> coremask; //!< Coremask used fo selecting cores where application will be running.
-        ConfigPortList dns_ports; //!< TCP/UDP port list used for identifying DNS traffic
-        ConfigIPv4List ipv4_allowlist; //!< List of allowed IPv4 addresses to process traffic from
-        ConfigIPv4List ipv4_denylist; //!< List of IPv4 addresses from which to NOT process traffic
-        ConfigIPv6List ipv6_allowlist; //!< List of allowed IPv6 addresses to process traffic from
-        ConfigIPv6List ipv6_denylist; //!< List of IPv6 addresses from which to NOT process traffic
+        ConfigItem<CList<Port_t>> dns_ports; //!< TCP/UDP port list used for identifying DNS traffic
+        ConfigItem<CList<IPv4_t>> ipv4_allowlist; //!< List of allowed IPv4 addresses to process traffic from
+        ConfigItem<CList<IPv4_t>> ipv4_denylist; //!< List of IPv4 addresses from which to NOT process traffic
+        ConfigItem<CList<IPv6_t>> ipv6_allowlist; //!< List of allowed IPv6 addresses to process traffic from
+        ConfigItem<CList<IPv6_t>> ipv6_denylist; //!< List of IPv6 addresses from which to NOT process traffic
 
         ConfigItem<uint32_t> tt_size; //!< Number of items in the transaction table
         ConfigItem<uint64_t> tt_timeout; //!< Timeout for orphaned items transaction table in milliseconds
@@ -51,7 +55,6 @@ namespace DDP {
         ConfigItem<uint64_t> file_rot_size; //!< Exported file size limit in MB
         ConfigItem<bool> file_compression; //!< Enable GZIP compression for exported files
         ConfigItem<PcapExportCfg> pcap_export; //!< Define what will be in exported PCAPs
-        ConfigItem<bool> raw_pcap; //!< Defines if input PCAP file is without ethernet headers
 
         ConfigItem<ExportFormat> export_format; //!< Specify export format
         ConfigItem<uint64_t> parquet_records; //!< Number of records in parquet file

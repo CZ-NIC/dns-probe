@@ -7,7 +7,7 @@ After=network.target
 [Service]
 Type=simple
 Restart=always
-ExecStart=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/dns-probe-@BACKEND@ -i lo -l /var/log/dns-probe-@BACKEND@.log
+ExecStart=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/dns-probe-@BACKEND@
 
 [Install]
 WantedBy=multi-user.target
