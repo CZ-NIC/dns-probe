@@ -756,6 +756,9 @@ DDP::DnsRecord& DDP::DnsParser::merge_records(DDP::DnsRecord& request, DDP::DnsR
     request.m_nscount = response.m_nscount;
     request.m_arcount = response.m_arcount;
 
+    if (response.m_tcp_rtt > 0)
+        request.m_tcp_rtt = response.m_tcp_rtt;
+
     request.m_resp_ednsRdata = response.m_resp_ednsRdata;
     response.m_resp_ednsRdata = nullptr;
     request.m_resp_ednsRdata_size = response.m_resp_ednsRdata_size;

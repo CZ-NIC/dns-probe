@@ -79,7 +79,8 @@ namespace DDP {
                             m_unparsed_msg(),
                             m_buffer_size(),
                             m_buffer_head(),
-                            m_buffer_tail()
+                            m_buffer_tail(),
+                            m_rtt()
         {
             m_buffer_size[CLIENT] = 0;
             m_buffer_size[SERVER] = 0;
@@ -191,6 +192,7 @@ namespace DDP {
         uint8_t m_buffer_size[2];
         TcpSegment* m_buffer_head[2];
         TcpSegment* m_buffer_tail[2];
+        Time m_rtt;
 
         /**
          * @brief Insert TCP segment given in packet into given connection side's reorder buffer
