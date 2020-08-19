@@ -53,7 +53,7 @@ namespace DDP {
                                          "6061626364656667686970717273747576777879"
                                          "8081828384858687888990919293949596979899";
 
-        static constexpr int COLUMNS = 54;
+        static constexpr int COLUMNS = 55;
         static constexpr uint8_t DNS_MIN_EDNS_OPTION_SIZE = 4;
 
         /**
@@ -208,6 +208,7 @@ namespace DDP {
 
         arrow::Int32Builder DNSResLen;
         arrow::StringBuilder ServerLocation;
+        arrow::Int64Builder TcpHsRtt;
 
         std::shared_ptr<arrow::Schema> m_DnsSchema;
         uint64_t m_records_limit;
