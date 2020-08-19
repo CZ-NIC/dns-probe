@@ -208,6 +208,9 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)])
         qr.response_size = record.m_res_dns_len;
 
+    if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_DELAY)])
+        qr.response_delay = record.m_tcp_rtt;
+
     // Add QueryResponseSignature to the QueryResponse
     if (qrs_filled)
         qr.qr_signature_index = m_block->add_qr_signature(qrs);

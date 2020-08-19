@@ -17,7 +17,7 @@
 
 #include "CdnsWriter.h"
 
-void DDP::set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<23> fields)
+void DDP::set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<CdnsBits> fields)
 {
     qr_hints = 0;
     qr_sig_hints = 0;
@@ -90,6 +90,9 @@ void DDP::set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset
 
     if (fields[static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)])
         qr_hints |= CDNS::QueryResponseHintsMask::response_size;
+
+    if (fields[static_cast<uint32_t>(CDNSField::RESPONSE_DELAY)])
+        qr_hints |= CDNS::QueryResponseHintsMask::response_delay;
 }
 
 DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id,

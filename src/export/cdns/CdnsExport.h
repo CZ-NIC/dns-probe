@@ -80,7 +80,7 @@ namespace DDP {
 
         private:
         std::shared_ptr<CDNS::CdnsBlock> m_block;
-        std::bitset<23> m_fields;
+        std::bitset<CdnsBits> m_fields;
         CDNS::BlockParameters m_parameters;
     };
 }

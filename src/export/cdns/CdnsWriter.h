@@ -29,7 +29,7 @@ namespace DDP {
      * @param qr_sig_hints QueryResponseSignature hints to set
      * @param fields C-DNS fields according to which the hints will be set
      */
-    void set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<23> fields);
+    void set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<CdnsBits> fields);
 
     /**
      * @brief Class for writing finished C-DNS Blocks to output

@@ -29,6 +29,8 @@ namespace DDP {
     using IPv4_t = uint32_t;
     using IPv6_t = std::array<uint32_t, 4>;
 
+    static constexpr uint8_t CdnsBits = 24; //!< Number of C-DNS fields options
+
     /**
      * Available values for PCAP export config.
      */
@@ -72,7 +74,8 @@ namespace DDP {
         QUERY_EDNS_UDP_SIZE,
         QUERY_OPT_RDATA,
         RESPONSE_ADDITIONAL_SECTIONS,
-        RESPONSE_SIZE
+        RESPONSE_SIZE,
+        RESPONSE_DELAY
     };
 
     /**
