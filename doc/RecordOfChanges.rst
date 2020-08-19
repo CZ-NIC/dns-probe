@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - 0.5
+     - 1.7
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`YANG module <YANGmodule>`
+     - Add TCP RTT item to exported data schema
+   * -
      - 1.6
      - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
      - Fix description of "export-dir" item in YANG module from static to dynamic configuration
