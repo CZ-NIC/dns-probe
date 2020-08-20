@@ -63,7 +63,8 @@ vals = [
     "is_google",
     "is_opendns",
     "dns_res_len",
-    "server_location"
+    "server_location",
+    #"tcp_hs_rtt"
 ]
 
 def cmp_parquet(parquet, pcap, cmd_base, verbose):
