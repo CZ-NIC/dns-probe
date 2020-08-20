@@ -50,7 +50,6 @@ DDP::ConnectionHandler::ConnectionHandler(int conn, SSL_CTX* ctx) : m_fd(conn), 
 
 void DDP::ConnectionHandler::run()
 {
-    uint8_t buf[4096];
     int ret;
     pollfd polls[1];
     polls[0].fd = m_fd;
