@@ -29,6 +29,18 @@
 
 namespace DDP {
     /**
+     * @brief Structure holding collector's configuration
+     */
+    struct CConfig {
+        CConfig() : cert(), key(), ip(), port(6378) {}
+
+        std::string cert;
+        std::string key;
+        std::string ip;
+        uint16_t port;
+    };
+
+    /**
      * @brief Class for handling one incoming SSL connection
      */
     class ConnectionHandler {
@@ -109,13 +121,10 @@ namespace DDP {
         /**
          * @brief Server constructor. Creates socket for listening for incoming connections and
          * initializes SSL library and SSL context.
-         * @param cert Location of server certificate
-         * @param key Location of server's private key
-         * @param ip Collector's IP address to listen on
-         * @param port Collector's transport protocol port to listen on
+         * @param cfg Server configuration (certificate, private key, ip, port)
          * @throw std::runtime_error
          */
-        Collector(std::string& cert, std::string& key, std::string& ip, uint16_t port);
+        Collector(CConfig& cfg);
 
         /**
          * @brief Destructor frees SSL context and closes socket
@@ -140,10 +149,7 @@ namespace DDP {
                 ::close(m_fd);
         }
 
-        std::string m_cert;
-        std::string m_key;
-        std::string m_ip;
-        uint16_t m_port;
+        CConfig m_cfg;
         int m_fd;
         SSL_CTX* m_ctx;
         std::vector<std::future<void>> m_threads;

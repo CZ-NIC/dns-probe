@@ -26,7 +26,7 @@
 #include <sys/stat.h>
 #include <poll.h>
 
-#include "collector.h"
+#include "Collector.h"
 
 extern std::atomic<bool> run_flag;
 
@@ -125,8 +125,7 @@ void DDP::connection_handler(int conn, SSL_CTX* ctx)
     }
 }
 
-DDP::Collector::Collector(std::string& cert, std::string& key, std::string& ip, uint16_t port) :
-    m_cert(cert), m_key(key), m_ip(ip), m_port(port), m_fd(-1), m_ctx(nullptr), m_threads()
+DDP::Collector::Collector(CConfig& cfg) : m_cfg(cfg)
 {
     bool is_ipv4 = false;
     sockaddr* sa;
@@ -135,9 +134,9 @@ DDP::Collector::Collector(std::string& cert, std::string& key, std::string& ip, 
     std::memset(&sa4, 0, sizeof(sa4));
     std::memset(&sa6, 0, sizeof(sa6));
 
-    if (!m_ip.empty()) {
+    if (!m_cfg.ip.empty()) {
         in_addr ipv4;
-        int ret = inet_pton(AF_INET, m_ip.c_str(), &ipv4);
+        int ret = inet_pton(AF_INET, m_cfg.ip.c_str(), &ipv4);
         if (ret == 1) {
             m_fd = socket(AF_INET, SOCK_STREAM, 0);
             if (m_fd < 0)
@@ -145,13 +144,13 @@ DDP::Collector::Collector(std::string& cert, std::string& key, std::string& ip, 
 
             sa4.sin_family = AF_INET;
             sa4.sin_addr = ipv4;
-            sa4.sin_port = htons(port);
+            sa4.sin_port = htons(m_cfg.port);
             sa = reinterpret_cast<sockaddr*>(&sa4);
             is_ipv4 = true;
         }
         else {
             in6_addr ipv6;
-            ret = inet_pton(AF_INET6, m_ip.c_str(), &ipv6);
+            ret = inet_pton(AF_INET6, m_cfg.ip.c_str(), &ipv6);
             if (ret != 1)
                 throw std::runtime_error("Given IP address is invalid!");
 
@@ -161,7 +160,7 @@ DDP::Collector::Collector(std::string& cert, std::string& key, std::string& ip, 
 
             sa6.sin6_family = AF_INET6;
             sa6.sin6_addr = ipv6;
-            sa6.sin6_port = htons(port);
+            sa6.sin6_port = htons(m_cfg.port);
             sa = reinterpret_cast<sockaddr*>(&sa6);
         }
     }
@@ -172,7 +171,7 @@ DDP::Collector::Collector(std::string& cert, std::string& key, std::string& ip, 
 
         sa6.sin6_family = AF_INET6;
         sa6.sin6_addr = in6addr_any;
-        sa6.sin6_port = htons(port);
+        sa6.sin6_port = htons(m_cfg.port);
         sa = reinterpret_cast<sockaddr*>(&sa6);
     }
 
@@ -199,12 +198,12 @@ DDP::Collector::Collector(std::string& cert, std::string& key, std::string& ip, 
     if (!m_ctx)
         throw std::runtime_error("Error creating TLS context!");
 
-    if (SSL_CTX_use_certificate_file(m_ctx, m_cert.c_str(), SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_certificate_file(m_ctx, m_cfg.cert.c_str(), SSL_FILETYPE_PEM) <= 0) {
         SSL_CTX_free(m_ctx);
         throw std::runtime_error("Error loading collector's certificate!");
     }
 
-    if (SSL_CTX_use_PrivateKey_file(m_ctx, m_key.c_str(), SSL_FILETYPE_PEM) <= 0) {
+    if (SSL_CTX_use_PrivateKey_file(m_ctx, m_cfg.key.c_str(), SSL_FILETYPE_PEM) <= 0) {
         SSL_CTX_free(m_ctx);
         throw std::runtime_error("Error loading collector's private key!");
     }

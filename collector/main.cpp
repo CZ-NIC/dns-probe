@@ -15,13 +15,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef PROBE_COLLECTOR_CONFIG
+#define PROBE_COLLECTOR_CONFIG ""
+#endif
+
 #include <iostream>
+#include <fstream>
+#include <algorithm>
 #include <string>
 #include <csignal>
 #include <atomic>
 #include <getopt.h>
 
-#include "collector.h"
+#include "Collector.h"
 
 std::atomic<bool> run_flag(true); //!< Flag for stopping collector's and all connections' processing loops
 
@@ -37,12 +43,47 @@ static void signal_handler(int signum)
 
 static void print_help()
 {
-    std::cout << "dp-collector -s SERVER_CERTIFICATE -k SERVER_PRIVATE_KEY [-a IP_ADDRESS] [-p PORT] [-h]" << std::endl;
+    std::cout << "dp-collector [-s SERVER_CERTIFICATE -k SERVER_PRIVATE_KEY] [-a IP_ADDRESS] [-p PORT] [-c CONFIG_FILE] [-h]" << std::endl;
     std::cout << std::endl << "Options:" << std::endl;
     std::cout << "\t-s SERVER_CERTIFICATE   : Collector's certificate for establishing TLS connection." << std::endl;
     std::cout << "\t-k SERVER_PRIVATE_KEY   : Collector's private key for TLS connection encryption." << std::endl;
     std::cout << "\t-a IP_ADDRESS           : Bind collector to specific IP address." << std::endl;
     std::cout << "\t-p PORT                 : Collector's transport protocol port (default 6378)." << std::endl;
+    std::cout << "\t-c CONFIG_FILE          : Configuration file with all the parameters specified." << std::endl;
+}
+
+static DDP::CConfig parse_config_file(const char* file)
+{
+    DDP::CConfig cfg;
+
+    std::ifstream ifs(file, std::ifstream::binary);
+    if (ifs.fail())
+        return cfg;
+
+    for (std::string line; std::getline(ifs, line); ) {
+        if (line[0] == '#')
+            continue;
+
+        auto pos = line.find("=");
+        std::string item = line.substr(0, pos);
+        std::string value = line.substr(pos + 1, line.size() - pos - 1);
+
+        item.erase(std::remove_if(item.begin(), item.end(), ::isspace), item.end());
+        std::transform(item.begin(), item.end(), item.begin(), toupper);
+
+        value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
+
+        if (item == "SERVER_CERTIFICATE")
+            cfg.cert = value;
+        else if (item == "SERVER_PRIVATE_KEY")
+            cfg.key = value;
+        else if (item == "IP_ADDRESS")
+            cfg.ip = value;
+        else if (item == "PORT")
+            cfg.port = std::atoi(value.c_str());
+    }
+
+    return cfg;
 }
 
 int main(int argc, char** argv)
@@ -58,15 +99,10 @@ int main(int argc, char** argv)
     sigaddset(&set, SIGPIPE);
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 
-    std::string srv_cert;
-    std::string srv_key;
-    std::string ip;
-    uint16_t port = 6378;
-
-    bool is_cert, is_key;
+    DDP::CConfig cfg = parse_config_file(PROBE_COLLECTOR_CONFIG);
     int opt;
 
-    while ((opt = getopt(argc, argv, "hs:k:a:p:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hs:k:a:p:c:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -75,21 +111,23 @@ int main(int argc, char** argv)
                 break;
 
             case 's':
-                srv_cert = std::string(optarg);
-                is_cert = true;
+                cfg.cert = std::string(optarg);
                 break;
 
             case 'k':
-                srv_key = std::string(optarg);
-                is_key = true;
+                cfg.key = std::string(optarg);
                 break;
 
             case 'a':
-                ip = std::string(optarg);
+                cfg.ip = std::string(optarg);
                 break;
 
             case 'p':
-                port = std::atoi(optarg);
+                cfg.port = std::atoi(optarg);
+                break;
+
+            case 'c':
+                cfg = parse_config_file(optarg);
                 break;
 
             default:
@@ -99,20 +137,20 @@ int main(int argc, char** argv)
         }
     }
 
-    if (!is_cert) {
+    if (cfg.cert.empty()) {
         std::cerr << "Missing collector's certificate!" << std::endl;
         print_help();
         exit(EXIT_FAILURE);
     }
 
-    if (!is_key) {
+    if (cfg.key.empty()) {
         std::cerr << "Missing collector's private key!" << std::endl;
         print_help();
         exit(EXIT_FAILURE);
     }
 
     try {
-        DDP::Collector collector(srv_cert, srv_key, ip, port);
+        DDP::Collector collector(cfg);
         collector.run();
     }
     catch (const std::exception& e) {
