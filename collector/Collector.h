@@ -32,8 +32,9 @@ namespace DDP {
      * @brief Structure holding collector's configuration
      */
     struct CConfig {
-        CConfig() : cert(), key(), ip(), port(6378) {}
+        CConfig() : filepath("."), cert(), key(), ip(), port(6378) {}
 
+        std::string filepath;
         std::string cert;
         std::string key;
         std::string ip;
@@ -59,9 +60,10 @@ namespace DDP {
          * @brief Handler constructor. Initializes new SSL connection and performs handshake.
          * @param conn New incoming connection's socket
          * @param ctx SSL context (READ ONLY)
+         * @param filepath Directory to store the collected data in
          * @throw std::runtime_error
          */
-        ConnectionHandler(int conn, SSL_CTX* ctx);
+        ConnectionHandler(int conn, SSL_CTX* ctx, std::string& filepath);
 
         /**
          * @brief Destructor gracefuly closes SSL connection.
@@ -99,7 +101,8 @@ namespace DDP {
         SSL* m_ssl;
         ConnectionStates m_state;
         uint8_t m_file_length;
-        std::string m_file_name;
+        std::string m_file_name; //!< Output file's name including path from m_file_path.
+        std::string m_file_path;
         std::ofstream m_out;
     };
 
@@ -107,8 +110,9 @@ namespace DDP {
      * @brief Incoming connection handler function. This is the function given to async thread.
      * @param conn New incoming connection's socket
      * @param ctx SSL context (READ ONLY)
+     * @param filepath Directory to store the collected data in
      */
-    void connection_handler(int conn, SSL_CTX* ctx);
+    void connection_handler(int conn, SSL_CTX* ctx, std::string filepath);
 
     /**
      * @brief Main server accepting incoming connections and spawning async threads

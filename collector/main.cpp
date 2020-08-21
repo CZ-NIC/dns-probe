@@ -43,13 +43,28 @@ static void signal_handler(int signum)
 
 static void print_help()
 {
-    std::cout << "dp-collector [-s SERVER_CERTIFICATE -k SERVER_PRIVATE_KEY] [-a IP_ADDRESS] [-p PORT] [-c CONFIG_FILE] [-h]" << std::endl;
+    std::cout << "dp-collector [-s SERVER_CERTIFICATE -k SERVER_PRIVATE_KEY] [-a IP_ADDRESS] " <<
+        "[-p PORT] [-o OUTPUT_DIRECTORY] [-c CONFIG_FILE] [-h]" << std::endl;
     std::cout << std::endl << "Options:" << std::endl;
     std::cout << "\t-s SERVER_CERTIFICATE   : Collector's certificate for establishing TLS connection." << std::endl;
     std::cout << "\t-k SERVER_PRIVATE_KEY   : Collector's private key for TLS connection encryption." << std::endl;
     std::cout << "\t-a IP_ADDRESS           : Bind collector to specific IP address." << std::endl;
     std::cout << "\t-p PORT                 : Collector's transport protocol port (default 6378)." << std::endl;
+    std::cout << "\t-o OUTPUT_DIRECTORY     : Directory to store the collected data (default \".\")." << std::endl;
     std::cout << "\t-c CONFIG_FILE          : Configuration file with all the parameters specified." << std::endl;
+}
+
+static std::string trim_whitespace(std::string& str)
+{
+    const std::string whitespace(" \t\"\'");
+    const auto str_begin = str.find_first_not_of(whitespace);
+    if (str_begin == std::string::npos)
+        return "";
+
+    const auto str_end = str.find_last_not_of(whitespace);
+    const auto str_range = str_end - str_begin + 1;
+
+    return str.substr(str_begin, str_range);
 }
 
 static DDP::CConfig parse_config_file(const char* file)
@@ -68,10 +83,8 @@ static DDP::CConfig parse_config_file(const char* file)
         std::string item = line.substr(0, pos);
         std::string value = line.substr(pos + 1, line.size() - pos - 1);
 
-        item.erase(std::remove_if(item.begin(), item.end(), ::isspace), item.end());
-        std::transform(item.begin(), item.end(), item.begin(), toupper);
-
-        value.erase(std::remove_if(value.begin(), value.end(), ::isspace), value.end());
+        item = trim_whitespace(item);
+        value = trim_whitespace(value);
 
         if (item == "SERVER_CERTIFICATE")
             cfg.cert = value;
@@ -81,6 +94,12 @@ static DDP::CConfig parse_config_file(const char* file)
             cfg.ip = value;
         else if (item == "PORT")
             cfg.port = std::atoi(value.c_str());
+        else if (item == "OUTPUT_DIRECTORY") {
+            if (value.empty())
+                cfg.filepath = ".";
+            else
+                cfg.filepath = value;
+        }
     }
 
     return cfg;
@@ -100,9 +119,10 @@ int main(int argc, char** argv)
     pthread_sigmask(SIG_BLOCK, &set, NULL);
 
     DDP::CConfig cfg = parse_config_file(PROBE_COLLECTOR_CONFIG);
+    std::string path;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hs:k:a:p:c:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hs:k:a:p:o:c:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -124,6 +144,14 @@ int main(int argc, char** argv)
 
             case 'p':
                 cfg.port = std::atoi(optarg);
+                break;
+
+            case 'o':
+                path = std::string(optarg);
+                if (path.empty())
+                    cfg.filepath = ".";
+                else
+                    cfg.filepath = path;
                 break;
 
             case 'c':

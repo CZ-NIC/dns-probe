@@ -30,8 +30,9 @@
 
 extern std::atomic<bool> run_flag;
 
-DDP::ConnectionHandler::ConnectionHandler(int conn, SSL_CTX* ctx) : m_fd(conn), m_ctx(ctx), m_ssl(nullptr),
-    m_state(ConnectionStates::FILE_LENGTH), m_file_length(0), m_file_name(), m_out()
+DDP::ConnectionHandler::ConnectionHandler(int conn, SSL_CTX* ctx, std::string& filepath) : m_fd(conn),
+    m_ctx(ctx), m_ssl(nullptr), m_state(ConnectionStates::FILE_LENGTH), m_file_length(0), m_file_name(),
+    m_file_path(filepath), m_out()
 {
     m_ssl = SSL_new(ctx);
     if (!m_ssl)
@@ -95,8 +96,10 @@ void DDP::ConnectionHandler::read_data()
         ret = SSL_read(m_ssl, buf, m_file_length);
         if (ret <= 0)
             throw std::runtime_error("Couldn't read filename!");
-        m_file_name = std::string(reinterpret_cast<char*>(buf), m_file_length);
+        m_file_name = m_file_path + "/" + std::string(reinterpret_cast<char*>(buf), m_file_length);
         m_out.open(m_file_name + ".part", std::ios::binary);
+        if (m_out.fail())
+            throw std::runtime_error("Couldn't open output file!");
         m_state = ConnectionStates::DATA;
     }
     else if (m_state == ConnectionStates::DATA) {
@@ -114,14 +117,14 @@ void DDP::ConnectionHandler::read_data()
     }
 }
 
-void DDP::connection_handler(int conn, SSL_CTX* ctx)
+void DDP::connection_handler(int conn, SSL_CTX* ctx, std::string filepath)
 {
     try {
-        DDP::ConnectionHandler handler(conn, ctx);
+        DDP::ConnectionHandler handler(conn, ctx, filepath);
         handler.run();
     }
     catch (const std::exception& e) {
-        std::cerr << "Connection failed: " << e.what();
+        std::cerr << "Connection failed: " << e.what() << std::endl;
     }
 }
 
@@ -235,7 +238,7 @@ void DDP::Collector::run()
         if (!run_flag.load())
             break;
 
-        m_threads.emplace_back(std::async(std::launch::async, connection_handler, conn, m_ctx));
+        m_threads.emplace_back(std::async(std::launch::async, connection_handler, conn, m_ctx, m_cfg.filepath));
         i++;
     }
 
