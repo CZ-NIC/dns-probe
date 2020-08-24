@@ -19,10 +19,10 @@ module cznic-dns-probe {
 
   contact
     "Editor: Ladislav Lhotka
-             <mailto:lhotka@nic.cz>
+             <mailto:lhotka@nic.cz>
 
      Editor: Jan Dražil
-             <mailto:idrazil@fit.vutbr.cz>
+             <mailto:idrazil@fit.vutbr.cz>
 
      Editor: Pavel Doležal
              <mailto:pavel.dolezal@nic.cz>";
@@ -34,6 +34,11 @@ module cznic-dns-probe {
      responses from network traffic (both UDP and TCP) and exports
      records about DNS transactions in C-DNS or Apache Parquet
      format.";
+
+  revision 2020-08-24 {
+    description
+      "Add secure export to remote location";
+  }
 
   revision 2020-07-15 {
     description
@@ -143,7 +148,7 @@ module cznic-dns-probe {
         type string;
         description
           "Path (including file's name) to the CA certificate against which the remote
-           server's certificate will be authenticated during SSL handshake.
+           server's certificate will be authenticated during TLS handshake.
 
            By default server's certificate will be authenticated against OpenSSL's
            default directory with CA certificates.
