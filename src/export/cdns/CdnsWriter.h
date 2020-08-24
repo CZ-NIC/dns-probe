@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -20,6 +26,7 @@
 #include <cdns/cdns.h>
 
 #include "export/BaseWriter.h"
+#include "utils/Logger.h"
 
 namespace DDP {
 
@@ -48,14 +55,27 @@ namespace DDP {
          * @brief Delete C-DNS writer object and exported file if it's empty
          */
         ~CdnsWriter() {
-            if (m_writer)
-                delete m_writer;
+            m_writer = nullptr;
 
-            struct stat buffer;
-            if (m_bytes_written == 0 && stat(m_filename.c_str(), &buffer) == 0)
-                remove(m_filename.c_str());
-            else
-                chmod(m_filename.c_str(), 0666);
+            try {
+                struct stat buffer;
+                if (m_bytes_written == 0 && stat(m_filename.c_str(), &buffer) == 0)
+                    remove(m_filename.c_str());
+                else {
+                    chmod(m_filename.c_str(), 0666);
+                    if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
+                        if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str()))
+                            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename));
+                    }
+                }
+            }
+            catch (std::exception& e) {
+                Logger("Writer").warning() << "Destructor error: " << e.what();
+            }
+
+            for (auto&& th : m_threads) {
+                th.wait();
+            }
         }
 
         /**
@@ -95,7 +115,13 @@ namespace DDP {
         void rotate_output() override;
 
         private:
-        CDNS::CdnsExporter* m_writer;
+
+        /**
+         * @brief Write filename size and filename to TLS connection
+         */
+        void write_filename();
+
+        std::unique_ptr<CDNS::CdnsExporter> m_writer;
         uint64_t m_bytes_written;
         uint64_t m_blocks_written;
     };

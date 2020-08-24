@@ -19,10 +19,10 @@ module cznic-dns-probe {
 
   contact
     "Editor: Ladislav Lhotka
-             <mailto:lhotka@nic.cz>
+             <mailto:lhotka@nic.cz>
 
      Editor: Jan Dražil
-             <mailto:idrazil@fit.vutbr.cz>
+             <mailto:idrazil@fit.vutbr.cz>
 
      Editor: Pavel Doležal
              <mailto:pavel.dolezal@nic.cz>";
@@ -34,6 +34,11 @@ module cznic-dns-probe {
      responses from network traffic (both UDP and TCP) and exports
      records about DNS transactions in C-DNS or Apache Parquet
      format.";
+
+  revision 2020-08-24 {
+    description
+      "Add secure export to remote location";
+  }
 
   revision 2020-08-17 {
     description
@@ -148,11 +153,53 @@ module cznic-dns-probe {
     container export {
       description
         "Configuration of exported data.";
+      leaf location {
+        type enumeration {
+          enum local {
+          description
+            "Store exported data to local files";
+          }
+          enum remote {
+            description
+              "Send exported data directly to a remote location";
+          }
+        }
+        default local;
+        description
+          "Location for the storage of the exported DNS records.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
       leaf export-dir {
         type string;
         default ".";
         description
           "Directory for exported data.";
+      }
+      leaf remote-ip-address {
+        type inet:ip-address-no-zone;
+        default "127.0.0.1";
+        description
+          "IP address for remote export of the DNS records.";
+      }
+      leaf remote-port {
+        type inet:port-number;
+        default 6378;
+        description
+          "Transport protocol port number for remote export of the DNS records.";
+      }
+      leaf remote-ca-cert {
+        type string;
+        description
+          "Path (including file's name) to the CA certificate against which the remote
+           server's certificate will be authenticated during TLS handshake.
+
+           By default server's certificate will be authenticated against OpenSSL's
+           default directory with CA certificates.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
       }
       leaf export-format {
         type enumeration {

@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -304,6 +310,69 @@ namespace DDP {
 
     protected:
         Type m_value{0x7}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::ExportLocation as config item.
+     */
+    template<>
+    class ConfigItem<ExportLocation> : public ConfigItemBase
+    {
+    public:
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        ExportLocation value() const { return m_value; }
+
+        bool validate(const boost::any& value) const override
+        {
+            try {
+                auto str_value = boost::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "LOCAL" || str_value == "REMOTE";
+            } catch(...) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from sysrepo.
+         * @param value Value from sysrepo
+         */
+        void from_sysrepo(const boost::any& value) override
+        {
+            auto str_value = boost::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if (str_value == "LOCAL")
+                m_value = ExportLocation::LOCAL;
+            else if (str_value == "REMOTE")
+                m_value = ExportLocation::REMOTE;
+            else
+                throw std::invalid_argument("Invalid argument for ExportLocation");
+        }
+
+        /**
+         * Implicit conversion to ExportLocation.
+         * @return Saved value.
+         */
+        operator ExportLocation() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == ExportLocation::LOCAL)
+                return {"LOCAL"};
+            else
+                return {"REMOTE"};
+        }
+
+    protected:
+        ExportLocation m_value{ExportLocation::LOCAL}; //!< Saved value.
     };
 
     /**

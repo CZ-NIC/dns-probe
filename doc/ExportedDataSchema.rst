@@ -2,6 +2,70 @@
 Exported data
 *************
 
+Storing exported data
+=====================
+
+DNS Probe supports storing the exported data either to local files or transferring them directly to a remote
+location via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_. This is determined
+by the :ref:`location` option in Sysrepo configuration.
+
+Local storage
+-------------
+
+If :ref:`location` option is set to ``local`` the exported data will be stored in local files in directory
+specified by :ref:`export-dir` option. The names of these files will have the following naming convention:
+
+::
+
+    <prefix>YYYYMMDD-HHMMSS_p<proc_id>_<file_id>.<sufix>
+
+The *<prefix>* is determined by :ref:`file-name-prefix` option in Sysrepo configuration. The *YYYYMMDD-HHMMSS*
+represents a UTC timestamp from when the output file was first opened. *<proc_id>* is an internal identification
+of process (worker or export thread) which wrote the output file. *<file_id>* represents the number of a file
+from files written within the same second to prevent overriding data if more files are exported within
+the same second. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
+compression configured in Sysrepo.
+
+Export to remote location
+-------------------------
+
+If :ref:`location` option is set to ``remote`` DNS Probe will attempt to transfer the exported data to a remote
+server specified by :ref:`remote-ip-address` and :ref:`remote-port` options via encrypted TLS connection with
+remote server's authentication.
+
+The transfer uses a simple application layer protocol shown below:
+
+.. code-block:: text
+
+     0  1  2  3  4  5  6  7
+    +--+--+--+--+--+--+--+--+
+    | File name's length    |
+    +--+--+--+--+--+--+--+--+
+    | File's name           |
+    | ...                   |
+    +--+--+--+--+--+--+--+--+
+    | File's data           |
+    | ...                   |
+    | ...                   |
+    +--+--+--+--+--+--+--+--+
+
+Each file is transferred using a new TLS connection. The first byte of data determines the length of transferred
+file's name. Then the name of the transferred file follows. The transferred file's name follows the same
+convention as files saved by DNS Probe locally meaning that the remote server can determine the file's timestamp,
+format and compression just from parsing the file's name. After the file's name the exported DNS data in Parquet
+or C-DNS format follows until the end of the connection. By correctly closing the connection DNS Probe signals
+to remote server that all the data has been sent and remote server can finish the currently transferred file.
+
+To prevent a loss of data due to network outages DNS Probe stores data for the current file to a local directory,
+specified in :ref:`export-dir`, first. When the file is finished and DNS Probe is about to perform output
+rotation, then the probe tries to transfer the finished file to remote server. If the transfer succeeds
+the local file is deleted. DNS Probe will attempt to transfer the file three times. If all three transfer
+attempts fail the local file is kept so user can manually retreive it later.
+
+
+Data schema
+===========
+
 DNS Probe exports data in one of two formats -
 `Parquet <https://parquet.apache.org/>`_ or
 `C-DNS <https://tools.ietf.org/html/rfc8618>`_. The exported data tries

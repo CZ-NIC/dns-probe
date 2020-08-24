@@ -15,7 +15,7 @@ scanned requests and responses.
       which means that it contains authoring/editing/managing notes
       in addition to the actual content.
 
-:Edition: :doc:`1.6 <RecordOfChanges>`
+:Edition: :doc:`1.7 <RecordOfChanges>`
 
 :Source: The source code of this documentation is open and can be found
          on `GitLab <https://gitlab.nic.cz/adam/dns-probe/-/tree/master/doc>`_.
@@ -43,6 +43,7 @@ scanned requests and responses.
    Configuration
    Running
    ExportedDataSchema
+   DataCollector
    manpages/index
    YANGmodule
    References

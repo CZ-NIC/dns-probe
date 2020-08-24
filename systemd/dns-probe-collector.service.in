@@ -1,0 +1,12 @@
+# DNS Probe Collector daemon
+[Unit]
+Description=Daemon for DNS Probe Collector
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+ExecStart=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/dp-collector
+
+[Install]
+WantedBy=multi-user.target

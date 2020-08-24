@@ -35,8 +35,12 @@ Sysrepo uses the YANG language [RFC7950]_ for modelling configuration and state 
    |  |  +--rw file-compression? <boolean>
    |  |  +--rw file-name-prefix? <string>
    |  |  +--rw file-size-limit? <uint64>
+   |  |  +--rw location? <enumeration>
    |  |  +--rw parquet-records-per-file? <uint64>
    |  |  +--rw pcap-export? <enumeration>
+   |  |  +--rw remote-ca-cert? <string>
+   |  |  +--rw remote-ip-address? <inet:ip-address-no-zone>
+   |  |  +--rw remote-port? <inet:port-number>
    |  |  +--rw timeout? <uint32>
    |  +--rw interface-list? <string>
    |  +--rw ipv4-allowlist? <inet:ipv4-address-no-zone>
@@ -267,6 +271,17 @@ the key using `scramble_ips` tool installed by the cryptopANT dependency like th
 
    scramble_ips --newkey --type=<encryption> <key_file>
 
+.. _location:
+
+location
+^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/location``
+:default: ``local``
+
+Location for the storage of exported DNS records. Determines if data is stored to local file or sent
+to remote server.
+
 log-file
 ^^^^^^^^
 
@@ -311,6 +326,17 @@ overriden by `-r` command line parameter.
 
 MUST be set to **false** if :ref:`interface-list` or `-i` command line parameter are used.
 
+remote-ca-cert
+^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/remote-ca-cert``
+:default: empty
+
+Path (including file's name) to the CA certificate against which the remote server's certificate
+will be authenticated during TLS handshake. Will be used if :ref:`location` is set to ``remote``.
+
+By default server's certificate will be authenticated against OpenSSL's default directory with CA certificates.
+
 .. _dynamic-conf-par:
 
 Dynamic configuration parameters
@@ -344,6 +370,8 @@ incoming packets to recognize DNS traffic.
 The default value of 53 is the standard DNS server port as defined
 in [RFC1035]_.
 
+.. _export-dir:
+
 export-dir
 ^^^^^^^^^^
 
@@ -353,6 +381,8 @@ export-dir
 Path to an existing local directory for storing export files.
 
 The default value of ``.`` means that DNS Probe will use the current working directory from which it was launched.
+
+.. _file-name-prefix:
 
 file-name-prefix
 ^^^^^^^^^^^^^^^^
@@ -469,6 +499,26 @@ query-timeout
 :default: 1000
 
 This parameter specifies the time interval in miliseconds after which the query or response is removed from the transaction table if no corresponding response or query is observed.
+
+.. _remote-ip-address:
+
+remote-ip-address
+^^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/remote-ip-address``
+:default: ``127.0.0.1``
+
+IP address for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
+
+.. _remote-port:
+
+remote-port
+^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/remote-port``
+:default: 6378
+
+Tranport protocol port number for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
 
 timeout
 ^^^^^^^

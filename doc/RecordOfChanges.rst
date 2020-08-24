@@ -16,6 +16,12 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - 0.5
+     - 1.7
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`,
+       :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Data Collector <DataCollector>`,
+       :doc:`YANG module <YANGmodule>`, :doc:`Manual pages <manpages/dp-collector>`
+     - Add secure export to remote location
+   * -
      - 1.6
      - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
      - Fix description of "export-dir" item in YANG module from static to dynamic configuration

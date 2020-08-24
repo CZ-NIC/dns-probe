@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <sysrepo.h>
@@ -101,6 +107,10 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/transaction-table/match-qname",      m_cfg.match_qname},
         {SYSCONF_CFG_ROOT "/tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
         {SYSCONF_CFG_ROOT "/tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
+        {SYSCONF_CFG_ROOT "/export/location",                    m_cfg.export_location},
+        {SYSCONF_CFG_ROOT "/export/remote-ip-address",           m_cfg.export_ip},
+        {SYSCONF_CFG_ROOT "/export/remote-port",                 m_cfg.export_port},
+        {SYSCONF_CFG_ROOT "/export/remote-ca-cert",              m_cfg.export_ca_cert},
         {SYSCONF_CFG_ROOT "/export/export-dir",                  m_cfg.target_directory},
         {SYSCONF_CFG_ROOT "/export/file-name-prefix",            m_cfg.file_prefix},
         {SYSCONF_CFG_ROOT "/export/timeout",                     m_cfg.file_rot_timeout},

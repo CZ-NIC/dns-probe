@@ -4,6 +4,7 @@ project("DNS Probe" VERSION 0.5.0)
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
 set(DPDK_LEGACY_MEM OFF CACHE BOOL "Enable legacy memory management for DPDK")
+set(BUILD_COLLECTOR ON CACHE BOOL "Build collector for data from probe's remote export")
 set(BUILD_TESTING OFF CACHE BOOL "Enable build testing binaries")
 set(BUILD_DOC ON CACHE BOOL "Generate Sphinx and Doxygen documentation")
 set(PROBE_CRYPTOPANT ON CACHE BOOL "Enable IP anonymization with cryptopANT library")
@@ -20,6 +21,7 @@ find_package(PCAP REQUIRED)
 find_package(LibYangCpp REQUIRED)
 find_package(SysrepoCpp REQUIRED)
 find_package(Boost REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(Doxygen)
 
 include(CheckCXXCompilerFlag)
@@ -48,10 +50,14 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Threads::Threads LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp OpenSSL::SSL)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
 target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 target_compile_options(DNSProbe INTERFACE -msse4)
+
+if (OPENSSL_VERSION VERSION_LESS "1.1.0")
+    target_compile_definitions(DNSProbe INTERFACE PROBE_OPENSSL_LEGACY)
+endif()
 
 if ((NOT PROBE_PARQUET) AND (NOT PROBE_CDNS))
     message(FATAL_ERROR "You must set at least one of available export formats (PROBE_PARQUET, PROBE_CDNS)!")
@@ -147,6 +153,11 @@ endif ()
 add_custom_target(install_module COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang)
 
 add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/Uninstall.cmake")
+
+#Build collector
+if (BUILD_COLLECTOR)
+    add_subdirectory("collector")
+endif()
 
 #Add tests
 enable_testing()

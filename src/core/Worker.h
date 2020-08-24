@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -154,7 +160,8 @@ namespace DDP {
                 delete writer;
             }
             catch (std::exception& e) {
-                delete writer;
+                if (writer)
+                    delete writer;
                 Logger("Export").warning() << "Couldn't write leftovers on worker " << m_process_id
                                          << " (" << e.what() << ")";
             }

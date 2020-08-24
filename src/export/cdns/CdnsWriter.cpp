@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include "CdnsWriter.h"
@@ -105,10 +111,11 @@ DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, 
                    cfg.cdns_fields.value());
 
     m_filename = filename("cdns", false);
+
     if (m_cfg.file_compression.value())
-        m_writer = new CDNS::CdnsExporter(fp, m_filename, CDNS::CborOutputCompression::GZIP);
+        m_writer = std::make_unique<CDNS::CdnsExporter>(fp, m_filename, CDNS::CborOutputCompression::GZIP);
     else
-        m_writer = new CDNS::CdnsExporter(fp, m_filename, CDNS::CborOutputCompression::NO_COMPRESSION);
+        m_writer = std::make_unique<CDNS::CdnsExporter>(fp, m_filename, CDNS::CborOutputCompression::NO_COMPRESSION);
 
     m_filename += m_sufix;
 }
@@ -123,8 +130,20 @@ void DDP::CdnsWriter::rotate_output()
     struct stat buffer;
     if (m_bytes_written == 0 && stat(rotated.c_str(), &buffer) == 0)
         remove(rotated.c_str());
-    else
+    else {
         chmod(rotated.c_str(), 0666);
+        if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
+            if (std::rename(rotated.c_str(), (rotated + ".part").c_str()))
+                throw std::runtime_error("Couldn't rename the output file!");
+
+            if (!m_threads.empty()) {
+                m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
+                    [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
+            }
+
+            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, rotated));
+        }
+    }
 
     m_blocks_written = 0;
     m_bytes_written = 0;

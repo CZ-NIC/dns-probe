@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <iostream>
@@ -76,9 +82,12 @@ int main(int argc, char** argv)
         struct sigaction sa = {};
         sa.sa_handler = &signal_handler;
         sigfillset(&sa.sa_mask);
-
         sigaction(SIGINT, &sa, nullptr);
         sigaction(SIGTERM, &sa, nullptr);
+        sigset_t set;
+        sigemptyset(&set);
+        sigaddset(&set, SIGPIPE);
+        pthread_sigmask(SIG_BLOCK, &set, NULL);
 
         // Poll on configuration core
         try {

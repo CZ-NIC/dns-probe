@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <sys/stat.h>
@@ -81,11 +87,16 @@ DDP::Exporter::Exporter(DDP::Config& cfg, DDP::Statistics& stats,
 DDP::Exporter::~Exporter()
 {
     int i = 0;
-    for (auto&& ring : m_rings) {
-        while (!ring->empty()) {
-            dequeue(*ring, i);
+    try {
+        for (auto&& ring : m_rings) {
+            while (!ring->empty()) {
+                dequeue(*ring, i);
+            }
+            i++;
         }
-        i++;
+    }
+    catch (std::exception& e) {
+        Logger("ExportDestructor").warning() << "Couldn't write to file: " << e.what();
     }
 
     delete m_writer;
@@ -126,6 +137,7 @@ DDP::ExporterRetCode DDP::Exporter::dequeue(Ring<boost::any>& ring, unsigned wor
     }
     catch(std::exception& e) {
         Logger("Writer").warning() << "Couldn't write to file: " << e.what();
+        m_writer->rotate_output();
         return ExporterRetCode::EXPORTER_WRITE_ERROR;
     }
 

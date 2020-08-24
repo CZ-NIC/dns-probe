@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <iostream>
@@ -33,6 +39,7 @@
 #include "utils/Logger.h"
 #include "platform/Platform.h"
 #include "platform/Mempool.h"
+#include "export/BaseWriter.h"
 
 namespace DDP {
     class CommLinkProxy : public PollAble
@@ -257,6 +264,9 @@ void DDP::Probe::init(const Arguments& args)
             throw std::runtime_error("DNS Probe was built without IP anonymization support!");
 #endif
         }
+
+        if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+            TlsCtx::getInstance().init(m_cfg.export_ca_cert.value());
 
         m_initialized = true;
     } catch (...) {

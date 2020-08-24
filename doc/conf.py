@@ -241,4 +241,7 @@ man_pages = [
     ('manpages/dns-probe-dpdk', 'dns-probe-dpdk',
      'DNS traffic monitoring probe with DPDK backend',
      author_pd, 1),
+    ('manpages/dp-collector', 'dp-collector',
+     'Data collector for data exported by DNS Probe via remote export feature',
+     author_pd, 1),
 ]

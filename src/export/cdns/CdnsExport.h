@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -57,7 +63,7 @@ namespace DDP {
 
         /**
          * @brief Write currently buffered records into file on application exit
-         * @param writer CdnsWriter!!! object thaht handles writing C-DNS Block to output
+         * @param writer CdnsWriter!!! object that handles writing C-DNS Block to output
          * @param stats Statistics for update
          */
         void write_leftovers(BaseWriter* writer, Statistics& stats) override {

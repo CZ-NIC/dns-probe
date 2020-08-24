@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -61,6 +67,11 @@ namespace DDP {
         ConfigBitfield<23> cdns_fields; //!< Fields which will be part of CDNS file
         ConfigItem<uint64_t> cdns_records_per_block; //!< Number of records in one block in CDNS file
         ConfigItem<uint64_t> cdns_blocks_per_file; //!< Number of blocks in CDNS file
+
+        ConfigItem<ExportLocation> export_location; //!< Location for the exported DNS records
+        ConfigItem<std::string> export_ip; //!< IP address for remote export of DNS records
+        ConfigItem<uint16_t> export_port; //!< Transport protocol port for remote export of DNS records
+        ConfigItem<std::string> export_ca_cert; //!< CA certificate for authentication of remote server's certificate
 
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
