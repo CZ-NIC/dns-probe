@@ -45,6 +45,11 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
        records about DNS transactions in C-DNS or Apache Parquet
        format.";
 
+    revision 2020-08-24 {
+      description
+        "Add secure export to remote location";
+    }
+
     revision 2020-07-15 {
       description
         "Add IP anonymization";
@@ -110,11 +115,53 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
       container export {
         description
           "Configuration of exported data.";
+        leaf location {
+          type enumeration {
+            enum local {
+            description
+              "Store exported data to local files";
+            }
+            enum remote {
+              description
+                "Send exported data directly to a remote location";
+            }
+          }
+          default local;
+          description
+            "Location for the storage of the exported DNS records.
+
+             This is a static configuration parameter that is applied
+             only upon restarting the probe.";
+        }
         leaf export-dir {
           type string;
           default ".";
           description
-            "Directory for exported data.
+            "Local directory for exported data.
+
+             This is a static configuration parameter that is applied
+             only upon restarting the probe.";
+        }
+        leaf remote-ip-address {
+          type inet:ip-address-no-zone;
+          default "127.0.0.1";
+          description
+            "IP address for remote export of the DNS records.";
+        }
+        leaf remote-port {
+          type inet:port-number;
+          default 6378;
+          description
+            "Transport protocol port number for remote export of the DNS records.";
+        }
+        leaf remote-ca-cert {
+          type string;
+          description
+            "Path (including file's name) to the CA certificate against which the remote
+             server's certificate will be authenticated during TLS handshake.
+
+             By default server's certificate will be authenticated against OpenSSL's
+             default directory with CA certificates.
 
              This is a static configuration parameter that is applied
              only upon restarting the probe.";

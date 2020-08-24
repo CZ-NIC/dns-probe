@@ -9,3 +9,4 @@ Man Pages
 
    dns-probe-af
    dns-probe-dpdk
+   dp-collector

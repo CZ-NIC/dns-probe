@@ -35,8 +35,12 @@ Sysrepo uses the YANG language [RFC7950]_ for modelling configuration and state 
    |  |  +--rw file-compression? <boolean>
    |  |  +--rw file-name-prefix? <string>
    |  |  +--rw file-size-limit? <uint64>
+   |  |  +--rw location? <enumeration>
    |  |  +--rw parquet-records-per-file? <uint64>
    |  |  +--rw pcap-export? <enumeration>
+   |  |  +--rw remote-ca-cert? <string>
+   |  |  +--rw remote-ip-address? <inet:ip-address-no-zone>
+   |  |  +--rw remote-port? <inet:port-number>
    |  |  +--rw timeout? <uint32>
    |  +--rw ipv4-allowlist? <inet:ipv4-address-no-zone>
    |  +--rw ipv4-denylist? <inet:ipv4-address-no-zone>
@@ -204,6 +208,8 @@ Encryption algorithm to be used during anonymization of client IP addresses if e
 ``sha1``
    SHA1 hash function.
 
+.. _export-dir:
+
 export-dir
 ^^^^^^^^^^
 
@@ -259,6 +265,17 @@ the key using `scramble_ips` tool installed by the cryptopANT dependency like th
 
    scramble_ips --newkey --type=<encryption> <key_file>
 
+.. _location:
+
+location
+^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/location``
+:default: ``local``
+
+Location for the storage of exported DNS records. Determines if data is stored to local file or sent
+to remote server.
+
 .. _max-transactions:
 
 max-transactions
@@ -270,6 +287,17 @@ max-transactions
 The value of this parameter must be a power of 2. It specifies the maximum number of pending DNS transactions that DNS Probe can handle at any given time, which in turn affects the size of in-memory transaction table.
 
 The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS traffic at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
+remote-ca-cert
+^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/remote-ca-cert``
+:default: empty
+
+Path (including file's name) to the CA certificate against which the remote server's certificate
+will be authenticated during TLS handshake. Will be used if :ref:`location` is set to ``remote``.
+
+By default server's certificate will be authenticated against OpenSSL's default directory with CA certificates.
 
 .. _dynamic-conf-par:
 
@@ -303,6 +331,8 @@ incoming packets to recognize DNS traffic.
 
 The default value of 53 is the standard DNS server port as defined
 in [RFC1035]_.
+
+.. _file-name-prefix:
 
 file-name-prefix
 ^^^^^^^^^^^^^^^^
@@ -419,6 +449,26 @@ query-timeout
 :default: 1000
 
 This parameter specifies the time interval in miliseconds after which the query or response is removed from the transaction table if no corresponding response or query is observed.
+
+.. _remote-ip-address:
+
+remote-ip-address
+^^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/remote-ip-address``
+:default: ``127.0.0.1``
+
+IP address for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
+
+.. _remote-port:
+
+remote-port
+^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe/export/remote-port``
+:default: 6378
+
+Tranport protocol port number for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
 
 timeout
 ^^^^^^^
