@@ -24,10 +24,6 @@ Data model
 Sysrepo uses the YANG language [RFC7950]_ for modelling configuration and state data, RPC operations and notifications. Section :ref:`YANG module <yang-module>` contains the complete YANG module *cznic-dns-probe* that is used for DNS Probe. Its schema tree looks as follows::
 
    +--rw cznic-dns-probe:dns-probe
-   |  +--rw interface-list? <string>
-   |  +--rw pcap-list? <string>
-   |  +--rw raw-pcap? <boolean>
-   |  +--rw log-file? <string>
    |  +--rw coremask? <uint64>
    |  +--rw dns-ports? <uint16>
    |  +--rw export
@@ -42,6 +38,7 @@ Sysrepo uses the YANG language [RFC7950]_ for modelling configuration and state 
    |  |  +--rw parquet-records-per-file? <uint64>
    |  |  +--rw pcap-export? <enumeration>
    |  |  +--rw timeout? <uint32>
+   |  +--rw interface-list? <string>
    |  +--rw ipv4-allowlist? <inet:ipv4-address-no-zone>
    |  +--rw ipv4-denylist? <inet:ipv4-address-no-zone>
    |  +--rw ipv6-allowlist? <inet:ipv6-address-no-zone>
@@ -50,6 +47,9 @@ Sysrepo uses the YANG language [RFC7950]_ for modelling configuration and state 
    |  |  +--rw anonymize-ip? <boolean>
    |  |  +--rw encryption? <enumeration>
    |  |  +--rw key-path? <string>
+   |  +--rw log-file? <string>
+   |  +--rw pcap-list? <string>
+   |  +--rw raw-pcap? <boolean>
    |  +--rw tcp-table
    |  |  +--rw concurrent-connections? <uint32>
    |  |  +--rw timeout? <uint64>
