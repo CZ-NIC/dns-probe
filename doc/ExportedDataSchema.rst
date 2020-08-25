@@ -59,8 +59,9 @@ to remote server that all the data has been sent and remote server can finish th
 To prevent a loss of data due to network outages DNS Probe stores data for the current file to a local directory,
 specified in :ref:`export-dir`, first. When the file is finished and DNS Probe is about to perform output
 rotation, then the probe tries to transfer the finished file to remote server. If the transfer succeeds
-the local file is deleted. DNS Probe will attempt to transfer the file three times. If all three transfer
-attempts fail the local file is kept so user can manually retreive it later.
+the local file is deleted. DNS Probe will initially attempt to transfer the file three times. If all three
+transfer attempts fail the local file is kept. DNS Probe keeps track of files that failed the transfer to
+remote server and periodically tries to resend them. The local files are kept until such transfer is successful.
 
 
 Data schema
