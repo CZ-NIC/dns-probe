@@ -13,13 +13,29 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
 
+#include <sys/socket.h>
 #include <string>
+#include <array>
+#include <unordered_set>
 
 namespace DDP {
+    template <typename T>
+    using CList = std::unordered_set<T>;
+
+    using Port_t = uint16_t;
+    using IPv4_t = uint32_t;
+    using IPv6_t = std::array<uint32_t, 4>;
+
     /**
      * Available values for PCAP export config.
      */
@@ -35,6 +51,14 @@ namespace DDP {
     enum class ExportFormat : uint8_t {
         PARQUET, //!< Parquet export format.
         CDNS //!< CDMS export format.
+    };
+
+    /**
+     * Available locations for exported DNS records
+     */
+    enum class ExportLocation : uint8_t {
+        LOCAL, //!< Store exported data to local files
+        REMOTE //!< Send exported data directly to remote location
     };
 
     /**
@@ -64,5 +88,16 @@ namespace DDP {
         QUERY_OPT_RDATA,
         RESPONSE_ADDITIONAL_SECTIONS,
         RESPONSE_SIZE
+    };
+
+    /**
+     * Encryption algorithm used for optional client IP anonymization
+     */
+    enum class IpEncryption : uint8_t {
+        NONE = 0x00,
+        MD5 = 0x01,
+        BLOWFISH = 0x02,
+        AES = 0x03,
+        SHA1 = 0x04
     };
 }

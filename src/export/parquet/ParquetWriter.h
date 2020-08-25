@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -24,21 +30,27 @@
 #include <parquet/arrow/writer.h>
 #include <parquet/exception.h>
 
-#include "DnsWriter.h"
+#include "export/BaseWriter.h"
 
 namespace DDP {
     /**
      * @brief Class for writing finished Arrow tables to output
      */
-    class ParquetWriter : public DnsWriter {
+    class ParquetWriter : public BaseWriter {
         public:
         /**
          * @brief Construct a new ParquetWriter object
          * @param cfg Configuration of the output
          * @param process_id Process ID used for generating names of the output files
          */
-        explicit ParquetWriter(Config& cfg, uint32_t process_id) : DnsWriter(cfg, process_id),
+        explicit ParquetWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id),
                                                                    m_compress(cfg.file_compression.value()) {}
+
+        ~ParquetWriter() {
+            for (auto&& th : m_threads) {
+                th.wait();
+            }
+        }
 
         /**
          * @brief Write Arrow table to output
@@ -59,33 +71,7 @@ namespace DDP {
          * @throw ::parquet::ParquetException
          * @return Number of DNS records written to output
          */
-        int64_t write(std::shared_ptr<arrow::Table> item) {
-            if (item == nullptr)
-                return 0;
-
-            m_filename = filename("parquet", false);
-            std::string full_name = m_filename + ".part";
-            auto res = arrow::io::FileOutputStream::Open(full_name);
-            PARQUET_THROW_NOT_OK(res);
-            std::shared_ptr<arrow::io::FileOutputStream> outfile = res.ValueOrDie();
-
-            parquet::WriterProperties::Builder propsBuilder;
-            propsBuilder.compression(parquet::Compression::GZIP);
-            auto props = propsBuilder.build();
-
-            if (m_compress)
-                PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows(), props));
-            else
-                PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows()));
-
-            outfile->Close();
-            if (std::rename(full_name.c_str(), m_filename.c_str()))
-                throw std::runtime_error("Couldn't rename the output file!");
-
-            chmod(m_filename.c_str(), 0666);
-
-            return item->num_rows();
-        }
+        int64_t write(std::shared_ptr<arrow::Table> item);
 
         /**
          * @brief Close current output and open a new one.

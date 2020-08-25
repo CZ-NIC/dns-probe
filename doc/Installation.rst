@@ -69,12 +69,13 @@ updated, and finally the DNS Probe package is installed:
 .. code:: shell
 
    sudo apt-get update
-   sudo apt-get install dns-probe-af dns-probe-dpdk
+   sudo apt-get install dns-probe-af dns-probe-dpdk dns-probe-collector
 
-Two alternative packages are available:
+Three alternative packages are available:
 
 * ``dns-probe-af`` is compiled with support for AF_PACKET sockets
 * ``dns-probe-dpdk`` uses the DPDK framework.
+* ``dns-probe-collector`` is a collector for data exported from DNS Probe via the remote export feature.
 
 Package installation also initializes the Sysrepo datastore with a default configuration, if no configuration is found.
 
@@ -88,6 +89,7 @@ distribution repositories:
 - CMake, version at least 3.5
 - Boost (C++ libraries)
 - libpcap
+- OpenSSL (libssl-dev)
 - DPDK (only for DPDK version)
 
 Optionally, to build this user documentation (``make doc``) or manual pages (``make man``)
@@ -168,6 +170,22 @@ C-DNS Library
    make install
    cd "$DEP_DIR"
 
+cryptopANT
+----------
+
+`Library <https://ant.isi.edu/software/cryptopANT/index.html>`_ for anonymization of IP addresses.
+
+.. code:: shell
+
+   curl -L https://ant.isi.edu/software/cryptopANT/cryptopANT-1.2.2.tar.gz > dl/cryptopant.tgz
+   mkdir build/cryptopant
+   tar -xf dl/cryptopant.tgz -C build/cryptopant --strip-components=1
+   cd build/cryptopant
+   ./configure --prefix="$DEP_DIR"
+   make -j
+   make install
+   cd "$DEP_DIR"
+
 DNS Probe
 ---------
 
@@ -175,7 +193,9 @@ DNS Probe
 
    # Replace <GIT_REPO> with path to this repository
    # For disabling DPDK BACKEND remove `-DDPDK_BACKEND=On`
-   cmake <GIT_REPO> -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DAF_PACKET_BACKEND=On -DDPDK_BACKEND=On
+   # For building without IP anonymization support add `-DPROBE_CRYPTOPANT=Off`
+   # For building without support for one of the export formats add `-DPROBE_PARQUET=Off` or `-DPROBE_CDNS=Off`
+   cmake <GIT_REPO> -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DAF_PACKET_BACKEND=On -DDPDK_BACKEND=On -DBUILD_COLLECTOR=On
    make -j
    make install
 

@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -151,14 +157,14 @@ namespace DDP {
             }
         }
 
-        const in6_addr& client_address()
+        in6_addr* client_address()
         {
-            return m_addr[static_cast<int>(m_client_index)];
+            return &m_addr[static_cast<int>(m_client_index)];
         }
 
-        const in6_addr& server_address()
+        in6_addr* server_address()
         {
-            return m_addr[!static_cast<int>(m_client_index)];
+            return &m_addr[!static_cast<int>(m_client_index)];
         }
 
         uint16_t client_port()

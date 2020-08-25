@@ -15,16 +15,38 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
-   * - 0.5
-     - 1.2
+   * - **0.6**
+     - **1.0**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`,
+       :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Data Collector <DataCollector>`,
+       :doc:`YANG module <YANGmodule>`, :doc:`Manual pages <manpages/dp-collector>`
+     - Add secure export to remote location
+   * -
+     -
+     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
+     - Fix description of "export-dir" item in YANG module from static to dynamic configuration
+   * -
+     -
+     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`, :doc:`Running DNS Probe <Running>`
+     - Integrate probe's command line parameters to Sysrepo configuration
+   * -
+     -
      - :doc:`Installation <Installation>`
      - Update instructions for installation from packages
    * -
-     - 1.1
+     -
+     - :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`, :doc:`YANG module <YANGmodule>`
+     - Add client IP anonymization
+   * -
+     -
+     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
+     - Add IP filtering to YANG module
+   * - **0.5**
+     - **1.1**
      - :doc:`index <index>`, :doc:`Installation <Installation>`, :doc:`YANG module <YANGmodule>`,
        :doc:`Record Of Changes <RecordOfChanges>`
      - Update GitLab URLs
    * -
-     - 1.0
+     - **1.0**
      - ALL
      - Initial release.

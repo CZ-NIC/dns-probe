@@ -13,11 +13,16 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <iostream>
 #include <sys/eventfd.h>
-#include <boost/log/trivial.hpp>
 #include "PcapPort.h"
 
 DDP::PCAPPort::PCAPPort(const char* port, uint16_t num_queues) : Port(1), m_handle(nullptr)
@@ -51,7 +56,7 @@ uint16_t DDP::PCAPPort::read(Packet* batch, unsigned queue)
             rx_count++;
         }
         catch (std::exception& e) {
-            BOOST_LOG_TRIVIAL(info) << "[WARNING] Packet: Unable to read packet data.";
+            Logger("Packet").warning() << "Unable to read packet data.";
         }
     }
 

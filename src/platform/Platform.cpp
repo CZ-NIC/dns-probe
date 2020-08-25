@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include "platform/Platform.h"
@@ -21,8 +27,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
-#include <boost/log/trivial.hpp>
 #include <rte_lcore.h>
+#include "utils/Logger.h"
 #endif
 
 #pragma GCC diagnostic push
@@ -67,7 +73,7 @@ void DDP::init_platform(const DDP::Arguments& args, const Config& cfg)
     for(auto arg: argv_char) {
         cmd += arg + std::string(" ");
     }
-    BOOST_LOG_TRIVIAL(info) << cmd;
+    logwriter.log_lvl("INFO", cmd);
 
     if(rte_eal_init(argv_char.size(), argv_char.data()) < 0) {
         throw std::runtime_error("Initialization of eal failed!");

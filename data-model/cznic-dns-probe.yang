@@ -10,15 +10,22 @@ module cznic-dns-probe {
     prefix yang;
   }
 
+  import ietf-inet-types {
+    prefix inet;
+  }
+
   organization
     "CZ.NIC, z. s. p. o.";
 
   contact
     "Editor: Ladislav Lhotka
-             <mailto:lhotka@nic.cz>
+             <mailto:lhotka@nic.cz>
 
      Editor: Jan Dražil
-             <mailto:idrazil@fit.vutbr.cz>";
+             <mailto:idrazil@fit.vutbr.cz>
+
+     Editor: Pavel Doležal
+             <mailto:pavel.dolezal@nic.cz>";
 
   description
     "This YANG module defines the data model for the DNS probe.
@@ -27,6 +34,26 @@ module cznic-dns-probe {
      responses from network traffic (both UDP and TCP) and exports
      records about DNS transactions in C-DNS or Apache Parquet
      format.";
+
+  revision 2020-08-24 {
+    description
+      "Add secure export to remote location";
+  }
+
+  revision 2020-08-17 {
+    description
+      "Add probe's command line parameters as Sysrepo configuration items.";
+  }
+
+  revision 2020-07-15 {
+    description
+      "Add IP anonymization";
+  }
+
+  revision 2020-07-09 {
+    description
+      "Add IP and port filtering";
+  }
 
   revision 2020-06-09 {
     description
@@ -38,6 +65,49 @@ module cznic-dns-probe {
   container dns-probe {
     description
       "Configuration of DNS Probe.";
+    leaf-list interface-list {
+      type string;
+      description
+        "List of network interfaces to process traffic from in addition to
+         interfaces passed with '-i' command line parameter.
+
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
+    }
+    leaf-list pcap-list {
+      type string;
+      description
+        "List of PCAPs to process in addition to PCAPs passed with
+         '-p' command line parameter.
+
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
+    }
+    leaf raw-pcap {
+      type boolean;
+      default "false";
+      description
+        "Indicates RAW PCAPs as input in 'pcap-list' or from command line
+         with '-p' parameter. Might get overriden by '-r' command line
+         parameter.
+
+         MUST be set to 'false' if 'interface-list' or '-i' command line
+         parameter are used.
+
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
+    }
+    leaf log-file {
+      type string;
+      description
+        "Path (including filename) to log file for storing logs.
+         Might get overriden by '-l' command line parameter.
+
+         By default logs are written to stdout.
+
+         This is a static configuration parameter that is applied
+         only upon restarting the probe.";
+    }
     leaf coremask {
       type uint64 {
         range "7..max";
@@ -50,23 +120,83 @@ module cznic-dns-probe {
          This is a static configuration parameter that is applied
          only upon restarting the probe.";
     }
-    leaf dns-port {
+    leaf-list ipv4-allowlist {
+      type inet:ipv4-address-no-zone;
+      description
+        "List of allowed IPv4 addresses to process traffic from.
+         By default all IPv4 addresses are allowed.";
+    }
+    leaf-list ipv4-denylist {
+      type inet:ipv4-address-no-zone;
+      description
+        "List of IPv4 addresses from which to NOT process traffic.
+         By default all IPv4 addresses are allowed.";
+    }
+    leaf-list ipv6-allowlist {
+      type inet:ipv6-address-no-zone;
+      description
+        "List of allowed IPv6 addresses to process traffic from.
+         By default all IPv6 addresses are allowed.";
+    }
+    leaf-list ipv6-denylist {
+      type inet:ipv6-address-no-zone;
+      description
+        "List of IPv6 addresses from which to NOT process traffic.
+         By default all IPv6 addresses are allowed.";
+    }
+    leaf-list dns-ports {
       type uint16;
       default "53";
       description
-        "Port used for identifying DNS traffic.
-
-         This is a static configuration parameter that is applied
-         only upon restarting the probe.";
+        "List of ports used for identifying DNS traffic.";
     }
     container export {
       description
         "Configuration of exported data.";
+      leaf location {
+        type enumeration {
+          enum local {
+          description
+            "Store exported data to local files";
+          }
+          enum remote {
+            description
+              "Send exported data directly to a remote location";
+          }
+        }
+        default local;
+        description
+          "Location for the storage of the exported DNS records.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
       leaf export-dir {
         type string;
         default ".";
         description
-          "Directory for exported data.
+          "Directory for exported data.";
+      }
+      leaf remote-ip-address {
+        type inet:ip-address-no-zone;
+        default "127.0.0.1";
+        description
+          "IP address for remote export of the DNS records.";
+      }
+      leaf remote-port {
+        type inet:port-number;
+        default 6378;
+        description
+          "Transport protocol port number for remote export of the DNS records.";
+      }
+      leaf remote-ca-cert {
+        type string;
+        description
+          "Path (including file's name) to the CA certificate against which the remote
+           server's certificate will be authenticated during TLS handshake.
+
+           By default server's certificate will be authenticated against OpenSSL's
+           default directory with CA certificates.
 
            This is a static configuration parameter that is applied
            only upon restarting the probe.";
@@ -222,6 +352,71 @@ module cznic-dns-probe {
         description
           "Selection of packets to be stored in PCAP files, in
            addition to normal Parquet or C-DNS export.";
+      }
+    }
+    container ip-anonymization {
+      description
+        "Configuration of client IP anonymization in exported data (Parquet or C-DNS).
+         The optional PCAP export does NOT get anonymized!!!";
+
+      leaf anonymize-ip {
+        type boolean;
+        default "false";
+        description
+          "If this flag is true, client IP addresses in exported data will be anonymized
+           using Crypto-PAn prefix-preserving algorithm.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
+
+      leaf encryption {
+        type enumeration {
+          enum aes {
+            description
+              "AES encryption algorithm.";
+          }
+
+          enum blowfish {
+            description
+              "Blowfish encryption algorithm.";
+          }
+
+          enum md5 {
+            description
+              "MD5 hash function.";
+          }
+
+          enum sha1 {
+            description
+              "SHA1 hash function.";
+          }
+        }
+
+        default "aes";
+        description
+          "Encryption algorithm to be used during anonymization of client IP addresses if enabled.
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
+      }
+
+      leaf key-path {
+        type string;
+        default "key.cryptopant";
+        description
+          "Path (including file's name) to the file with encryption key that is to be used
+           for client IP anonymization if enabled. If the file doesn't exist, it is generated
+           by the probe.
+
+           The key needs to be compatible with the encryption algorithm set in the 'encryption'
+           option above. User should generate the key using 'scramble_ips' tool installed by
+           the cryptopANT dependency like this:
+
+           scramble_ips --newkey --type=<encryption> <key_file>
+
+           This is a static configuration parameter that is applied
+           only upon restarting the probe.";
       }
     }
     container transaction-table {

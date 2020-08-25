@@ -13,17 +13,22 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <iostream>
 #include <utility>
 #include <tuple>
-#include <boost/log/trivial.hpp>
-#include <boost/log/utility/setup/file.hpp>
-#include <boost/log/utility/setup/common_attributes.hpp>
-#include <boost/log/utility/setup/console.hpp>
-
 #include <getopt.h>
+
+#ifdef PROBE_CRYPTOPANT
+#include <cryptopANT.h>
+#endif
 
 #include "Probe.h"
 #include "Worker.h"
@@ -34,6 +39,7 @@
 #include "utils/Logger.h"
 #include "platform/Platform.h"
 #include "platform/Mempool.h"
+#include "export/BaseWriter.h"
 
 namespace DDP {
     class CommLinkProxy : public PollAble
@@ -60,7 +66,7 @@ namespace DDP {
                     break;
 
                 case Message::Type::LOG:
-                    BOOST_LOG_TRIVIAL(info) << dynamic_cast<MessageLog*>(message.get())->msg.str();
+                    logwriter.log(dynamic_cast<MessageLog*>(message.get())->msg.str());
                     break;
 
                 case Message::Type::WORKER_STOPPED:
@@ -77,9 +83,9 @@ namespace DDP {
 }
 
 
-DDP::Probe::Probe() : m_initialized(false), m_running(false), m_poll(), m_cfg(), m_sysrepo(nullptr),
-                      m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(), m_log_link(),
-                      m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
+DDP::Probe::Probe() : m_cfg_loaded(false), m_initialized(false), m_running(false), m_poll(), m_cfg(),
+                      m_sysrepo(nullptr), m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
+                      m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
                       m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
 
 DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
@@ -87,7 +93,6 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     DDP::Arguments args{};
     args.app = argv[0];
     int opt;
-    bool logfile = false;
 
     while ((opt = getopt(argc, argv, "hi:p:rl:")) != EOF) {
 
@@ -110,32 +115,13 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
                 break;
 
             case 'l':
-                boost::log::add_file_log(
-                    boost::log::keywords::file_name = optarg,
-                    boost::log::keywords::auto_flush = true,
-                    boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
-                );
-                boost::log::add_common_attributes();
-                logfile = true;
+                logwriter.set_output(std::string(optarg));
+                args.log_file = std::string(optarg);
                 break;
 
             default:
                 throw std::invalid_argument("Invalid arguments");
         }
-    }
-
-    if (!logfile) {
-        boost::log::add_console_log(
-            std::cout,
-            boost::log::keywords::auto_flush = true,
-            boost::log::keywords::format = "[%TimeStamp%] [%ProcessID%] %Message%"
-        );
-        boost::log::add_common_attributes();
-    }
-
-    if (!args.exit) {
-        if (args.interfaces.empty() && args.pcaps.empty())
-            throw std::invalid_argument("At least one interface or pcap should be specified!");
     }
 
     ParsedArgs ret{args, static_cast<unsigned>(optind)};
@@ -169,9 +155,9 @@ DDP::Probe& DDP::Probe::getInstance()
     return instance;
 }
 
-void DDP::Probe::init(const Arguments& args)
+void DDP::Probe::load_config(Arguments& args)
 {
-    if (m_initialized)
+    if (m_cfg_loaded)
         return;
 
     // Init logging
@@ -179,9 +165,41 @@ void DDP::Probe::init(const Arguments& args)
 
     try {
         // Init configuration
-        m_cfg.raw_pcap.from_sysrepo(args.raw_pcap);
         m_sysrepo = &m_poll.emplace<DDP::ConfigSysrepo>(m_cfg);
+        if (args.raw_pcap)
+            m_cfg.raw_pcap.from_sysrepo(args.raw_pcap);
 
+        if (args.log_file.empty() && !m_cfg.log_file.value().empty())
+            logwriter.set_output(m_cfg.log_file.value());
+
+        for (auto& intf : m_cfg.interface_list.value()) {
+            args.interfaces.emplace_back(intf);
+        }
+
+        for (auto& pcap : m_cfg.pcap_list.value()) {
+            args.pcaps.emplace_back(pcap);
+        }
+
+        if (args.interfaces.empty() && args.pcaps.empty())
+            throw std::invalid_argument("At least one interface or pcap should be specified!");
+
+        m_cfg_loaded = true;
+    }
+    catch (...) {
+        process_log_messages();
+        throw;
+    }
+}
+
+void DDP::Probe::init(const Arguments& args)
+{
+    if (!m_cfg_loaded)
+        throw std::runtime_error("Configuration was not loaded from Sysrepo yet!");
+
+    if (m_initialized)
+        return;
+
+    try {
         init_platform(args, m_cfg);
 
         m_thread_manager = std::make_unique<ThreadManager>(m_cfg.coremask);
@@ -225,6 +243,30 @@ void DDP::Probe::init(const Arguments& args)
             };
             m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
         }
+
+#ifndef PROBE_PARQUET
+        if (m_cfg.export_format.value() == ExportFormat::PARQUET)
+            throw std::runtime_error("DNS Probe was built without Parquet support! Use C-DNS as export format!");
+#endif
+
+#ifndef PROBE_CDNS
+        if (m_cfg.export_format.value() == ExportFormat::CDNS)
+            throw std::runtime_error("DNS Probe was built without C-DNS support! Use Parquet as export format!");
+#endif
+
+        if (m_cfg.anonymize_ip) {
+#ifdef PROBE_CRYPTOPANT
+            if (scramble_init_from_file(m_cfg.ip_enc_key.value().c_str(),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()),
+                static_cast<scramble_crypt_t>(m_cfg.ip_encryption.value()), nullptr) != 0)
+                throw std::runtime_error("Couldn't initialize IP address anonymization!");
+#else
+            throw std::runtime_error("DNS Probe was built without IP anonymization support!");
+#endif
+        }
+
+        if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+            TlsCtx::getInstance().init(m_cfg.export_ca_cert.value());
 
         m_initialized = true;
     } catch (...) {
@@ -311,12 +353,12 @@ void DDP::Probe::process_log_messages() const
 {
     std::unique_ptr<DDP::Message> message;
     while ((message = std::move(this->m_log_link->config_endpoint().recv())).get())
-        BOOST_LOG_TRIVIAL(info) << dynamic_cast<DDP::MessageLog*>(message.get())->msg.str();
+        logwriter.log(dynamic_cast<DDP::MessageLog*>(message.get())->msg.str());
 }
 
 void DDP::Probe::stop(bool restart)
 {
-    if (!m_initialized || !m_running)
+    if ( !m_cfg_loaded || !m_initialized || !m_running)
         return;
 
     //Send stop message to all workers

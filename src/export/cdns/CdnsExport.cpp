@@ -13,17 +13,23 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include "CdnsExport.h"
 
-DDP::CdnsExport::CdnsExport(std::bitset<23> fields, uint64_t records_per_block)
-    : DnsExport(), m_fields(fields), m_parameters()
+DDP::CdnsExport::CdnsExport(Config& cfg)
+    : BaseExport(cfg.anonymize_ip.value()), m_fields(cfg.cdns_fields.value()), m_parameters()
 {
-    m_parameters.storage_parameters.max_block_items = records_per_block;
+    m_parameters.storage_parameters.max_block_items = cfg.cdns_records_per_block.value();
     set_cdns_hints(m_parameters.storage_parameters.storage_hints.query_response_hints,
                    m_parameters.storage_parameters.storage_hints.query_response_signature_hints,
-                   fields);
+                   m_fields);
 
     m_block = std::make_shared<CDNS::CdnsBlock>(CDNS::CdnsBlock(m_parameters, 0));
 }
@@ -68,22 +74,32 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     }
 
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_ADDRESS)]) {
-        const in6_addr& addr = record.client_address();
-        if (record.m_addr_family == DnsRecord::AddrFamily::IP4)
-            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 4));
-        else if (record.m_addr_family == DnsRecord::AddrFamily::IP6)
-            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 16));
+        in6_addr* addr = record.client_address();
+        if (record.m_addr_family == DnsRecord::AddrFamily::IP4) {
+#ifdef PROBE_CRYPTOPANT
+            if (m_anonymize_ip)
+                *reinterpret_cast<uint32_t*>(addr) = scramble_ip4(*reinterpret_cast<uint32_t*>(addr), 0);
+#endif
+            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 4));
+        }
+        else if (record.m_addr_family == DnsRecord::AddrFamily::IP6) {
+#ifdef PROBE_CRYPTOPANT
+            if (m_anonymize_ip)
+                scramble_ip6(addr, 0);
+#endif
+            qr.client_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 16));
+        }
     }
 
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_PORT)])
         qr.client_port = record.client_port();
 
     if (m_fields[static_cast<uint32_t>(CDNSField::SERVER_ADDRESS)]) {
-        const in6_addr& addr = record.server_address();
+        in6_addr* addr = record.server_address();
         if (record.m_addr_family == DnsRecord::AddrFamily::IP4)
-            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 4));
+            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 4));
         else if (record.m_addr_family == DnsRecord::AddrFamily::IP6)
-            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(&addr), 16));
+            qrs.server_address_index = m_block->add_ip_address(std::string(reinterpret_cast<const char*>(addr), 16));
 
         qrs_filled = true;
     }

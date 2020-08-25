@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <sysrepo.h>
@@ -86,12 +92,25 @@ static boost::any conv_sysrepo_data(libyang::S_Data_Node data)
 }
 
 DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_map{
+        {SYSCONF_CFG_ROOT "/interface-list",                     m_cfg.interface_list},
+        {SYSCONF_CFG_ROOT "/pcap-list",                          m_cfg.pcap_list},
+        {SYSCONF_CFG_ROOT "/raw-pcap",                           m_cfg.raw_pcap},
+        {SYSCONF_CFG_ROOT "/log-file",                           m_cfg.log_file},
         {SYSCONF_CFG_ROOT "/coremask",                           m_cfg.coremask},
+        {SYSCONF_CFG_ROOT "/dns-ports",                          m_cfg.dns_ports},
+        {SYSCONF_CFG_ROOT "/ipv4-allowlist",                     m_cfg.ipv4_allowlist},
+        {SYSCONF_CFG_ROOT "/ipv4-denylist",                      m_cfg.ipv4_denylist},
+        {SYSCONF_CFG_ROOT "/ipv6-allowlist",                     m_cfg.ipv6_allowlist},
+        {SYSCONF_CFG_ROOT "/ipv6-denylist",                      m_cfg.ipv6_denylist},
         {SYSCONF_CFG_ROOT "/transaction-table/max-transactions", m_cfg.tt_size},
         {SYSCONF_CFG_ROOT "/transaction-table/query-timeout",    m_cfg.tt_timeout},
         {SYSCONF_CFG_ROOT "/transaction-table/match-qname",      m_cfg.match_qname},
         {SYSCONF_CFG_ROOT "/tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
         {SYSCONF_CFG_ROOT "/tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
+        {SYSCONF_CFG_ROOT "/export/location",                    m_cfg.export_location},
+        {SYSCONF_CFG_ROOT "/export/remote-ip-address",           m_cfg.export_ip},
+        {SYSCONF_CFG_ROOT "/export/remote-port",                 m_cfg.export_port},
+        {SYSCONF_CFG_ROOT "/export/remote-ca-cert",              m_cfg.export_ca_cert},
         {SYSCONF_CFG_ROOT "/export/export-dir",                  m_cfg.target_directory},
         {SYSCONF_CFG_ROOT "/export/file-name-prefix",            m_cfg.file_prefix},
         {SYSCONF_CFG_ROOT "/export/timeout",                     m_cfg.file_rot_timeout},
@@ -103,7 +122,9 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
         {SYSCONF_CFG_ROOT "/export/cdns-fields",                 m_cfg.cdns_fields},
         {SYSCONF_CFG_ROOT "/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
         {SYSCONF_CFG_ROOT "/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
-        {SYSCONF_CFG_ROOT "/dns-port",                           m_cfg.dns_port},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/encryption",        m_cfg.ip_encryption},
+        {SYSCONF_CFG_ROOT "/ip-anonymization/key-path",          m_cfg.ip_enc_key},
 }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     try {
@@ -119,14 +140,21 @@ DDP::ConfigSysrepo::ConfigSysrepo(Config& cfg) : PollAble(), m_cfg(cfg), m_path_
 
     for (auto&& item : m_path_map) {
         try {
-            auto val = tree->find_path(item.first.c_str())->data()[0];
-
-            if (val) {
+            for (auto& val : tree->find_path(item.first.c_str())->data()) {
                 m_logger.debug() << "Setting new value for " << item.first << " (old value: " << item.second.string() << ")";
                 item.second.from_sysrepo(conv_sysrepo_data(val));
                 m_logger.debug() << "New value for " << item.first << " is " << item.second.string();
-            } else
-                m_logger.warning() << "Config for path '" << item.first << "' not found!";
+            }
+
+            if (tree->find_path(item.first.c_str())->data().empty()) {
+                std::string end("list");
+                if (!((item.first.length() >= end.length() &&
+                       item.first.compare(item.first.length() - end.length(), end.length(), end) == 0) ||
+                      (item.first == "/cznic-dns-probe:dns-probe/export/remote-ca-cert") ||
+                      (item.first == "/cznic-dns-probe:dns-probe/log-file"))) {
+                    m_logger.warning() << "Config for path '" << item.first << "' not found!";
+                }
+            }
         } catch (sysrepo::sysrepo_exception& e) {
             m_logger.warning() << "Getting config for path '" << item.first << "' failed! (" << e.what() << ")";
         }
@@ -172,15 +200,20 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
     auto it = session->get_changes_iter("//.");
 
     while (auto change = session->get_change_tree_next(it)) {
+        auto node = change->node();
+        auto path = node->path();
+        auto pos = path.find('[');
+        if (pos != std::string::npos)
+            path = path.substr(0, pos);
+
         if (change->oper() == SR_OP_CREATED || change->oper() == SR_OP_MODIFIED) {
-            auto node = change->node();
             try {
-                auto& cfg = m_cfg.m_path_map.at(node->path());
+                auto& cfg = m_cfg.m_path_map.at(path);
 
                 if (event == SR_EV_DONE) {
                     m_cfg.m_logger.info() << "New configuration '" << node->path()
                                           << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
-                                          << "' replacing '"
+                                          << "' modifying '"
                                           << cfg.string() << "'";
 
                     cfg.from_sysrepo(conv_sysrepo_data(node));
@@ -189,6 +222,27 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
                 }
             } catch (std::out_of_range& e) {
                 m_cfg.m_logger.info() << "New configuration '" << node->path()
+                                      << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
+                                      << "'. Cannot be applied because this path doesn't have associated config item.";
+            }
+        }
+        else if (change->oper() == SR_OP_DELETED) {
+            try {
+                auto& cfg = m_cfg.m_path_map.at(path);
+
+                if (event == SR_EV_DONE) {
+                    m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
+                                        << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
+                                        << "' from '" << cfg.string() << "'";
+
+                    cfg.delete_value(conv_sysrepo_data(node));
+                }
+                else if (event == SR_EV_CHANGE) {
+
+                }
+            }
+            catch (std::out_of_range& e) {
+                m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
                                       << "' with value: '" << libyang::Data_Node_Leaf_List(node).value_str()
                                       << "'. Cannot be applied because this path doesn't have associated config item.";
             }

@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #pragma once
@@ -42,6 +48,7 @@ namespace DDP {
         std::list<std::string> interfaces; //<! List of interfaces used for listening for incoming DNS data
         std::list<PciDevice> devices; //<! List of PCI devices corresponding to interfaces list (used in DPDK version)
         std::list<std::string> pcaps; //<! List of PCAPs with data for processing
+        std::string log_file; //!< Log file to store probe's logs
         bool raw_pcap;
     };
 }

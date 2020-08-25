@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 
 #include <pcap.h>
@@ -72,7 +78,7 @@ int64_t DDP::PcapWriter::write(const Packet* pkt)
 
     packet_header.ts = ts;
 
-    if (m_cfg.raw_pcap.value()) {
+    if (m_raw_pcap) {
         if (!pkt->size())
             return 0;
         packet_header.caplen = pkt->size();

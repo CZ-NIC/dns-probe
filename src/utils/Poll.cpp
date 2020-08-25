@@ -13,6 +13,12 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  In addition, as a special exception, the copyright holders give
+ *  permission to link the code of portions of this program with the
+ *  OpenSSL library under certain conditions as described in each
+ *  individual source file, and distribute linked combinations including
+ *  the two.
  */
 #include <stdexcept>
 #include <cstring>
@@ -29,13 +35,17 @@ DDP::Poll::PollAbleInterrupt::PollAbleInterrupt() : PollAble(), m_fd(eventfd(0, 
 void DDP::Poll::PollAbleInterrupt::ready_read()
 {
     uint64_t cnt = 0;
-    read(m_fd, &cnt, sizeof(cnt));
+    auto ret = read(m_fd, &cnt, sizeof(cnt));
+    if (ret == -1)
+        std::runtime_error("Poll: Couldn't read from file descriptor!");
 }
 
 void DDP::Poll::PollAbleInterrupt::interrupt()
 {
     uint64_t cnt = 1;
-    write(m_fd, &cnt, sizeof(cnt));
+    auto ret = write(m_fd, &cnt, sizeof(cnt));
+    if (ret == -1)
+        std::runtime_error("Poll: Couldn't write to file descriptor!");
 }
 
 DDP::Poll::Poll() : m_stop(false), m_pollables(), m_poll_fds(), m_interrupt(nullptr), m_poll_version(0)

@@ -6,6 +6,7 @@ import argparse
 import itertools
 import tempfile
 import subprocess
+import pathlib
 import pandas as pd
 
 vals = [
@@ -65,6 +66,70 @@ vals = [
     "server_location"
 ]
 
+def cmp_parquet(parquet, pcap, cmd_base, verbose):
+    print("-----------------------------------------------------------")
+    print("*** Testing " + parquet + " ***")
+    cmd = cmd_base + pcap
+    out = open(os.devnull, 'w')
+    proc = subprocess.Popen(cmd, shell=True, stdout=out, stderr=out)
+
+    try:
+        proc.wait()
+    except KeyboardInterrupt:
+        proc.wait()
+        pass
+    except:
+        proc.kill()
+        proc.wait()
+        raise
+
+    if len(os.listdir(os.getcwd())) == 0:
+        print("Error: No parquet generated")
+        print("xxx Fail")
+        return 1
+
+    for file in os.listdir(os.getcwd()):
+        if file.endswith(".pcap"):
+            os.remove(file)
+            continue
+
+        p2p = pd.read_parquet("../test_parquets/" + parquet)
+        p2p = p2p.drop(['unixtime', 'time', 'time_micro'], axis=1)
+
+        ddp = pd.read_parquet(file)
+        ddp = ddp.drop(['unixtime', 'time', 'time_micro'], axis=1)
+
+        result = True
+        if len(ddp.index) != len(p2p.index):
+            if verbose:
+                print("Parquets differ in number of DNS records")
+                print("DDP records: " + str(len(ddp.index)))
+                print("Correct records: " + str(len(p2p.index)))
+                print("")
+            result = False
+
+        for ((ddp_i, ddp_row), (p2p_i, p2p_row)) in zip(ddp.iterrows(), p2p.iterrows()):
+            for col in vals:
+                if not ddp_row[col] == p2p_row[col]:
+                    if pd.isna(ddp_row[col]) and pd.isna(p2p_row[col]):
+                        continue
+
+                    if verbose:
+                        print("Row " + str(ddp_i) + " column " + col + " differs")
+                        print("DDP: " + str(ddp_row[col]))
+                        print("Correct: " + str(p2p_row[col]))
+                        print("")
+                    result = False
+
+        os.remove(file)
+
+        if result:
+            print("!!! Success")
+            return 0
+        else:
+            print("xxx Fail")
+            return 1
+
 def main():
     retval = 0
     parser = argparse.ArgumentParser()
@@ -73,89 +138,55 @@ def main():
                         help="enables more verbose output for failed tests")
     args = parser.parse_args()
 
+    orig_path = os.getcwd()
+
     if args.path:
         ddp_path = args.path
         if not ddp_path.startswith("/"):
-            ddp_path = "../" + ddp_path
+            ddp_path = orig_path  + "/" + ddp_path
     
-    cmd_base = ddp_path + " -p ../test_pcaps/"
+    test_path = pathlib.Path(sys.argv[0]).parent.absolute()
+    cmd_base = ddp_path + " -p " + str(test_path) + "/test_pcaps/"
+    tmpdir = str(test_path) + "/test_tmp"
 
-    tmpdir = "test_tmp"
     try:
         os.mkdir(tmpdir)
         os.chdir(tmpdir)
     except:
         os.rmdir(tmpdir)
         pass
+
+    # Backup current configuration
+    subprocess.run(["sysrepocfg", "--export=../config/tmp.json", "-f", "json"])
     
-    for (parquet, pcap) in zip(sorted(os.listdir("../test_parquets")), sorted(os.listdir("../test_pcaps"))):
-        print("-----------------------------------------------------------")
-        print("*** Testing " + pcap + " ***")
-        cmd = cmd_base + pcap
-        out = open(os.devnull, 'w')
-        proc = subprocess.Popen(cmd, shell=True, stdout=out, stderr=out)
+    # Run default configuration tests
+    subprocess.run(["sysrepocfg", "--import=../config/default.json"])
+    for (parquet, pcap) in zip(sorted(os.listdir("../test_parquets/base")), sorted(os.listdir("../test_pcaps"))):
+        retval = cmp_parquet("base/" + parquet, pcap, cmd_base, args.verbose_switch) or retval
 
-        try:
-            proc.wait()
-        except KeyboardInterrupt:
-            proc.wait()
-            pass
-        except:
-            proc.kill()
-            proc.wait()
-            raise
-        
-        if len(os.listdir(os.getcwd())) == 0:
-            print("Error: No parquet generated")
-            print("xxx Fail")
-            retval = 1
-            continue
-        
-        for file in os.listdir(os.getcwd()):
-            if file.endswith(".pcap"):
-                os.remove(file)
-                continue
+    # Run tests for IP anonymization
+    subprocess.run(["sysrepocfg", "--import=../config/anon.json"])
+    for (parquet, pcap) in zip(sorted(os.listdir("../test_parquets/anonymized")), sorted(os.listdir("../test_pcaps"))):
+        retval = cmp_parquet("anonymized/" + parquet, pcap, cmd_base, args.verbose_switch) or retval
 
-            p2p = pd.read_parquet("../test_parquets/" + parquet)
-            p2p = p2p.drop(['unixtime', 'time', 'time_micro'], axis=1)
+    # Run test for IP allow-list
+    subprocess.run(["sysrepocfg", "--import=../config/ip_allow.json"])
+    retval = cmp_parquet("ip_filtered/edns_dnssec_nsid_allow.parquet", "edns_dnssec_nsid.pcap",
+                         cmd_base, args.verbose_switch) or retval
 
-            ddp = pd.read_parquet(file)
-            ddp = ddp.drop(['unixtime', 'time', 'time_micro'], axis=1)
-
-            result = True
-            if len(ddp.index) != len(p2p.index):
-                if args.verbose_switch:
-                    print("Parquets differ in number of DNS records")
-                    print("DDP records: " + str(len(ddp.index)))
-                    print("Correct records: " + str(len(p2p.index)))
-                    print("")
-                result = False
-
-            for ((ddp_i, ddp_row), (p2p_i, p2p_row)) in zip(ddp.iterrows(), p2p.iterrows()):
-                for col in vals:
-                    if not ddp_row[col] == p2p_row[col]:
-                        if pd.isna(ddp_row[col]) and pd.isna(p2p_row[col]):
-                            continue
-
-                        if args.verbose_switch:
-                            print("Row " + str(ddp_i) + " column " + col + " differs")
-                            print("DDP: " + str(ddp_row[col]))
-                            print("Correct: " + str(p2p_row[col]))
-                            print("")
-                        result = False
-
-            if result:
-                print("!!! Success")
-            else:
-                print("xxx Fail")
-                retval = 1
-            
-            os.remove(file)
+    # Run test for IP deny-list
+    subprocess.run(["sysrepocfg", "--import=../config/ip_deny.json"])
+    retval = cmp_parquet("ip_filtered/edns_dnssec_nsid_deny.parquet", "edns_dnssec_nsid.pcap",
+                         cmd_base, args.verbose_switch) or retval
     
+    # Import original configuration
+    subprocess.run(["sysrepocfg", "--import=../config/tmp.json"])
+    os.remove("../config/tmp.json")
+
     for file in os.listdir(os.getcwd()):
         os.remove(file)
     
-    os.chdir("../")
+    os.chdir(orig_path)
     os.rmdir(tmpdir)
     return retval
 

@@ -29,6 +29,7 @@ build_and_test:
       python3
       python3-pip
       python3-pandas
+      libssl-dev
       libboost-all-dev
       libcdns-dev
       libpcap-dev
@@ -38,6 +39,7 @@ build_and_test:
       libyang-cpp-dev
       sysrepo-dev
       sysrepo-cpp-dev
+      libcryptopant-dev
       dpdk-dev
     - pip3 install pyarrow
   script:
@@ -64,6 +66,7 @@ pages:
       cmake
       doxygen
       python3-sphinx
+      libssl-dev
       libboost-all-dev
       libcdns-dev
       libarrow-dev
@@ -73,6 +76,7 @@ pages:
       libyang-cpp-dev
       sysrepo-dev
       sysrepo-cpp-dev
+      libcryptopant-dev
   script:
     - mkdir build
     - cd build

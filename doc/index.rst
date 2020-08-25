@@ -43,6 +43,7 @@ scanned requests and responses.
    Configuration
    Running
    ExportedDataSchema
+   DataCollector
    manpages/index
    YANGmodule
    References

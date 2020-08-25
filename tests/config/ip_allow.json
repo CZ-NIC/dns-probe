@@ -1,0 +1,7 @@
+{
+  "cznic-dns-probe:dns-probe": {
+    "ipv4-allowlist": [
+        "147.229.8.12"
+    ]
+  }
+}
