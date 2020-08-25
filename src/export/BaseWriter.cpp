@@ -32,14 +32,16 @@
 #include "utils/Logger.h"
 
 namespace DDP {
-    void send_file(Config cfg, std::string filename)
+    std::string send_file(Config cfg, std::string filename, std::string sufix, uint8_t tries)
     {
         auto pos = filename.find_last_of('/');
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < tries; i++) {
             try {
                 TlsConnection tls(cfg);
-                std::ifstream ifs(filename + ".part", std::ifstream::binary);
+                std::ifstream ifs(filename + sufix, std::ifstream::binary);
+                if (ifs.fail())
+                    throw std::runtime_error("Couldn't read file for transfer!");
 
                 if (pos == std::string::npos) {
                     uint8_t length = filename.size();
@@ -59,15 +61,29 @@ namespace DDP {
                 }
 
                 ifs.close();
-                std::remove((filename + ".part").c_str());
-                return;
+                std::remove((filename + sufix).c_str());
+                return "";
             }
             catch (std::exception& e) {}
         }
 
         Logger("Writer").warning() << "Couldn't send output file to remote server!";
-        if (std::rename((filename + ".part").c_str(), filename.c_str()))
+        if (std::rename((filename + sufix).c_str(), filename.c_str()))
             Logger("Writer").warning() << "Couldn't rename the output file!";
+        return filename;
+    }
+
+    std::unordered_set<std::string> send_files(Config cfg, std::unordered_set<std::string> flist)
+    {
+        for (auto it = flist.begin(); it != flist.end(); ) {
+            auto ret = send_file(cfg, *it, "", 1);
+            if (ret.empty())
+                it = flist.erase(it);
+            else
+                ++it;
+        }
+
+        return flist;
     }
 
     void TlsCtx::init(std::string ca_cert)
@@ -218,6 +234,41 @@ namespace DDP {
                 m_filename_counter = 0;
                 return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() +
                     std::string(time) + m_id + inv + "_" + std::to_string(m_filename_counter) + full_sufix;
+            }
+        }
+    }
+
+    void BaseWriter::check_file_transfer()
+    {
+        if (!m_threads.empty()) {
+            m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
+                [this](auto& x) {
+                bool ret = x.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+                if (ret) {
+                    auto result = x.get();
+                    if (!result.empty())
+                        m_unsent_files.insert(result);
+                }
+                return ret;
+            }));
+        }
+
+        if (m_files_thread.valid() &&
+            (m_files_thread.wait_for(std::chrono::seconds(0)) == std::future_status::ready)) {
+            auto failed = m_files_thread.get();
+            for (auto&& file : failed) {
+                m_unsent_files.insert(file);
+            }
+
+            if (!m_unsent_files.empty()) {
+                m_files_thread = std::async(std::launch::async, send_files, m_cfg, m_unsent_files);
+                m_unsent_files.clear();
+            }
+        }
+        else if (!m_files_thread.valid()) {
+            if (!m_unsent_files.empty()) {
+                m_files_thread = std::async(std::launch::async, send_files, m_cfg, m_unsent_files);
+                m_unsent_files.clear();
             }
         }
     }

@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <vector>
 #include <future>
+#include <unordered_set>
 
 #include "config/Config.h"
 
@@ -36,12 +37,25 @@ struct ssl_st;
 typedef struct ssl_st SSL;
 
 namespace DDP {
+    constexpr static uint8_t DEFAULT_TRIES = 3; //!< Default number of attempts to transfer file
+
     /**
      * @brief Send local file to remote server via TLS connection
      * @param cfg Configuration (server IP, port)
      * @param filename Name of the file to send WITHOUT the ".part" sufix
+     * @param sufix Sufix of the file to send (usually ".part" sufix)
+     * @param tries How many times should the file transfer be attempted before giving up
+     * @return Empty string on successful transfer, or filename parameter if transfer fails
      */
-    void send_file(Config cfg, std::string filename);
+    std::string send_file(Config cfg, std::string filename, std::string sufix, uint8_t tries);
+
+    /**
+     * @brief Send files given in flist to remote server via TLS connection
+     * @param cfg Configuration (server IP, port)
+     * @param flist List of files to send
+     * @return List of files that failed to transfer to remote server
+     */
+    std::unordered_set<std::string> send_files(Config cfg, std::unordered_set<std::string> flist);
 
     /**
      * @brief Singleton RAII wrapper around SSL_CTX structure from OpenSSL library
@@ -148,7 +162,9 @@ namespace DDP {
             m_sufix(sufix),
             m_filename_counter(0),
             m_filename(),
-            m_threads() {}
+            m_threads(),
+            m_unsent_files(),
+            m_files_thread() {}
 
         virtual ~BaseWriter() {}
 
@@ -181,11 +197,19 @@ namespace DDP {
         std::string filename(std::string sufix, bool invalid);
 
         protected:
+        /**
+         * @brief Collects all finished transfer threads a checks for transfer success.
+         * Spawns thread to resend all files from failed transfers if such thread doesn't already exist.
+         */
+        void check_file_transfer();
+
         Config m_cfg;
         std::string m_id;
         std::string m_sufix;
         uint8_t m_filename_counter;
         std::string m_filename;
-        std::vector<std::future<void>> m_threads;
+        std::vector<std::future<std::string>> m_threads;
+        std::unordered_set<std::string> m_unsent_files;
+        std::future<std::unordered_set<std::string>> m_files_thread; //!< Thread for sending list of files that failed initial transfer
     };
 }

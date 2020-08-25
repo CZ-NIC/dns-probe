@@ -56,12 +56,8 @@ int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)
             throw std::runtime_error("Couldn't rename the output file!");
     }
     else {
-        if (!m_threads.empty()) {
-            m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
-                [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
-        }
-
-        m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename));
+        check_file_transfer();
+        m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename, ".part", DEFAULT_TRIES));
     }
 
     return item->num_rows();

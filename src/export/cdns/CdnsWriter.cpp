@@ -136,12 +136,8 @@ void DDP::CdnsWriter::rotate_output()
             if (std::rename(rotated.c_str(), (rotated + ".part").c_str()))
                 throw std::runtime_error("Couldn't rename the output file!");
 
-            if (!m_threads.empty()) {
-                m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
-                    [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
-            }
-
-            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, rotated));
+            check_file_transfer();
+            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, rotated, ".part", DEFAULT_TRIES));
         }
     }
 

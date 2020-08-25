@@ -65,7 +65,8 @@ namespace DDP {
                     chmod(m_filename.c_str(), 0666);
                     if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
                         if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str()))
-                            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename));
+                            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename,
+                                                              ".part", DEFAULT_TRIES));
                     }
                 }
             }
