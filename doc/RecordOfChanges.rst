@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.6**
+     - **1.1**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Domainname field in export schema is in lowercase
+   * -
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Data Collector <DataCollector>`,
