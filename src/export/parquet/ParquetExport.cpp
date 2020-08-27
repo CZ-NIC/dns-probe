@@ -24,6 +24,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
+#include <cctype>
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <parquet/arrow/reader.h>
@@ -128,6 +129,9 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     else
         PARQUET_THROW_NOT_OK(Qname.Append(record.m_qname, strlen(record.m_qname)));
 
+    for (int i = 0; i < size; i++) {
+        domain_name[i] = std::tolower(static_cast<unsigned char>(domain_name[i]));
+    }
     PARQUET_THROW_NOT_OK(Domainname.Append(domain_name, size));
 
     // Request packet length
