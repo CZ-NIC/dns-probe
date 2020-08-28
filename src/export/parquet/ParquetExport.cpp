@@ -337,7 +337,7 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     // Server location
     PARQUET_THROW_NOT_OK(ServerLocation.Append(""));
 
-    // TCP RTT (microseconds precision)
+    // TCP RTT (milliseconds precision)
     PARQUET_THROW_NOT_OK(TcpHsRtt.Append(record.m_tcp_rtt));
 
     if (ID.length() >= static_cast<int64_t>(m_records_limit)) {
@@ -517,7 +517,7 @@ std::shared_ptr<arrow::Table> DDP::ParquetExport::write_table()
     // Server location
     PARQUET_THROW_NOT_OK(ServerLocation.Finish(&arrays[i++]));
 
-    // TCP RTT (microseconds precision)
+    // TCP RTT (milliseconds precision)
     PARQUET_THROW_NOT_OK(TcpHsRtt.Finish(&arrays[i++]));
 
     // Create Arrow table
