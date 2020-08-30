@@ -109,7 +109,7 @@ namespace DDP {
          * Constructor
          * @param cfg Reference to config of the application.
          */
-        explicit ConfigSysrepo(Config& cfg);
+        explicit ConfigSysrepo(std::string instance, Config& cfg);
 
         /**
          * Destructor
@@ -138,6 +138,7 @@ namespace DDP {
         int fd() override { return m_fd; }
 
     private:
+        std::string m_instance; //!< Name of running instance;
         Config& m_cfg; //!< Associated config.
         std::unordered_map<std::string, ConfigItemBase&> m_path_map; //!< Maps model config names to values from config.
         sysrepo::S_Session m_sysrepo_session; //!< Sysrepo session.

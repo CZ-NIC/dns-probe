@@ -94,7 +94,7 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     args.app = argv[0];
     int opt;
 
-    while ((opt = getopt(argc, argv, "hi:p:rl:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rl:n:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -116,7 +116,11 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 
             case 'l':
                 logwriter.set_output(std::string(optarg));
-                args.log_file = std::string(optarg);
+                args.log_file = optarg;
+                break;
+
+            case 'n':
+                args.instance_name = optarg;
                 break;
 
             default:
@@ -165,7 +169,7 @@ void DDP::Probe::load_config(Arguments& args)
 
     try {
         // Init configuration
-        m_sysrepo = &m_poll.emplace<DDP::ConfigSysrepo>(m_cfg);
+        m_sysrepo = &m_poll.emplace<DDP::ConfigSysrepo>(args.instance_name, m_cfg);
         if (args.raw_pcap)
             m_cfg.raw_pcap.from_sysrepo(args.raw_pcap);
 
