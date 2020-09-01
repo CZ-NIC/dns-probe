@@ -88,7 +88,7 @@ namespace DDP {
                       m_proto(Proto::INVALID),
                       m_addr_family(AddrFamily::INVALID),
                       m_timestamp(),
-                      m_tcp_rtt(0),
+                      m_tcp_rtt(-1),
                       m_client_index(ClientIndex::CLIENT_LOW),
                       m_len(0),
                       m_dns_len(0),
@@ -229,7 +229,7 @@ namespace DDP {
 
         // Timestamp extracted from mbuf
         Time m_timestamp;
-        uint64_t m_tcp_rtt; // millisecond precision
+        int64_t m_tcp_rtt; // millisecond precision, less than 0 means no rtt
 
         ClientIndex m_client_index;
 

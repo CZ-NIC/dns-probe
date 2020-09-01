@@ -338,7 +338,10 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     PARQUET_THROW_NOT_OK(ServerLocation.Append(""));
 
     // TCP RTT (milliseconds precision)
-    PARQUET_THROW_NOT_OK(TcpHsRtt.Append(record.m_tcp_rtt));
+    if (record.m_tcp_rtt >= 0)
+        PARQUET_THROW_NOT_OK(TcpHsRtt.Append(record.m_tcp_rtt));
+    else
+        PARQUET_THROW_NOT_OK(TcpHsRtt.AppendNull());
 
     if (ID.length() >= static_cast<int64_t>(m_records_limit)) {
         return write_table();
