@@ -60,8 +60,8 @@ uint16_t DDP::PCAPPort::read(Packet* batch, unsigned queue)
         }
     }
 
-//    if(!rx_count)
-//        throw PortEOF();
+    if(!rx_count)
+        throw PortEOF();
     return rx_count;
 }
 
