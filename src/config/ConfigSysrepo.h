@@ -138,7 +138,12 @@ namespace DDP {
         int fd() override { return m_fd; }
 
     private:
-        std::string m_instance; //!< Name of running instance;
+        const std::string m_instance; //!< Name of running instance;
+        const std::string m_module{"cznic-dns-probe"}; //!< Name of sysrepo module
+        const std::string m_root; //!< root config for sysrepo module
+        const std::string m_cfg_root; //!< Root node of configuration at the sysrepo module
+        const std::string m_stats_root; //!< Root node of statistics at the sysrepo module
+
         Config& m_cfg; //!< Associated config.
         std::unordered_map<std::string, ConfigItemBase&> m_path_map; //!< Maps model config names to values from config.
         sysrepo::S_Session m_sysrepo_session; //!< Sysrepo session.
@@ -146,5 +151,7 @@ namespace DDP {
         sysrepo::S_Callback m_sysrepo_callback; //!< Sysrepo callback class instance.
         int m_fd; //!< Underlying file descriptor used for communication with sysrepo.
         Logger m_logger; //!< Logger for logging events.
+
+
     };
 }

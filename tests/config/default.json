@@ -1,4 +1,3 @@
 {
-  "cznic-dns-probe:dns-probe": {
-  }
+  "cznic-dns-probe:dns-probe": [{ "instance": "default" }]
 }

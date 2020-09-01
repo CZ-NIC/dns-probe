@@ -230,7 +230,7 @@ void DDP::Probe::init(const Arguments& args)
                                            std::forward_as_tuple(slave),
                                            std::forward_as_tuple(32, true));
             m_poll.emplace<CommLinkProxy>(cl.first->second.config_endpoint());
-            m_stats.push_back(Statistics());
+            m_stats.emplace_back();
         }
 
         auto cb = [this] {

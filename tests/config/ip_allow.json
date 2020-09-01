@@ -1,7 +1,11 @@
 {
-  "cznic-dns-probe:dns-probe": {
-    "ipv4-allowlist": [
-        "147.229.8.12"
-    ]
-  }
+  "cznic-dns-probe:dns-probe": [
+    {
+      "instance": "default",
+      "configuration": {
+        "ipv4-allowlist": [ "147.229.8.12" ]
+      }
+    }
+  ]
 }
+

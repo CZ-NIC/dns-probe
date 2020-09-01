@@ -31,12 +31,6 @@
 #include "core/Probe.h"
 #include "ConfigSysrepo.h"
 
-
-const char* SYSCONF_MODULE = "cznic-dns-probe";
-const char* SYSCONF_CFG_ROOT = "/cznic-dns-probe:dns-probe";
-const char* SYSCONF_STATS_ROOT = "/cznic-dns-probe:statistics";
-
-
 static boost::any conv_sysrepo_data(libyang::S_Data_Node data)
 {
     libyang::Data_Node_Leaf_List leaf(std::move(data));
@@ -82,42 +76,48 @@ static boost::any conv_sysrepo_data(libyang::S_Data_Node data)
     throw std::runtime_error("Unsupported type!");
 }
 
-DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) : PollAble(), m_instance(std::move(instance)),
-                                                                       m_cfg(cfg), m_path_map{
-                {"/interface-list",                     m_cfg.interface_list},
-                {"/pcap-list",                          m_cfg.pcap_list},
-                {"/raw-pcap",                           m_cfg.raw_pcap},
-                {"/log-file",                           m_cfg.log_file},
-                {"/coremask",                           m_cfg.coremask},
-                {"/dns-ports",                          m_cfg.dns_ports},
-                {"/ipv4-allowlist",                     m_cfg.ipv4_allowlist},
-                {"/ipv4-denylist",                      m_cfg.ipv4_denylist},
-                {"/ipv6-allowlist",                     m_cfg.ipv6_allowlist},
-                {"/ipv6-denylist",                      m_cfg.ipv6_denylist},
-                {"/transaction-table/max-transactions", m_cfg.tt_size},
-                {"/transaction-table/query-timeout",    m_cfg.tt_timeout},
-                {"/transaction-table/match-qname",      m_cfg.match_qname},
-                {"/tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
-                {"/tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
-                {"/export/location",                    m_cfg.export_location},
-                {"/export/remote-ip-address",           m_cfg.export_ip},
-                {"/export/remote-port",                 m_cfg.export_port},
-                {"/export/remote-ca-cert",              m_cfg.export_ca_cert},
-                {"/export/export-dir",                  m_cfg.target_directory},
-                {"/export/file-name-prefix",            m_cfg.file_prefix},
-                {"/export/timeout",                     m_cfg.file_rot_timeout},
-                {"/export/file-size-limit",             m_cfg.file_rot_size},
-                {"/export/file-compression",            m_cfg.file_compression},
-                {"/export/pcap-export",                 m_cfg.pcap_export},
-                {"/export/export-format",               m_cfg.export_format},
-                {"/export/parquet-records-per-file",    m_cfg.parquet_records},
-                {"/export/cdns-fields",                 m_cfg.cdns_fields},
-                {"/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
-                {"/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
-                {"/ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
-                {"/ip-anonymization/encryption",        m_cfg.ip_encryption},
-                {"/ip-anonymization/key-path",          m_cfg.ip_enc_key},
-        }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
+DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) :
+        PollAble(),
+        m_instance(std::move(instance)),
+        m_root("/" +  m_module + ":dns-probe[instance='" + m_instance + "']"),
+        m_cfg_root(m_root + "/configuration"),
+        m_stats_root(m_root + "/statistics"),
+
+        m_cfg(cfg), m_path_map{
+        {"/interface-list",                     m_cfg.interface_list},
+        {"/pcap-list",                          m_cfg.pcap_list},
+        {"/raw-pcap",                           m_cfg.raw_pcap},
+        {"/log-file",                           m_cfg.log_file},
+        {"/coremask",                           m_cfg.coremask},
+        {"/dns-ports",                          m_cfg.dns_ports},
+        {"/ipv4-allowlist",                     m_cfg.ipv4_allowlist},
+        {"/ipv4-denylist",                      m_cfg.ipv4_denylist},
+        {"/ipv6-allowlist",                     m_cfg.ipv6_allowlist},
+        {"/ipv6-denylist",                      m_cfg.ipv6_denylist},
+        {"/transaction-table/max-transactions", m_cfg.tt_size},
+        {"/transaction-table/query-timeout",    m_cfg.tt_timeout},
+        {"/transaction-table/match-qname",      m_cfg.match_qname},
+        {"/tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
+        {"/tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
+        {"/export/location",                    m_cfg.export_location},
+        {"/export/remote-ip-address",           m_cfg.export_ip},
+        {"/export/remote-port",                 m_cfg.export_port},
+        {"/export/remote-ca-cert",              m_cfg.export_ca_cert},
+        {"/export/export-dir",                  m_cfg.target_directory},
+        {"/export/file-name-prefix",            m_cfg.file_prefix},
+        {"/export/timeout",                     m_cfg.file_rot_timeout},
+        {"/export/file-size-limit",             m_cfg.file_rot_size},
+        {"/export/file-compression",            m_cfg.file_compression},
+        {"/export/pcap-export",                 m_cfg.pcap_export},
+        {"/export/export-format",               m_cfg.export_format},
+        {"/export/parquet-records-per-file",    m_cfg.parquet_records},
+        {"/export/cdns-fields",                 m_cfg.cdns_fields},
+        {"/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
+        {"/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
+        {"/ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
+        {"/ip-anonymization/encryption",        m_cfg.ip_encryption},
+        {"/ip-anonymization/key-path",          m_cfg.ip_enc_key},
+}, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     try {
         m_sysrepo_session = std::make_shared<sysrepo::Session>(std::make_shared<sysrepo::Connection>());
@@ -129,8 +129,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) : PollAble(
     }
 
 
-    auto cfg_root = std::string(SYSCONF_CFG_ROOT)  + "[instance='" + m_instance + "']";
-    auto tree = m_sysrepo_session->get_data(SYSCONF_CFG_ROOT);
+    auto tree = m_sysrepo_session->get_data(m_cfg_root.c_str());
 
     // Check if config instance exists if not create it
     bool found_instance = false;
@@ -144,9 +143,9 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) : PollAble(
 
     if (!found_instance) {
         m_logger.debug() << "Creating new config instance " << m_instance;
-        m_sysrepo_session->set_item(cfg_root.c_str());
+        m_sysrepo_session->set_item(m_cfg_root.c_str());
         m_sysrepo_session->apply_changes();
-        tree = m_sysrepo_session->get_data(SYSCONF_CFG_ROOT);
+        tree = m_sysrepo_session->get_data(m_cfg_root.c_str());
     }
 
     auto allow_empty = std::set<std::string>{
@@ -162,15 +161,15 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) : PollAble(
 
     for (auto&& item : m_path_map) {
         try {
-            auto nodes = tree->find_path((cfg_root + item.first).c_str())->data();
+            auto nodes = tree->find_path((m_cfg_root + item.first).c_str())->data();
 
-            if(nodes.empty() && !allow_empty.count(item.first)) {
+            if (nodes.empty() && !allow_empty.count(item.first)) {
                 m_logger.warning() << "Config for path '" << item.first << "' not found!";
                 continue;
             }
 
             for (auto& val : nodes) {
-                m_logger.debug() << "Setting new value for " << item.first << " (old value: " << item.second.string()
+                m_logger.debug() << "Setting new value for " << val->path() << " (old value: " << item.second.string()
                                  << ")";
                 item.second.from_sysrepo(conv_sysrepo_data(val));
                 m_logger.debug() << "New value for " << item.first << " is " << item.second.string();
@@ -181,14 +180,15 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) : PollAble(
     }
 
     try {
-        m_sysrepo_subscribe->module_change_subscribe(SYSCONF_MODULE, m_sysrepo_callback, nullptr, nullptr, 0,
+        m_sysrepo_subscribe->module_change_subscribe(m_module.c_str(), m_sysrepo_callback, nullptr, nullptr, 0,
                                                      SR_SUBSCR_NO_THREAD);
         m_sysrepo_session->session_switch_ds(SR_DS_OPERATIONAL);
 
-        m_sysrepo_subscribe->oper_get_items_subscribe(SYSCONF_MODULE, SYSCONF_STATS_ROOT,
+        m_sysrepo_subscribe->oper_get_items_subscribe(m_module.c_str(), m_stats_root.c_str(),
                                                       m_sysrepo_callback, nullptr, SR_SUBSCR_NO_THREAD);
 
-        m_sysrepo_subscribe->rpc_subscribe((std::string("/") + SYSCONF_MODULE + ":restart").c_str(), m_sysrepo_callback, nullptr, 0,
+        m_sysrepo_subscribe->rpc_subscribe((m_root + "/restart").c_str(), m_sysrepo_callback,
+                                           nullptr, 0,
                                            SR_SUBSCR_NO_THREAD);
     } catch (sysrepo::sysrepo_exception& e) {
         m_logger.warning() << "Couldn't subscribe to sysrepo changes! (" << e.what() << ")";
@@ -246,18 +246,16 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
                 m_cfg.m_logger.info() << "New configuration '" << node->path()
                                       << "'. Cannot be applied because this path doesn't have associated config item.";
             }
-        }
-        else if (change->oper() == SR_OP_DELETED) {
+        } else if (change->oper() == SR_OP_DELETED) {
             try {
                 auto& cfg = m_cfg.m_path_map.at(path);
 
                 if (event == SR_EV_DONE) {
                     m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
-                                        << "' from '" << cfg.string() << "'";
+                                          << "' from '" << cfg.string() << "'";
 
                     cfg.delete_value(conv_sysrepo_data(node));
-                }
-                else if (event == SR_EV_CHANGE) {
+                } else if (event == SR_EV_CHANGE) {
 
                 }
             }
@@ -271,7 +269,7 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
     Probe::getInstance().update_config();
     return SR_ERR_OK;
 }
-#include <iostream>
+
 int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session session,
                                                         const char* module_name,
                                                         const char*,
@@ -298,9 +296,7 @@ int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session sessi
     auto ctx = session->get_context();
     auto mod = ctx->get_module(module_name);
 
-    parent.reset(new libyang::Data_Node(ctx, SYSCONF_STATS_ROOT, nullptr, LYD_ANYDATA_CONSTSTRING, 0));
-    auto instance = parent->new_path(ctx, "instances", nullptr, LYD_ANYDATA_CONSTSTRING, 0);
-    instance->new_path(ctx, "instance", m_cfg.m_instance.c_str(), LYD_ANYDATA_CONSTSTRING, 0);
+    auto instance = parent->new_path(ctx, m_cfg.m_stats_root.c_str(), nullptr, LYD_ANYDATA_CONSTSTRING, 0);
 
     for (auto&& item : stats_map) {
         instance->new_path(ctx, item.first.c_str(), item.second.c_str(), LYD_ANYDATA_CONSTSTRING, 0);
@@ -310,12 +306,12 @@ int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session sessi
 }
 
 int DDP::ConfigSysrepo::SysrepoCallback::rpc(sysrepo::S_Session,
-                                         const char*,
-                                         const sysrepo::S_Vals,
-                                         sr_event_t,
-                                         uint32_t,
-                                         sysrepo::S_Vals_Holder,
-                                         void*)
+                                             const char*,
+                                             const sysrepo::S_Vals,
+                                             sr_event_t,
+                                             uint32_t,
+                                             sysrepo::S_Vals_Holder,
+                                             void*)
 {
     m_cfg.m_logger.info() << "Received request to restart.";
     Probe::getInstance().stop(true);
