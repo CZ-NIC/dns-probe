@@ -150,6 +150,8 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) : PollAble(
     }
 
     auto allow_empty = std::set<std::string>{
+            "/interface-list",
+            "/pcap-list",
             "/ipv4-allowlist",
             "/ipv4-denylist",
             "/ipv6-allowlist",
