@@ -64,7 +64,7 @@ namespace DDP {
 
         ConfigItem<ExportFormat> export_format; //!< Specify export format
         ConfigItem<uint64_t> parquet_records; //!< Number of records in parquet file
-        ConfigBitfield<23> cdns_fields; //!< Fields which will be part of CDNS file
+        ConfigBitfield<CdnsBits> cdns_fields; //!< Fields which will be part of CDNS file
         ConfigItem<uint64_t> cdns_records_per_block; //!< Number of records in one block in CDNS file
         ConfigItem<uint64_t> cdns_blocks_per_file; //!< Number of blocks in CDNS file
 

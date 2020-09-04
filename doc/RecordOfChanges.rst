@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.6**
+     - **1.2**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`YANG module <YANGmodule>`
+     - Add TCP RTT item to exported data schema
+   * -
      - **1.1**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
      - Domainname field in export schema is in lowercase

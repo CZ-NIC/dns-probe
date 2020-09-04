@@ -45,6 +45,11 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
        records about DNS transactions in C-DNS or Apache Parquet
        format.";
 
+    revision 2020-09-04 {
+      description
+        "Add 'response_delay' bit to exported C-DNS fields";
+    }
+
     revision 2020-08-24 {
       description
         "Add secure export to remote location";
@@ -259,6 +264,7 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
             bit query_opt_rdata;
             bit response_additional_sections;
             bit response_size;
+            bit response_delay; // TCP RTT
           }
           default "transaction_id time_offset query_name "
                 + "client_hoplimit qr_transport_flags client_address "
@@ -267,7 +273,7 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
                 + "query_nscount query_qdcount query_opcode "
                 + "response_rcode query_classtype query_edns_version "
                 + "query_edns_udp_size query_opt_rdata "
-                + "response_additional_sections response_size";
+                + "response_additional_sections response_size response_delay";
           description
             "This bit set indicates which fields from the C-DNS
              standard schema are included in exported data.
