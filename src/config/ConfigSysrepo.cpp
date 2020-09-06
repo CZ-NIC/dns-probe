@@ -80,43 +80,40 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) :
         PollAble(),
         m_instance(std::move(instance)),
         m_root("/" +  m_module + ":dns-probe[instance='" + m_instance + "']"),
-        m_cfg_root(m_root + "/configuration"),
-        m_stats_root(m_root + "/statistics"),
-
         m_cfg(cfg), m_path_map{
-        {"/interface-list",                     m_cfg.interface_list},
-        {"/pcap-list",                          m_cfg.pcap_list},
-        {"/raw-pcap",                           m_cfg.raw_pcap},
-        {"/log-file",                           m_cfg.log_file},
-        {"/coremask",                           m_cfg.coremask},
-        {"/dns-ports",                          m_cfg.dns_ports},
-        {"/ipv4-allowlist",                     m_cfg.ipv4_allowlist},
-        {"/ipv4-denylist",                      m_cfg.ipv4_denylist},
-        {"/ipv6-allowlist",                     m_cfg.ipv6_allowlist},
-        {"/ipv6-denylist",                      m_cfg.ipv6_denylist},
-        {"/transaction-table/max-transactions", m_cfg.tt_size},
-        {"/transaction-table/query-timeout",    m_cfg.tt_timeout},
-        {"/transaction-table/match-qname",      m_cfg.match_qname},
-        {"/tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
-        {"/tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
-        {"/export/location",                    m_cfg.export_location},
-        {"/export/remote-ip-address",           m_cfg.export_ip},
-        {"/export/remote-port",                 m_cfg.export_port},
-        {"/export/remote-ca-cert",              m_cfg.export_ca_cert},
-        {"/export/export-dir",                  m_cfg.target_directory},
-        {"/export/file-name-prefix",            m_cfg.file_prefix},
-        {"/export/timeout",                     m_cfg.file_rot_timeout},
-        {"/export/file-size-limit",             m_cfg.file_rot_size},
-        {"/export/file-compression",            m_cfg.file_compression},
-        {"/export/pcap-export",                 m_cfg.pcap_export},
-        {"/export/export-format",               m_cfg.export_format},
-        {"/export/parquet-records-per-file",    m_cfg.parquet_records},
-        {"/export/cdns-fields",                 m_cfg.cdns_fields},
-        {"/export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
-        {"/export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
-        {"/ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
-        {"/ip-anonymization/encryption",        m_cfg.ip_encryption},
-        {"/ip-anonymization/key-path",          m_cfg.ip_enc_key},
+        {"interface-list",                     m_cfg.interface_list},
+        {"pcap-list",                          m_cfg.pcap_list},
+        {"raw-pcap",                           m_cfg.raw_pcap},
+        {"log-file",                           m_cfg.log_file},
+        {"coremask",                           m_cfg.coremask},
+        {"dns-ports",                          m_cfg.dns_ports},
+        {"ipv4-allowlist",                     m_cfg.ipv4_allowlist},
+        {"ipv4-denylist",                      m_cfg.ipv4_denylist},
+        {"ipv6-allowlist",                     m_cfg.ipv6_allowlist},
+        {"ipv6-denylist",                      m_cfg.ipv6_denylist},
+        {"transaction-table/max-transactions", m_cfg.tt_size},
+        {"transaction-table/query-timeout",    m_cfg.tt_timeout},
+        {"transaction-table/match-qname",      m_cfg.match_qname},
+        {"tcp-table/concurrent-connections",   m_cfg.tcp_ct_size},
+        {"tcp-table/timeout",                  m_cfg.tcp_ct_timeout},
+        {"export/location",                    m_cfg.export_location},
+        {"export/remote-ip-address",           m_cfg.export_ip},
+        {"export/remote-port",                 m_cfg.export_port},
+        {"export/remote-ca-cert",              m_cfg.export_ca_cert},
+        {"export/export-dir",                  m_cfg.target_directory},
+        {"export/file-name-prefix",            m_cfg.file_prefix},
+        {"export/timeout",                     m_cfg.file_rot_timeout},
+        {"export/file-size-limit",             m_cfg.file_rot_size},
+        {"export/file-compression",            m_cfg.file_compression},
+        {"export/pcap-export",                 m_cfg.pcap_export},
+        {"export/export-format",               m_cfg.export_format},
+        {"export/parquet-records-per-file",    m_cfg.parquet_records},
+        {"export/cdns-fields",                 m_cfg.cdns_fields},
+        {"export/cdns-records-per-block",      m_cfg.cdns_records_per_block},
+        {"export/cdns-blocks-per-file",        m_cfg.cdns_blocks_per_file},
+        {"ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
+        {"ip-anonymization/encryption",        m_cfg.ip_encryption},
+        {"ip-anonymization/key-path",          m_cfg.ip_enc_key},
 }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     try {
@@ -128,12 +125,11 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) :
         throw std::runtime_error(e.what());
     }
 
-
-    auto tree = m_sysrepo_session->get_data(m_cfg_root.c_str());
+    auto root_tree = m_sysrepo_session->get_data(m_root.c_str());
 
     // Check if config instance exists if not create it
     bool found_instance = false;
-    for (auto sibling = tree->first_sibling(); sibling != nullptr && !found_instance; sibling = sibling->next()) {
+    for (auto sibling = root_tree->first_sibling(); sibling != nullptr && !found_instance; sibling = sibling->next()) {
         for (auto&& item: sibling->find_path("instance")->data())
             if (boost::any_cast<std::string>(conv_sysrepo_data(item)) == m_instance) {
                 found_instance = true;
@@ -143,28 +139,43 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) :
 
     if (!found_instance) {
         m_logger.debug() << "Creating new config instance " << m_instance;
-        m_sysrepo_session->set_item(m_cfg_root.c_str());
+        m_sysrepo_session->set_item(m_root.c_str());
         m_sysrepo_session->apply_changes();
-        tree = m_sysrepo_session->get_data(m_cfg_root.c_str());
+        root_tree = m_sysrepo_session->get_data(m_root.c_str());
     }
 
-    auto allow_empty = std::set<std::string>{
-            "/interface-list",
-            "/pcap-list",
-            "/ipv4-allowlist",
-            "/ipv4-denylist",
-            "/ipv6-allowlist",
-            "/ipv6-denylist",
-            "/export/remote-ca-cert",
-            "/log-file"
-    };
+    auto config_subtrees = root_tree->find_path("configuration")->data();
+
+    if (config_subtrees.empty() or config_subtrees.size() != 1) {
+        m_logger.error() << "Invalid schema!";
+        throw std::runtime_error("Invalid schema!");
+    }
+
+    auto tree = config_subtrees[0];
 
     for (auto&& item : m_path_map) {
         try {
-            auto nodes = tree->find_path((m_cfg_root + item.first).c_str())->data();
+            auto nodes = tree->find_path(item.first.c_str())->data();
 
-            if (nodes.empty() && !allow_empty.count(item.first)) {
-                m_logger.warning() << "Config for path '" << item.first << "' not found!";
+            if (nodes.empty()) {
+                auto show_not_found_warning = true;
+                auto cfg_schemas = tree->schema()->find_path(item.first.c_str())->schema();
+
+                // Check if value has set default. If not do not show warning.
+                for (auto&& cfg_schema: cfg_schemas) {
+                    if (cfg_schema->nodetype() == LYS_LEAF) {
+                        auto leaf = libyang::Schema_Node_Leaf(cfg_schema);
+                        if (leaf.dflt() == nullptr)
+                            show_not_found_warning = false;
+                    } else if (cfg_schema->nodetype() == LYS_LEAFLIST) {
+                        auto leaf_list = libyang::Schema_Node_Leaflist(cfg_schema);
+                        if (leaf_list.dflt().empty())
+                            show_not_found_warning = false;
+                    }
+                }
+
+                if (show_not_found_warning)
+                    m_logger.warning() << "Config for path '" << item.first << "' not found!";
                 continue;
             }
 
@@ -184,7 +195,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) :
                                                      SR_SUBSCR_NO_THREAD);
         m_sysrepo_session->session_switch_ds(SR_DS_OPERATIONAL);
 
-        m_sysrepo_subscribe->oper_get_items_subscribe(m_module.c_str(), m_stats_root.c_str(),
+        m_sysrepo_subscribe->oper_get_items_subscribe(m_module.c_str(), (m_root + "/statistics").c_str(),
                                                       m_sysrepo_callback, nullptr, SR_SUBSCR_NO_THREAD);
 
         m_sysrepo_subscribe->rpc_subscribe((m_root + "/restart").c_str(), m_sysrepo_callback,
@@ -219,14 +230,20 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
                                                        uint32_t,
                                                        void*)
 {
-    auto it = session->get_changes_iter("//.");
+    auto cfg_root = m_cfg.m_root + "/configuration";
+    auto it = session->get_changes_iter((cfg_root + "//.").c_str());
 
     while (auto change = session->get_change_tree_next(it)) {
         auto node = change->node();
-        auto path = node->path();
-        auto pos = path.find('[');
-        if (pos != std::string::npos)
-            path = path.substr(0, pos);
+        auto path = node->path().erase(0, cfg_root.length() + 1);
+
+        if (node->schema()->nodetype() == LYS_CONTAINER) {
+            continue;
+        } else if (node->schema()->nodetype() == LYS_LEAFLIST) {
+            auto last_open_bracket = path.rfind('[');
+            path.erase(last_open_bracket);
+        }
+
 
         if (change->oper() == SR_OP_CREATED || change->oper() == SR_OP_MODIFIED) {
             try {
@@ -243,7 +260,7 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
 
                 }
             } catch (std::out_of_range& e) {
-                m_cfg.m_logger.info() << "New configuration '" << node->path()
+                m_cfg.m_logger.info() << "New configuration '" << path
                                       << "'. Cannot be applied because this path doesn't have associated config item.";
             }
         } else if (change->oper() == SR_OP_DELETED) {
@@ -251,10 +268,25 @@ int DDP::ConfigSysrepo::SysrepoCallback::module_change(sysrepo::S_Session sessio
                 auto& cfg = m_cfg.m_path_map.at(path);
 
                 if (event == SR_EV_DONE) {
-                    m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
-                                          << "' from '" << cfg.string() << "'";
+                    // Set default value for leaves if exists
+                    auto schema = node->schema();
+                    if (schema->nodetype() == LYS_LEAF) {
+                        auto node_info = libyang::Schema_Node_Leaf(schema);
+                        if (node_info.dflt()) {
+                            auto default_node = m_cfg.m_sysrepo_session->get_data(change->node()->path().c_str());
+//                            cfg.from_sysrepo(conv_sysrepo_data(default_node));
+//                            m_cfg.m_logger.info() << "Setting default configuration '" << node->path()
+//                                                  << "' to '" << cfg.string();
+                            m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
+                                                  << "' from '" << cfg.string() << "'";
+                        }
+                    } else {
+                        m_cfg.m_logger.info() << "Deleted configuration '" << node->path()
+                                              << "' from '" << cfg.string() << "'";
 
-                    cfg.delete_value(conv_sysrepo_data(node));
+                        cfg.delete_value(conv_sysrepo_data(node));
+                    }
+
                 } else if (event == SR_EV_CHANGE) {
 
                 }
@@ -296,7 +328,7 @@ int DDP::ConfigSysrepo::SysrepoCallback::oper_get_items(sysrepo::S_Session sessi
     auto ctx = session->get_context();
     auto mod = ctx->get_module(module_name);
 
-    auto instance = parent->new_path(ctx, m_cfg.m_stats_root.c_str(), nullptr, LYD_ANYDATA_CONSTSTRING, 0);
+    auto instance = parent->new_path(ctx, "statistics", nullptr, LYD_ANYDATA_CONSTSTRING, 0);
 
     for (auto&& item : stats_map) {
         instance->new_path(ctx, item.first.c_str(), item.second.c_str(), LYD_ANYDATA_CONSTSTRING, 0);
