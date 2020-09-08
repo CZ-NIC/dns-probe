@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.6**
+     - **1.3**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Update pattern of exported file's names
+   * -
      - **1.2**
      - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`YANG module <YANGmodule>`
      - Add TCP RTT item to exported data schema

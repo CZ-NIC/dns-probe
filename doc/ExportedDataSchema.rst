@@ -17,13 +17,12 @@ specified by :ref:`export-dir` option. The names of these files will have the fo
 
 ::
 
-    <prefix>YYYYMMDD-HHMMSS_p<proc_id>_<file_id>.<sufix>
+    <prefix>yyyyMMdd.HHmmss.SSSSSS.p<proc_id>.<sufix>
 
-The *<prefix>* is determined by :ref:`file-name-prefix` option in Sysrepo configuration. The *YYYYMMDD-HHMMSS*
-represents a UTC timestamp from when the output file was first opened. *<proc_id>* is an internal identification
-of process (worker or export thread) which wrote the output file. *<file_id>* represents the number of a file
-from files written within the same second to prevent overriding data if more files are exported within
-the same second. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
+The *<prefix>* is determined by :ref:`file-name-prefix` option in Sysrepo configuration. The
+*yyyyMMdd.HHmmss.SSSSSS* represents a UTC timestamp (microsecond precision) from when the output file was
+first opened. *<proc_id>* is an internal identification of process (worker or export thread) which wrote
+the output file. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
 compression configured in Sysrepo.
 
 Export to remote location
