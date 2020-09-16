@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.6**
+     - **1.4**
+     - :doc:`YANG module <YANGmodule>`
+     - Fix default value for number of concurrent connections in tcp-table
+   * -
      - **1.3**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
      - Update pattern of exported file's names

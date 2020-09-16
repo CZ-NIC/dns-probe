@@ -45,6 +45,11 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
        records about DNS transactions in C-DNS or Apache Parquet
        format.";
 
+    revision 2020-09-16 {
+      description
+        "Fix default value for number of concurrent connections in tcp-table";
+    }
+
     revision 2020-09-04 {
       description
         "Add 'response_delay' bit to exported C-DNS fields";
@@ -468,7 +473,7 @@ This section contains the complete YANG module *cznic-dns-probe* that is used fo
           "Configuration of TCP processing.";
         leaf concurrent-connections {
           type uint32;
-          default "1048576";
+          default "131072";
           description
             "Maximal number of concurrent TCP connections.
 
