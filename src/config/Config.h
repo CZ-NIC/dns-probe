@@ -37,6 +37,40 @@ namespace DDP {
      */
     struct Config
     {
+        Config() : interface_list(),
+                   pcap_list(),
+                   raw_pcap(false),
+                   log_file(),
+                   coremask(0x7),
+                   dns_ports({53}),
+                   ipv4_allowlist(),
+                   ipv4_denylist(),
+                   ipv6_allowlist(),
+                   ipv6_denylist(),
+                   tt_size(1048576),
+                   tt_timeout(1000),
+                   match_qname(false),
+                   tcp_ct_size(131072),
+                   tcp_ct_timeout(60000),
+                   target_directory("."),
+                   file_prefix("dns_"),
+                   file_rot_timeout(0),
+                   file_rot_size(0),
+                   file_compression(true),
+                   pcap_export(PcapExportCfg::DISABLED),
+                   export_format(ExportFormat::PARQUET),
+                   parquet_records(5000000),
+                   cdns_fields(0xFFFFFF),
+                   cdns_records_per_block(10000),
+                   cdns_blocks_per_file(0),
+                   export_location(ExportLocation::LOCAL),
+                   export_ip("127.0.0.1"),
+                   export_port(6378),
+                   export_ca_cert(),
+                   anonymize_ip(false),
+                   ip_encryption(IpEncryption::AES),
+                   ip_enc_key("key.cryptopant") {}
+
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
         ConfigItem<bool> raw_pcap; //!< Defines if input PCAP files are without ethernet headers

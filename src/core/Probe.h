@@ -42,7 +42,7 @@
 namespace DDP {
     class TimerInterface;
     class Port;
-    class ConfigSysrepo;
+    class ConfigFile;
     class CommLinkProxy;
 
     /**
@@ -94,7 +94,7 @@ namespace DDP {
         static void print_help(const char* app = nullptr);
 
         /**
-         * @brief Loads configuration from Sysrepo.
+         * @brief Loads configuration from configuration file.
          * @param args Program arguments to be filled with network ports and PCAPs to process
          */
         void load_config(Arguments& args);
@@ -178,13 +178,13 @@ namespace DDP {
          */
         void process_log_messages() const;
 
-        bool m_cfg_loaded; //!< Information that application loaded Sysrepo configuration.
+        bool m_cfg_loaded; //!< Information that application loaded configuration file.
         bool m_initialized; //!< Information that application is initialized with call DDP::Probe::init.
         bool m_running; //!< Information that main application is in main loop.
 
         Poll m_poll; //!< Backend for main loop.
         Config m_cfg; //!< Application configuration.
-        ConfigSysrepo* m_sysrepo; //!< Sysrepo connection reference.
+        ConfigFile* m_cfgfile;
         TimerInterface* m_aggregated_timer; //!< Timer for automatic aggregating statistics and calculating qps.
         TimerInterface* m_output_timer; //!< Timer for automatic rotation of output files
 

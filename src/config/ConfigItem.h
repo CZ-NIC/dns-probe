@@ -36,7 +36,6 @@
 #include <sys/socket.h>
 #include <boost/any.hpp>
 #include <type_traits>
-#include <sysrepo-cpp/Session.hpp>
 
 #include "ConfigTypes.h"
 #include "platform/ThreadManager.h"
@@ -52,14 +51,14 @@ namespace DDP {
     public:
         virtual ~ConfigItemBase() = default;
         /**
-         * Method used for extraction from sysrepo. Given value is passed as boost::any. Actual implementation should
-         * convert boost::any into appropriate type.
-         * @param value Value from sysrepo.
+         * Method used for extraction from configuration file. Given value is passed as boost::any.
+         * Actual implementation should convert boost::any into appropriate type.
+         * @param value Value from configuration file.
          */
-        virtual void from_sysrepo(const boost::any& value) = 0;
+        virtual void add_value(const boost::any& value) = 0;
 
         /**
-         * Deletes given value from config item. Used mainly for deleting values from leaf-list.
+         * Deletes given value from config item. Used mainly for deleting values from lists.
          * @param value Value to delete from config item.
          */
 #pragma GCC diagnostic push
@@ -74,8 +73,8 @@ namespace DDP {
         virtual std::string string() const = 0;
 
         /**
-         * Check if given value from sysrepo can be used in config.
-         * @param value Checked valued from sysrepo.
+         * Check if given value from configuration file can be used in config.
+         * @param value Checked valued from configuration file.
          * @return True if value is valid otherwise false.
          */
         virtual bool validate(const boost::any&) const { return true; }
@@ -90,16 +89,22 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem() {};
+        ConfigItem(Type value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         Type value() const { return m_value; }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             m_value = boost::any_cast<Type>(value);
         }
@@ -133,14 +138,20 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(PcapExportCfg value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         PcapExportCfg value() const { return m_value; }
 
         /**
-         * Check if given value from sysrepo can be used in config.
-         * @param value Checked valued from sysrepo.
+         * Check if given value from configuration file can be used in config.
+         * @param value Checked valued from configuration file.
          * @return True if value is valid otherwise false.
          */
         bool validate(const boost::any& value) const override
@@ -155,10 +166,10 @@ namespace DDP {
         }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
@@ -205,14 +216,20 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(ExportFormat value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         ExportFormat value() const { return m_value; }
 
         /**
-         * Check if given value from sysrepo can be used in config.
-         * @param value Checked valued from sysrepo.
+         * Check if given value from configuration file can be used in config.
+         * @param value Checked valued from configuration file.
          * @return True if value is valid otherwise false.
          */
         bool validate(const boost::any& value) const override
@@ -227,10 +244,10 @@ namespace DDP {
         }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
@@ -275,6 +292,11 @@ namespace DDP {
     {
         using Type = ThreadManager::MaskType;
     public:
+        /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(Type value) : m_value(value) {};
 
         /**
          * Access saved value.
@@ -283,10 +305,10 @@ namespace DDP {
         Type value() const { return m_value; }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             m_value = boost::any_cast<uint64_t>(value);
         }
@@ -320,6 +342,12 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(ExportLocation value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
@@ -337,10 +365,10 @@ namespace DDP {
         }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo
+         * Save value from configuration file.
+         * @param value Value from configuration file
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
@@ -383,6 +411,11 @@ namespace DDP {
     {
         using Type = std::bitset<size>;
     public:
+        /**
+         * @brief Constructors
+         */
+        ConfigBitfield(){}
+        ConfigBitfield(size_t value) : m_value(value) {}
 
         /**
          * Access saved value.
@@ -391,20 +424,12 @@ namespace DDP {
         Type value() const { return m_value; }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
-            auto bit_field = boost::any_cast<std::vector<libyang::S_Type_Bit>>(value);
-            if(bit_field.size() != size)
-                throw std::invalid_argument("Bitfield contains unexpected count of bits!");
-
-            m_value.reset();
-
-            for(decltype(bit_field.size()) i = 0; i < bit_field.size(); i++) {
-                m_value.set(i, static_cast<bool>(bit_field[i]));
-            }
+            m_value = boost::any_cast<std::bitset<CdnsBits>>(value);
         }
 
         /**
@@ -436,14 +461,20 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(IpEncryption value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         IpEncryption value() const { return m_value; }
 
         /**
-         * Check if given value from sysrepo can be used in config.
-         * @param value Checked valued from sysrepo.
+         * Check if given value from configuration file can be used in config.
+         * @param value Checked valued from configuration file.
          * @return True if value is valid otherwise false.
          */
         bool validate(const boost::any& value) const override
@@ -458,10 +489,10 @@ namespace DDP {
         }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             auto str_value = boost::any_cast<std::string>(value);
             std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
@@ -517,23 +548,29 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(CList<Port_t> value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         CList<Port_t> value() const { return m_value; }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             m_value.insert(boost::any_cast<Port_t>(value));
         }
 
         /**
          * Delete value from list.
-         * @param value Value from syrepo to delete.
+         * @param value Value from configuration file to delete.
          */
         void delete_value(const boost::any& value) override
         {
@@ -578,16 +615,22 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(CList<IPv4_t> value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         CList<IPv4_t> value() const { return m_value; }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             IPv4_t addr;
             int ret = inet_pton(AF_INET, boost::any_cast<std::string>(value).c_str(), &addr);
@@ -598,7 +641,7 @@ namespace DDP {
 
         /**
          * Delete value from list.
-         * @param value Value from syrepo to delete.
+         * @param value Value from configuration file to delete.
          */
         void delete_value(const boost::any& value) override
         {
@@ -672,16 +715,22 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(CList<IPv6_t> value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         CList<IPv6_t> value() const { return m_value; }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             IPv6_t addr;
             int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), addr.data());
@@ -692,7 +741,7 @@ namespace DDP {
 
         /**
          * Delete value from list.
-         * @param value Value from syrepo to delete.
+         * @param value Value from configuration file to delete.
          */
         void delete_value(const boost::any& value) override
         {
@@ -743,23 +792,29 @@ namespace DDP {
     {
     public:
         /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(CList<std::string> value) : m_value(value) {};
+
+        /**
          * Access saved value.
          * @return Value inside config item.
          */
         CList<std::string> value() const { return m_value; }
 
         /**
-         * Save value from sysrepo.
-         * @param value Value from sysrepo.
+         * Save value from configuration file.
+         * @param value Value from configuration file.
          */
-        void from_sysrepo(const boost::any& value) override
+        void add_value(const boost::any& value) override
         {
             m_value.insert(boost::any_cast<std::string>(value));
         }
 
         /**
          * Delete value from list.
-         * @param value Value from syrepo to delete.
+         * @param value Value from configuration to delete.
          */
         void delete_value(const boost::any& value) override
         {

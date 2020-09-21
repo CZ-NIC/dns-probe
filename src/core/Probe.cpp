@@ -34,7 +34,7 @@
 #include "Worker.h"
 #include "Exporter.h"
 #include "core/Port.h"
-#include "config/ConfigSysrepo.h"
+#include "config/ConfigFile.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
 #include "platform/Platform.h"
@@ -84,7 +84,7 @@ namespace DDP {
 
 
 DDP::Probe::Probe() : m_cfg_loaded(false), m_initialized(false), m_running(false), m_poll(), m_cfg(),
-                      m_sysrepo(nullptr), m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
+                      m_cfgfile(nullptr), m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
                       m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
                       m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
 
@@ -94,7 +94,7 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     args.app = argv[0];
     int opt;
 
-    while ((opt = getopt(argc, argv, "hi:p:rl:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rl:n:c:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -116,7 +116,15 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 
             case 'l':
                 logwriter.set_output(std::string(optarg));
-                args.log_file = std::string(optarg);
+                args.log_file = optarg;
+                break;
+
+            case 'n':
+                args.instance_name = optarg;
+                break;
+
+            case 'c':
+                args.conf_file = optarg;
                 break;
 
             default:
@@ -142,11 +150,13 @@ void DDP::Probe::print_help(const char* app)
         interface = "interface name e.g. eth0 or PCI ID e.g. 00:1f.6";
 
     std::cout << std::endl << app << std::endl
-              << "\t-p PCAP      : input pcap files. Parameter can repeat." << std::endl
-              << "\t-i INTERFACE : " << interface << ". Parameter can repeat." << std::endl
-              << "\t-r           : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
-              << "\t-l LOGFILE   : redirect probe's logs to LOGFILE instead of standard output" << std::endl
-              << "\t-h           : this help message" << std::endl;
+              << "\t-p PCAP        : input pcap files. Parameter can repeat." << std::endl
+              << "\t-i INTERFACE   : " << interface << ". Parameter can repeat." << std::endl
+              << "\t-r             : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
+              << "\t-l LOGFILE     : redirect probe's logs to LOGFILE instead of standard output" << std::endl
+              << "\t-n INSTANCE    : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
+              << "\t-c CONFIG_FILE : YAML file to load initial configuration from." << std::endl
+              << "\t-h             : this help message" << std::endl;
 }
 
 DDP::Probe& DDP::Probe::getInstance()
@@ -165,9 +175,10 @@ void DDP::Probe::load_config(Arguments& args)
 
     try {
         // Init configuration
-        m_sysrepo = &m_poll.emplace<DDP::ConfigSysrepo>(m_cfg);
+        m_cfgfile = &m_poll.emplace<DDP::ConfigFile>(m_cfg, args.conf_file, args.instance_name);
+
         if (args.raw_pcap)
-            m_cfg.raw_pcap.from_sysrepo(args.raw_pcap);
+            m_cfg.raw_pcap.add_value(args.raw_pcap);
 
         if (args.log_file.empty() && !m_cfg.log_file.value().empty())
             logwriter.set_output(m_cfg.log_file.value());
@@ -194,7 +205,7 @@ void DDP::Probe::load_config(Arguments& args)
 void DDP::Probe::init(const Arguments& args)
 {
     if (!m_cfg_loaded)
-        throw std::runtime_error("Configuration was not loaded from Sysrepo yet!");
+        throw std::runtime_error("Configuration was not loaded from configuration file yet!");
 
     if (m_initialized)
         return;

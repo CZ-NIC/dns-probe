@@ -23,6 +23,10 @@
 
 #pragma once
 
+#ifndef PROBE_CONFIG
+#define PROBE_CONFIG ""
+#endif
+
 #include <string>
 #include <list>
 
@@ -49,6 +53,8 @@ namespace DDP {
         std::list<PciDevice> devices; //<! List of PCI devices corresponding to interfaces list (used in DPDK version)
         std::list<std::string> pcaps; //<! List of PCAPs with data for processing
         std::string log_file; //!< Log file to store probe's logs
+        std::string instance_name = "default"; //!< Instance name used for getting YAML configuration
+        std::string conf_file = PROBE_CONFIG; //!< YAML file to load initial configuration from
         bool raw_pcap;
     };
 }

@@ -27,6 +27,7 @@
 #include <string>
 #include <array>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace DDP {
     template <typename T>
@@ -91,6 +92,32 @@ namespace DDP {
         RESPONSE_ADDITIONAL_SECTIONS,
         RESPONSE_SIZE,
         RESPONSE_DELAY
+    };
+
+    static const std::unordered_map<std::string, uint32_t> CdnsFieldsMap = {
+        {"transaction_id",                  static_cast<uint32_t>(CDNSField::TRANSACTION_ID)},
+        {"time_offset",                     static_cast<uint32_t>(CDNSField::TIME_OFFSET)},
+        {"query_name",                      static_cast<uint32_t>(CDNSField::QUERY_NAME)},
+        {"client_hoplimit",                 static_cast<uint32_t>(CDNSField::CLIENT_HOPLIMIT)},
+        {"qr_transport_flags",              static_cast<uint32_t>(CDNSField::QR_TRANSPORT_FLAGS)},
+        {"client_address",                  static_cast<uint32_t>(CDNSField::CLIENT_ADDRESS)},
+        {"client_port",                     static_cast<uint32_t>(CDNSField::CLIENT_PORT)},
+        {"server_address",                  static_cast<uint32_t>(CDNSField::SERVER_ADDRESS)},
+        {"server_port",                     static_cast<uint32_t>(CDNSField::SERVER_PORT)},
+        {"query_size",                      static_cast<uint32_t>(CDNSField::QUERY_SIZE)},
+        {"qr_dns_flags",                    static_cast<uint32_t>(CDNSField::QR_DNS_FLAGS)},
+        {"query_ancount",                   static_cast<uint32_t>(CDNSField::QUERY_ANCOUNT)},
+        {"query_arcount",                   static_cast<uint32_t>(CDNSField::QUERY_ARCOUNT)},
+        {"query_nscount",                   static_cast<uint32_t>(CDNSField::QUERY_NSCOUNT)},
+        {"query_qdcount",                   static_cast<uint32_t>(CDNSField::QUERY_QDCOUNT)},
+        {"response_rcode",                  static_cast<uint32_t>(CDNSField::RESPONSE_RCODE)},
+        {"query_classtype",                 static_cast<uint32_t>(CDNSField::QUERY_CLASSTYPE)},
+        {"query_edns_version",              static_cast<uint32_t>(CDNSField::QUERY_EDNS_VERSION)},
+        {"query_edns_udp_size",             static_cast<uint32_t>(CDNSField::QUERY_EDNS_UDP_SIZE)},
+        {"query_opt_data",                  static_cast<uint32_t>(CDNSField::QUERY_OPT_RDATA)},
+        {"response_additional_sections",    static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)},
+        {"response_size",                   static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)},
+        {"response_delay",                  static_cast<uint32_t>(CDNSField::RESPONSE_DELAY)},
     };
 
     /**
