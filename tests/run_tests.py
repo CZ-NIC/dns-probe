@@ -70,8 +70,7 @@ vals = [
 def cmp_parquet(parquet, cmd, verbose):
     print("-----------------------------------------------------------")
     print("*** Testing " + parquet + " ***")
-    out = open(os.devnull, 'w')
-    proc = subprocess.Popen(cmd, shell=True, stdout=out, stderr=out)
+    proc = subprocess.Popen(cmd, shell=True)
 
     try:
         proc.wait()
