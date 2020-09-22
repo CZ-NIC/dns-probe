@@ -1,0 +1,12 @@
+anon:
+  ip-anonymization:
+    anonymize-ip: true
+    key-path: '../config/key.cryptopant'
+
+ip_allow:
+  ipv4-allowlist:
+    - '147.229.8.12'
+
+ip_deny:
+  ipv4-denylist:
+    - '147.229.8.12'
