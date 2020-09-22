@@ -29,9 +29,24 @@
 #include "Config.h"
 
 namespace DDP {
+    /**
+     * @brief Parse YAML configuration file and fill Config structure
+     */
     struct ConfigFile
     {
+        /**
+         * @brief Parses "default" and user given instances from YAML configuration file.
+         * @param cfg Config structure to fill
+         * @param conf_file Path to YAML configuration file
+         * @param instance Unique ID of DNS Probe instance
+         */
         static void load_configuration(Config& cfg, std::string conf_file, std::string instance = "default");
+
+        /**
+         * @brief Parses DNS Probe instance given in YAML::Node object
+         * @param cfg Config structure to fill
+         * @param node YAML Node with configuration for specific DNS Probe instance
+         */
         static void load_instance(Config& cfg, YAML::Node node);
     };
 }

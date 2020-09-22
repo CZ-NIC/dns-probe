@@ -36,6 +36,7 @@ void DDP::ConfigFile::load_configuration(Config& cfg, std::string conf_file, std
     try {
         YAML::Node config = YAML::LoadFile(conf_file);
 
+        // Always load default configuration first and then load changes for given instance if present
         if (config["default"])
             load_instance(cfg, config["default"]);
 
