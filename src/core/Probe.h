@@ -42,7 +42,6 @@
 namespace DDP {
     class TimerInterface;
     class Port;
-    class ConfigFile;
     class CommLinkProxy;
 
     /**
@@ -184,7 +183,6 @@ namespace DDP {
 
         Poll m_poll; //!< Backend for main loop.
         Config m_cfg; //!< Application configuration.
-        ConfigFile* m_cfgfile;
         TimerInterface* m_aggregated_timer; //!< Timer for automatic aggregating statistics and calculating qps.
         TimerInterface* m_output_timer; //!< Timer for automatic rotation of output files
 

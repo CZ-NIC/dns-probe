@@ -84,7 +84,7 @@ namespace DDP {
 
 
 DDP::Probe::Probe() : m_cfg_loaded(false), m_initialized(false), m_running(false), m_poll(), m_cfg(),
-                      m_cfgfile(nullptr), m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
+                      m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
                       m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
                       m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
 
@@ -175,7 +175,7 @@ void DDP::Probe::load_config(Arguments& args)
 
     try {
         // Init configuration
-        m_cfgfile = &m_poll.emplace<DDP::ConfigFile>(m_cfg, args.conf_file, args.instance_name);
+        ConfigFile::load_configuration(m_cfg, args.conf_file, args.instance_name);
 
         if (args.raw_pcap)
             m_cfg.raw_pcap.add_value(args.raw_pcap);

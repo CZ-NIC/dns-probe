@@ -23,52 +23,15 @@
 
 #pragma once
 
-#include <iostream>
-#include <memory>
-#include <unistd.h>
+#include <string>
 #include <yaml-cpp/yaml.h>
 
-#include "ConfigItem.h"
 #include "Config.h"
-#include "core/Statistics.h"
-#include "utils/Poll.h"
-#include "utils/FileDescriptor.h"
-#include "utils/Logger.h"
 
 namespace DDP {
-    class ConfigFile : public PollAble
+    struct ConfigFile
     {
-        public:
-        explicit ConfigFile(Config& cfg, std::string conf_file, std::string instance = "default");
-
-        ~ConfigFile() override = default;
-
-        /**
-         * Process request from config file when associated file descriptor is ready to read.
-         */
-        void ready_read() override;
-
-        /**
-         * When connection between application and config file is broken process the error.
-         */
-        void error() override;
-
-        /**
-         * Process closed connection from config file.
-         */
-        void hup() override;
-
-        /**
-         * Provides access to underlying file descriptor.
-         * @return Associated file descriptor.
-         */
-        int fd() override { return m_fd; }
-
-    private:
-        void load_instance(YAML::Node node);
-
-        Config& m_cfg; //!< Associated config.
-        Logger m_logger; //!< Logger for logging events.
-        int m_fd;
+        static void load_configuration(Config& cfg, std::string conf_file, std::string instance = "default");
+        static void load_instance(Config& cfg, YAML::Node node);
     };
 }
