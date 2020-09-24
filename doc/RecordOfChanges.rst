@@ -16,8 +16,16 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.6**
+     - **1.5**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
+       :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Glossary <Glossary>`,
+       :doc:`Installation <Installation>`, :doc:`Overview <Overview>`, :doc:`Running DNS Probe <Running>`,
+       :doc:`Default YAML file <YAMLfile>`, :doc:`dns-probe-af manpage <manpages/dns-probe-af>`,
+       :doc:`dns-probe-dpdk manpage <manpages/dns-probe-dpdk>`
+     - Replace Sysrepo with YAML file to configure DNS Probe
+   * -
      - **1.4**
-     - :doc:`YANG module <YANGmodule>`
+     - YANG module
      - Fix default value for number of concurrent connections in tcp-table
    * -
      - **1.3**
@@ -25,7 +33,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Update pattern of exported file's names
    * -
      - **1.2**
-     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`YANG module <YANGmodule>`
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, YANG module
      - Add TCP RTT item to exported data schema
    * -
      - **1.1**
@@ -35,15 +43,15 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Data Collector <DataCollector>`,
-       :doc:`YANG module <YANGmodule>`, :doc:`Manual pages <manpages/dp-collector>`
+       YANG module, :doc:`Manual pages <manpages/dp-collector>`
      - Add secure export to remote location
    * -
      -
-     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
+     - :doc:`Configuration <Configuration>`, YANG module
      - Fix description of "export-dir" item in YANG module from static to dynamic configuration
    * -
      -
-     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`, :doc:`Running DNS Probe <Running>`
+     - :doc:`Configuration <Configuration>`, YANG module, :doc:`Running DNS Probe <Running>`
      - Integrate probe's command line parameters to Sysrepo configuration
    * -
      -
@@ -51,15 +59,15 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Update instructions for installation from packages
    * -
      -
-     - :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`, :doc:`YANG module <YANGmodule>`
+     - :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`, YANG module
      - Add client IP anonymization
    * -
      -
-     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
+     - :doc:`Configuration <Configuration>`, YANG module
      - Add IP filtering to YANG module
    * - **0.5**
      - **1.1**
-     - :doc:`index <index>`, :doc:`Installation <Installation>`, :doc:`YANG module <YANGmodule>`,
+     - :doc:`index <index>`, :doc:`Installation <Installation>`, YANG module,
        :doc:`Record Of Changes <RecordOfChanges>`
      - Update GitLab URLs
    * -

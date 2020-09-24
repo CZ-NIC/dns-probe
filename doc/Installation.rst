@@ -77,8 +77,6 @@ Three alternative packages are available:
 * ``dns-probe-dpdk`` uses the DPDK framework.
 * ``dns-probe-collector`` is a collector for data exported from DNS Probe via the remote export feature.
 
-Package installation also initializes the Sysrepo datastore with a default configuration, if no configuration is found.
-
 Installation from source
 ========================
 
@@ -89,6 +87,7 @@ distribution repositories:
 - CMake, version at least 3.5
 - Boost (C++ libraries)
 - libpcap
+- yaml-cpp
 - OpenSSL (libssl-dev)
 - DPDK (only for DPDK version)
 
@@ -121,36 +120,6 @@ Apache Arrow packages can be installed on most distributions from Apache's own
 `repositories <https://arrow.apache.org/install/>`_. Debian/Ubuntu ``libarrow-dev``
 and ``libparquet-dev`` packages or their equivalents in other distributions need
 to be installed for successful compilation of DNS probe.
-
-Sysrepo
--------
-
-`Sysrepo <https://github.com/sysrepo/sysrepo>`_ provides a
-configuration and management API. It uses the `libyang
-<https://github.com/CESNET/libyang>`_ library that needs to be
-installed first.
-
-.. code:: shell
-
-   curl -L https://github.com/CESNET/libyang/archive/master.tar.gz > dl/libyang.tgz
-   mkdir build/libyang
-   tar -xf dl/libyang.tgz -C build/libyang --strip-components=1
-   mkdir -p build/libyang/build
-   cd build/libyang/build
-   cmake .. -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DGEN_LANGUAGE_BINDINGS=On -DGEN_CPP_BINDINGS=On -DGEN_PYTHON_BINDINGS=Off
-   make -j
-   make install
-   cd "$DEP_DIR"
-
-   curl -L https://github.com/sysrepo/sysrepo/archive/master.tar.gz > dl/sysrepo.tgz
-   mkdir build/sysrepo
-   tar -xf dl/sysrepo.tgz -C build/sysrepo --strip-components=1
-   mkdir -p build/sysrepo/build
-   cd build/sysrepo/build
-   cmake .. -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DGEN_LANGUAGE_BINDINGS=On -DGEN_CPP_BINDINGS=On -DGEN_PYTHON_BINDINGS=Off
-   make -j
-   make install
-   cd "$DEP_DIR"
 
 C-DNS Library
 -------------
@@ -198,9 +167,3 @@ DNS Probe
    cmake <GIT_REPO> -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DAF_PACKET_BACKEND=On -DDPDK_BACKEND=On -DBUILD_COLLECTOR=On
    make -j
    make install
-
-Finally, YANG module containing the data model for DNS Probe and default configuration also needs to be installed:
-
-.. code:: shell
-
-   sudo $DEP_DIR/bin/sysrepoctl -i <GIT_REPO>/data-model/cznic-dns-probe.yang
