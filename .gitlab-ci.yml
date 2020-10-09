@@ -1,4 +1,4 @@
-image: registry.nic.cz/adam/dns-probe:config_redo
+image: registry.nic.cz/adam/dns-probe:latest
 
 stages:
   - build_and_test
