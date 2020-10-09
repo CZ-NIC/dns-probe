@@ -15,8 +15,8 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
-   * - **0.6**
-     - **1.5**
+   * - **0.7**
+     - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Glossary <Glossary>`,
        :doc:`Installation <Installation>`, :doc:`Overview <Overview>`, :doc:`Running DNS Probe <Running>`,
@@ -24,18 +24,18 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
        :doc:`dns-probe-dpdk manpage <manpages/dns-probe-dpdk>`
      - Replace Sysrepo with YAML file to configure DNS Probe
    * -
-     - **1.4**
+     -
      - YANG module
      - Fix default value for number of concurrent connections in tcp-table
    * -
-     - **1.3**
+     -
      - :doc:`Exported Data Schema <ExportedDataSchema>`
      - Update pattern of exported file's names
    * -
-     - **1.2**
+     -
      - :doc:`Exported Data Schema <ExportedDataSchema>`, YANG module
      - Add TCP RTT item to exported data schema
-   * -
+   * - **0.6**
      - **1.1**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
      - Domainname field in export schema is in lowercase
