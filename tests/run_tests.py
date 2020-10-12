@@ -63,13 +63,13 @@ vals = [
     "is_google",
     "is_opendns",
     "dns_res_len",
-    "server_location"
+    "server_location",
+    #"tcp_hs_rtt"
 ]
 
-def cmp_parquet(parquet, pcap, cmd_base, verbose):
+def cmp_parquet(parquet, cmd, verbose):
     print("-----------------------------------------------------------")
     print("*** Testing " + parquet + " ***")
-    cmd = cmd_base + pcap
     out = open(os.devnull, 'w')
     proc = subprocess.Popen(cmd, shell=True, stdout=out, stderr=out)
 
@@ -155,33 +155,24 @@ def main():
     except:
         os.rmdir(tmpdir)
         pass
-
-    # Backup current configuration
-    subprocess.run(["sysrepocfg", "--export=../config/tmp.json", "-f", "json"])
     
     # Run default configuration tests
-    subprocess.run(["sysrepocfg", "--import=../config/default.json"])
     for (parquet, pcap) in zip(sorted(os.listdir("../test_parquets/base")), sorted(os.listdir("../test_pcaps"))):
-        retval = cmp_parquet("base/" + parquet, pcap, cmd_base, args.verbose_switch) or retval
+        retval = cmp_parquet("base/" + parquet, cmd_base + pcap, args.verbose_switch) or retval
+
+    cfgfile = " -c ../config/config.yml"
 
     # Run tests for IP anonymization
-    subprocess.run(["sysrepocfg", "--import=../config/anon.json"])
     for (parquet, pcap) in zip(sorted(os.listdir("../test_parquets/anonymized")), sorted(os.listdir("../test_pcaps"))):
-        retval = cmp_parquet("anonymized/" + parquet, pcap, cmd_base, args.verbose_switch) or retval
+        retval = cmp_parquet("anonymized/" + parquet, cmd_base + pcap + cfgfile + " -n anon", args.verbose_switch) or retval
 
     # Run test for IP allow-list
-    subprocess.run(["sysrepocfg", "--import=../config/ip_allow.json"])
-    retval = cmp_parquet("ip_filtered/edns_dnssec_nsid_allow.parquet", "edns_dnssec_nsid.pcap",
-                         cmd_base, args.verbose_switch) or retval
+    retval = cmp_parquet("ip_filtered/edns_dnssec_nsid_allow.parquet", cmd_base + "edns_dnssec_nsid.pcap"
+        + cfgfile + " -n ip_allow", args.verbose_switch) or retval
 
     # Run test for IP deny-list
-    subprocess.run(["sysrepocfg", "--import=../config/ip_deny.json"])
-    retval = cmp_parquet("ip_filtered/edns_dnssec_nsid_deny.parquet", "edns_dnssec_nsid.pcap",
-                         cmd_base, args.verbose_switch) or retval
-    
-    # Import original configuration
-    subprocess.run(["sysrepocfg", "--import=../config/tmp.json"])
-    os.remove("../config/tmp.json")
+    retval = cmp_parquet("ip_filtered/edns_dnssec_nsid_deny.parquet", cmd_base + "edns_dnssec_nsid.pcap"
+        + cfgfile + " -n ip_deny", args.verbose_switch) or retval
 
     for file in os.listdir(os.getcwd()):
         os.remove(file)

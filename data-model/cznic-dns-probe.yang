@@ -35,6 +35,16 @@ module cznic-dns-probe {
      records about DNS transactions in C-DNS or Apache Parquet
      format.";
 
+  revision 2020-09-16 {
+    description
+      "Fix default value for number of concurrent connections in tcp-table";
+  }
+
+  revision 2020-09-04 {
+    description
+      "Add 'response_delay' bit to exported C-DNS fields";
+  }
+
   revision 2020-08-24 {
     description
       "Add secure export to remote location";
@@ -249,6 +259,7 @@ module cznic-dns-probe {
           bit query_opt_rdata;
           bit response_additional_sections;
           bit response_size;
+          bit response_delay; // TCP RTT
         }
         default "transaction_id time_offset query_name "
               + "client_hoplimit qr_transport_flags client_address "
@@ -257,7 +268,7 @@ module cznic-dns-probe {
               + "query_nscount query_qdcount query_opcode "
               + "response_rcode query_classtype query_edns_version "
               + "query_edns_udp_size query_opt_rdata "
-              + "response_additional_sections response_size";
+              + "response_additional_sections response_size response_delay";
         description
           "This bit set indicates which fields from the C-DNS
            standard schema are included in exported data.
@@ -452,7 +463,7 @@ module cznic-dns-probe {
         "Configuration of TCP processing.";
       leaf concurrent-connections {
         type uint32;
-        default "1048576";
+        default "131072";
         description
           "Maximal number of concurrent TCP connections.
 

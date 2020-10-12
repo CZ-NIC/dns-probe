@@ -1,0 +1,190 @@
+# Last revision: 2020-09-22
+#
+# Default instance configuration.
+# This configuration is always loaded before other configuration specified by given instance's ID.
+# DNS Probe contains default configuration values within itself so this file can be left empty
+# if desired.
+default:
+
+  # List of network interfaces to process traffic from in addition to interfaces passed
+  # with '-i' command line parameter.
+  interface-list: []
+
+  # List of PCAPs to process in addition to PCAPs passed with '-p' command line parameter.
+  pcap-list: []
+
+  # Indicates RAW PCAPs as input in 'pcap-list' or from command line with '-p' parameter.
+  # Might get overriden by '-r' command line parameter.
+  # MUST be set to 'false' if 'interface-list' or '-i' command line parameter are used.
+  raw-pcap: false
+
+  # Path (including file's name) to log file for storing logs. Might get overriden by '-l'
+  # command line parameter.
+  # By default logs are written to stdout.
+  log-file: ''
+
+  # This parameter is used for selecting CPU cores on which the application will be running.
+  coremask: 0x7
+
+  # List of allowed IPv4 addreses to process traffic from.
+  # By default all IPv4 addresses are allowed.
+  ipv4-allowlist: []
+
+  # List of IPv4 addresses from which to NOT process traffic.
+  # By default all IPv4 addresses are allowed.
+  ipv4-denylist: []
+
+  # List of allowed IPv6 addresses to process traffic from.
+  # By default all IPv6 addresses are allowed.
+  ipv6-allowlist: []
+
+  # List of IPv6 addresses from which to NOT process traffic.
+  # By default all IPv6 addresses are allowed.
+  ipv6-denylist: []
+
+  # List of ports used for identifying DNS traffic.
+  dns-ports:
+    - 53
+
+  # [SECTION] Items for configuration of exported data
+  export:
+
+    # Location for the storage of exported DNS records.
+    # Valid values are 'local' and 'remote'.
+    location: 'local'
+
+    # Directory for exported data.
+    export-dir: '.'
+
+    # IP address for remote export of DNS records.
+    remote-ip-address: '127.0.0.1'
+
+    # Transport protocol port number for remote export of DNS records.
+    remote-port: 6378
+
+    # Path (including file's name) to the CA certificate against which the remote server's
+    # certificate will be authenticated during TLS handshake.
+    # By default server's certificate will be authenticated against OpenSSL's default directory
+    # with CA certificates.
+    remote-ca-cert: ''
+
+    # Format of exported data.
+    # Valid values are 'parquet' and 'cdns'.
+    export-format: 'parquet'
+
+    # This sequence indicates which fields from the C-DNS standard schema are included in exported data.
+    # By default all fields available in DNS Probe are enabled as shown below.
+    cdns-fields:
+      - 'transaction_id'
+      - 'time_offset'
+      - 'query_name'
+      - 'client_hoplimit'
+      - 'qr_transport_flags'
+      - 'client_address'
+      - 'client_port'
+      - 'server_address'
+      - 'server_port'
+      - 'query_size'
+      - 'qr_dns_flags'
+      - 'query_ancount'
+      - 'query_arcount'
+      - 'query_nscount'
+      - 'query_qdcount'
+      - 'query_opcode'
+      - 'response_rcode'
+      - 'query_classtype'
+      - 'query_edns_version'
+      - 'query_edns_udp_size'
+      - 'query_opt_rdata'
+      - 'response_additional_sections'
+      - 'response_size'
+      - 'response_delay' # TCP RTT
+
+    # Maximum number of DNS records in one exported C-DNS block.
+    cdns-records-per-block: 10000
+
+    # Maximum number of C-DNS blocks in one exported C-DNS file.
+    cdns-blocks-per-file: 0
+
+    # Maximum number of Parquet records per file.
+    parquet-records-per-file: 5000000
+
+    # Common prefix of exported files' names.
+    file-name-prefix: 'dns_'
+
+    # Time interval after which the current export file is rotated.
+    timeout: 0
+
+    # Size limit for the export file. If the limit is exceeded, the export file is rotated.
+    # The value of 0 (default) means no size-based rotation.
+    file-size-limit: 0
+
+    # if this flag is true, the exported Parquet or C-DNS files will be compressed using GZIP.
+    # C-DNS willl be compressed explicitly with .gz sufix; Parquet files will be compressed
+    # internally due to the nature of the format.
+    file-compression: true
+
+    # Selection of packets to be stored in PCAP files, in addition to normal Parquet or C-DNS export.
+    # It's recommended to use this option only for testing purposes.
+    # Valid values are 'all', 'invalid', 'disabled'.
+    pcap-export: 'disabled'
+
+  # [SECTION] Configuration of client IP anonymization in exported data (Parquet or C-DNS).
+  # The optional PCAP export does NOT get anonymized!!!
+  ip-anonymization:
+
+    # If this flag is true, client IP addresses in exported data will be anonymized using
+    # Crypto-PAn prefix-preserving algorithm.
+    anonymize-ip: false
+
+    # Encryption algorithm to be used during anonymization of client IP addresses if enabled.
+    # Valid values are 'aes', 'blowfish', 'md5', 'sha1'.
+    encryption: 'aes'
+
+    # Path (including file's name) to the file with encryption key that is to be used for client
+    # IP anonymization if enabled. If the file doesn't exist, it is generated by the probe.
+    # The key needs to be compatible with the encryption algorithm set in the 'encryption' option
+    # above. User should generate the key using 'scramble-ips' tool installed by the cryptopANT
+    # dependency like this:
+    #
+    # scramble_ips --newkey --type=<encryption> <key-file>
+    key-path: 'key.cryptopant'
+
+  # [SECTION] Configuration of transaction table parameters.
+  transaction-table:
+
+    # Maximum number of entries in the transaction table.
+    # MUST be a power of 2.
+    max-transactions: 1048576
+
+    # Time interval after which a query record is removed from the transaction database if no
+    # response is observed.
+    # Value is in milliseconds.
+    query-timeout: 1000
+
+    # If this flag is true, DNS QNAME (if present) is used as a secondary key for matching
+    # requests with responses.
+    match-qname: false
+
+  # [SECTION] Configuration of TCP processing
+  tcp-table:
+
+    # Maximum number of concurrent TCP connections.
+    # MUST be a power of 2.
+    concurrent-connections: 131072
+
+    # Time interval after which a TCP connection is removed from the connection database
+    # if no data is received through that connection.
+    # Value is in milliseconds.
+    timeout: 60000
+
+# Configuration for specific instances of DNS Probe (set by '-n' command line parameter).
+# Only changes to default configuration need to be specified here.
+#
+# test1:
+#   interface-list:
+#     - 'lo'
+#
+# test2:
+#   interface-list:
+#     - 'enp0'

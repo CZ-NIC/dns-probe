@@ -7,7 +7,7 @@ Storing exported data
 
 DNS Probe supports storing the exported data either to local files or transferring them directly to a remote
 location via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_. This is determined
-by the :ref:`location` option in Sysrepo configuration.
+by the :ref:`location` option in YAML configuration file.
 
 Local storage
 -------------
@@ -17,14 +17,13 @@ specified by :ref:`export-dir` option. The names of these files will have the fo
 
 ::
 
-    <prefix>YYYYMMDD-HHMMSS_p<proc_id>_<file_id>.<sufix>
+    <prefix>yyyyMMdd.HHmmss.SSSSSS.p<proc_id>.<sufix>
 
-The *<prefix>* is determined by :ref:`file-name-prefix` option in Sysrepo configuration. The *YYYYMMDD-HHMMSS*
-represents a UTC timestamp from when the output file was first opened. *<proc_id>* is an internal identification
-of process (worker or export thread) which wrote the output file. *<file_id>* represents the number of a file
-from files written within the same second to prevent overriding data if more files are exported within
-the same second. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
-compression configured in Sysrepo.
+The *<prefix>* is determined by :ref:`file-name-prefix` option in YAML configuration file. The
+*yyyyMMdd.HHmmss.SSSSSS* represents a UTC timestamp (microsecond precision) from when the output file was
+first opened. *<proc_id>* is an internal identification of process (worker or export thread) which wrote
+the output file. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
+compression configured in YAML file.
 
 Export to remote location
 -------------------------
@@ -185,7 +184,9 @@ Entrada schema.
 +---------------------------------+-----------+--------------------------------------+-------------------------------------------------------------+
 | is\_opendns                     | BOOLEAN   | XXX                                  | By IP list (Maxmind) (always false in Parquet)              |
 +---------------------------------+-----------+--------------------------------------+-------------------------------------------------------------+
-| dns\_res\_len                   | INT32     | response\_size                       | Response DNS payload length                                 |
+| dns\_res\_len                   | INT32     | response-size                        | Response DNS payload length                                 |
 +---------------------------------+-----------+--------------------------------------+-------------------------------------------------------------+
 | server\_location                | STRING    | XXX                                  | Server location (allways empty string in Parquet)           |
++---------------------------------+-----------+--------------------------------------+-------------------------------------------------------------+
+| tcp\_hs\_rtt                    | INT64     | response-delay                       | TCP Round Trip Time (RTT) (millisecond precision)           |
 +---------------------------------+-----------+--------------------------------------+-------------------------------------------------------------+

@@ -158,7 +158,7 @@ namespace DDP {
          */
         explicit BaseWriter(Config& cfg, uint32_t process_id, std::string sufix = "") :
             m_cfg(cfg),
-            m_id("_p" + std::to_string(process_id)),
+            m_id(".p" + std::to_string(process_id)),
             m_sufix(sufix),
             m_filename_counter(0),
             m_filename(),

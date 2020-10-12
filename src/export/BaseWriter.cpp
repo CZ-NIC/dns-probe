@@ -21,6 +21,7 @@
  *  the two.
  */
 
+#include <cstdio>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -206,36 +207,21 @@ namespace DDP {
     std::string BaseWriter::filename(std::string sufix, bool invalid)
     {
         std::string inv;
-        char time[20];
+        char time[30];
         timespec timestamp;
         tm tmp_tm;
 
         clock_gettime(CLOCK_REALTIME, &timestamp);
         gmtime_r(&timestamp.tv_sec, &tmp_tm);
-        strftime(time, 20, "%Y%m%d-%H%M%S", &tmp_tm);
+        auto pos = strftime(time, 20, "%Y%m%d.%H%M%S.", &tmp_tm);
+        std::snprintf(time + pos, sizeof(time) - pos, "%06lu", timestamp.tv_nsec / 1000);
 
-        if (invalid) {
-            inv = "_inv";
-        }
-        std::string counter = "_" + std::to_string(m_filename_counter);
+        if (invalid)
+            inv = ".inv";
+
         std::string full_sufix = sufix.empty() ? "" : ("." + sufix);
-        std::string filename = m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() +
-                                std::string(time) + m_id + inv + counter + full_sufix;
-
-        struct stat buffer;
-        if (stat((filename + m_sufix).c_str(), &buffer) == 0) {
-            return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() + std::string(time) +
-                m_id + inv + "_" + std::to_string(++m_filename_counter) + full_sufix;
-        } else {
-            if (m_filename_counter == 0) {
-                return filename;
-            }
-            else {
-                m_filename_counter = 0;
-                return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() +
-                    std::string(time) + m_id + inv + "_" + std::to_string(m_filename_counter) + full_sufix;
-            }
-        }
+        return m_cfg.target_directory.value() + "/" + m_cfg.file_prefix.value() + std::string(time)
+               + m_id + inv + full_sufix;
     }
 
     void BaseWriter::check_file_transfer()

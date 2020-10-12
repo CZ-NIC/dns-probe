@@ -54,6 +54,7 @@ bool DDP::DnsTcpConnection::update_connection(DnsRecord& record, const Packet& p
                 m_next_seq[conn_side] = pkt_seq + 1;
             }
 
+            m_rtt = Time(Time::Clock::MONOTONIC);
             m_state = TcpConnectionState::SYN;
         }
         else {
@@ -160,6 +161,7 @@ bool DDP::DnsTcpConnection::update_connection(DnsRecord& record, const Packet& p
 
             // Received ACK to complete 3-way handshake
             if (ntohl(header->ack_seq) == m_next_seq[conn_side ^ 1]) {
+                m_rtt = Time(Time::Clock::MONOTONIC) - m_rtt;
                 m_state = TcpConnectionState::ESTABLISHED;
             }
 
@@ -338,6 +340,11 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
             if ((uint32_t)(len + 2) == seg_len) {
                 record.m_dns_len = seg_len - 2;
                 record.m_len = packet.size();
+                if (m_state >= TcpConnectionState::ESTABLISHED) {
+                    record.m_tcp_rtt = m_rtt.getMillis();
+                    m_rtt = Time(-1);
+                }
+
                 try {
                     parser->parse_dns(segment.offset(2), record);
                 }
@@ -369,6 +376,10 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                 while (len <= seg_len_left) {
                     DnsRecord& msg = parser->get_empty();
                     fill_record_L3_L4(msg, record);
+                    if (m_state >= TcpConnectionState::ESTABLISHED) {
+                        msg.m_tcp_rtt = m_rtt.getMillis();
+                        m_rtt = Time(-1);
+                    }
 
                     try {
                         uint8_t* msg_buffer = parser->copy_to_buffer(data + 2, len, 0);
@@ -461,6 +472,10 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                     while (len <= seg_len_left) {
                         DnsRecord &msg = parser->get_empty();
                         fill_record_L3_L4(msg, record);
+                        if (m_state >= TcpConnectionState::ESTABLISHED) {
+                            msg.m_tcp_rtt = m_rtt.getMillis();
+                            m_rtt = Time(-1);
+                        }
 
                         const uint8_t *msg_buffer;
                         try {

@@ -1,4 +1,4 @@
-image: pdolezal/dns-probe-deps:latest
+image: registry.nic.cz/adam/dns-probe:latest
 
 stages:
   - build_and_test
@@ -7,7 +7,6 @@ stages:
 build_and_test:
   stage: build_and_test
   script:
-    - sysrepoctl -i data-model/cznic-dns-probe.yang
     - mkdir build
     - cd build
     - cmake -DDPDK_BACKEND=ON -DAF_PACKET_BACKEND=ON ..

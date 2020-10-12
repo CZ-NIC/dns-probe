@@ -8,36 +8,45 @@ Running as systemd service
 ==========================
 
 Installation packages include a *systemd* unit file
-``dns-probe-<BACKEND>.service``, where ``<BACKEND>`` is either ``af``
+``dns-probe-<BACKEND>@.service``, where ``<BACKEND>`` is either ``af``
 or ``dpdk`` depending on the :term:`backend` that the package installs.
 
 The *systemd* service can be run like this:
 
 .. code:: shell
 
-    sudo systemctl start dns-probe-<BACKEND>.service
+    sudo systemctl start dns-probe-<BACKEND>@<instance-id>.service
 
 Other ``systemctl`` subcommands can be used to stop, enable or restart the service.
 
+The ``instance-id`` service parameter specifies what configuration to load from YAML configuration file at
+``/etc/dns-probe-<BACKEND>/dns-probe.yml``.
 With default configuration DNS Probe doesn't have any network interface to process traffic from configured.
-User should therefore modify Sysrepo configuration before running the *systemd* service
-for the first time. For example like this:
+User should therefore modify the YAML configuration file before running the *systemd* service for the first
+time. For example like this:
 
-.. code-block:: shell
+.. code-block:: yaml
 
-    sysrepocfg -E vim -m cznic-dns-probe
+    inst1:
+        interface-list:
+            - 'eth0'
+            - 'eth1'
+        log-file: '/var/log/dns-probe-af@inst1.log'
 
-.. code-block:: xml
+    inst2:
+        interface-list:
+            - 'eth2'
+        log-file: '/var/log/dns-probe-af@inst2.log'
 
-    <dns-probe xmlns="https://www.nic.cz/ns/yang/dns-probe">
-        <interface-list>eth0</interface-list>
-        <interface-list>eth1</interface-list>
-        <log-file>/var/log/dns-probe-af.log</log-file>
-    </dns-probe>
+This configuration will have ``inst1`` instance of DNS Probe process traffic from ``eth0`` and ``eth1``
+interfaces and write its logs to `/var/log/dns-probe-af@inst1.log` file. ``inst2`` instance of DNS Probe
+will process traffic from `eth2` and write its log to `/var/log/dns-probe-af@inst2.log` file. After this
+modification is done the *systemd* service can be started as shown above with either ``inst1`` or ``inst2``
+as ``instance-id`` service parameter. If desired both instances can be run at the same time via two
+separate *systemd* services.
 
-This configuration will have DNS Probe process traffic from `eth0` and `eth1` interfaces and
-write its logs to `/var/log/dns-probe-af.log` file. After this modification is done
-the *systemd* service can be started as usual.
+For more information about configuring the YAML file see :doc:`Configuration <Configuration>` and
+:doc:`Default YAML file<YAMLfile>`.
 
 Running from command line
 =========================
@@ -58,7 +67,7 @@ For each :term:`backend`, one binary program and one shell script is installed. 
 
 The binary programs accept several command-line options described in their :ref:`manual pages <manpages>`.
 
-The wrapper shell scripts accept the same options as the corresponding backend binary, and start the binary with these options. If the running binary program receives the :ref:`restart <rpc-restart>` operation through Sysrepo, it exits with return code 1. The wrapper script then starts the same binary again.
+The wrapper shell scripts accept the same options as the corresponding backend binary, and start the binary with these options. If the running binary program receives the ``restart`` operation through remote management API, it exits with return code 1. The wrapper script then starts the same binary again.
 
 For other codes returned by the binary, the wrapper script just exits and returns the same code.
 

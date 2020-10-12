@@ -8,7 +8,7 @@ dns-probe-dpdk
 Synopsis
 --------
 
-:program:`dns-probe-dpdk` [-i *interface* | -p *pcap* [-r]] [-l *logfile*] [-h]
+:program:`dns-probe-dpdk` [-i *interface* | -p *pcap* [-r]] [-l *logfile*] [-n *instance*] [-c *config_file*] [-h]
 
 Description
 -----------
@@ -38,6 +38,14 @@ Options
 
    Write logging messages to *logfile* instead of standard output.
 
+.. option:: -n instance
+
+   Unique identifier (for configuration purposes) for given instance of DNS Probe.
+
+.. option:: -c config_file
+
+   YAML file to load configuration from.
+
 .. option:: -h
 
    Print help message and exit.
@@ -49,4 +57,4 @@ Exit Status
    Normal exit
 
 **1**
-   Exit based on receiving ``restart`` operation from Sysrepo
+   Exit based on receiving ``restart`` operation from remote management API
