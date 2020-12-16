@@ -167,6 +167,7 @@ bool DDP::DnsTcpConnection::update_connection(DnsRecord& record, const Packet& p
 
             // Received FIN to close connection
             if (header->fin) {
+                m_rtt = m_state == TcpConnectionState::ESTABLISHED ? m_rtt : Time(Time::Clock::MONOTONIC) - m_rtt;
                 m_state = TcpConnectionState::FIN1;
                 m_fin[conn_side] = true;
             }
