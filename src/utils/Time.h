@@ -148,7 +148,7 @@ namespace DDP {
             friend Time operator-(Time first, const Time& second)
             {
                 if(first.m_timespec.tv_nsec - second.m_timespec.tv_nsec < 0) {
-                    first.m_timespec.tv_sec -= second.m_timespec.tv_sec - 1;
+                    first.m_timespec.tv_sec = first.m_timespec.tv_sec - second.m_timespec.tv_sec - 1;
                     first.m_timespec.tv_nsec = first.m_timespec.tv_nsec + 1000000000 - second.m_timespec.tv_nsec;
                 }
                 else {
