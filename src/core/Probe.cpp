@@ -94,7 +94,7 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     args.app = argv[0];
     int opt;
 
-    while ((opt = getopt(argc, argv, "hi:p:rl:n:c:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rd:l:n:c:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -112,6 +112,10 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 
             case 'r':
                 args.raw_pcap = true;
+                break;
+
+            case 'd':
+                args.dnstap_sockets.emplace_back(optarg);
                 break;
 
             case 'l':
@@ -150,13 +154,14 @@ void DDP::Probe::print_help(const char* app)
         interface = "interface name e.g. eth0 or PCI ID e.g. 00:1f.6";
 
     std::cout << std::endl << app << std::endl
-              << "\t-p PCAP        : input pcap files. Parameter can repeat." << std::endl
-              << "\t-i INTERFACE   : " << interface << ". Parameter can repeat." << std::endl
-              << "\t-r             : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
-              << "\t-l LOGFILE     : redirect probe's logs to LOGFILE instead of standard output" << std::endl
-              << "\t-n INSTANCE    : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
-              << "\t-c CONFIG_FILE : YAML file to load initial configuration from." << std::endl
-              << "\t-h             : this help message" << std::endl;
+              << "\t-p PCAP            : input pcap files. Parameter can repeat." << std::endl
+              << "\t-i INTERFACE       : " << interface << ". Parameter can repeat." << std::endl
+              << "\t-r                 : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
+              << "\t-d DNSTAP_SOCKET   : path to input dnstap unix socket. Parameter can repeat." << std::endl
+              << "\t-l LOGFILE         : redirect probe's logs to LOGFILE instead of standard output" << std::endl
+              << "\t-n INSTANCE        : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
+              << "\t-c CONFIG_FILE     : YAML file to load initial configuration from." << std::endl
+              << "\t-h                 : this help message" << std::endl;
 }
 
 DDP::Probe& DDP::Probe::getInstance()
@@ -191,7 +196,11 @@ void DDP::Probe::load_config(Arguments& args)
             args.pcaps.emplace_back(pcap);
         }
 
-        if (args.interfaces.empty() && args.pcaps.empty())
+        for (auto& dt_socket : m_cfg.dnstap_socket_list.value()) {
+            args.dnstap_sockets.emplace_back(dt_socket);
+        }
+
+        if (args.interfaces.empty() && args.pcaps.empty() && args.dnstap_sockets.empty())
             throw std::invalid_argument("At least one interface or pcap should be specified!");
 
         m_cfg_loaded = true;
