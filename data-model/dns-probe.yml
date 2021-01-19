@@ -13,6 +13,10 @@ default:
   # List of PCAPs to process in addition to PCAPs passed with '-p' command line parameter.
   pcap-list: []
 
+  # List of unix sockets to process dnstap data from in addition to sockets passed with '-d'
+  # command line parameter.
+  dnstap-socket-list: []
+
   # Indicates RAW PCAPs as input in 'pcap-list' or from command line with '-p' parameter.
   # Might get overriden by '-r' command line parameter.
   # MUST be set to 'false' if 'interface-list' or '-i' command line parameter are used.
