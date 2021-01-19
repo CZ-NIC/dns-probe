@@ -40,6 +40,7 @@ namespace DDP {
         Config() : interface_list(),
                    pcap_list(),
                    raw_pcap(false),
+                   dnstap_socket_list(),
                    log_file(),
                    coremask(0x7),
                    dns_ports({53}),
@@ -74,6 +75,7 @@ namespace DDP {
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
         ConfigItem<bool> raw_pcap; //!< Defines if input PCAP files are without ethernet headers
+        ConfigItem<CList<std::string>> dnstap_socket_list; //!< List of unix sockets to process dnstap data from
         ConfigItem<std::string> log_file; //!< Log file for storing probe's logs
         ConfigItem<ThreadManager::MaskType> coremask; //!< Coremask used fo selecting cores where application will be running.
         ConfigItem<CList<Port_t>> dns_ports; //!< TCP/UDP port list used for identifying DNS traffic
