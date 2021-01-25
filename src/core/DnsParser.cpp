@@ -32,6 +32,10 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 
+#ifdef PROBE_DNSTAP
+#include "dnstap.pb.h"
+#endif
+
 #include "utils/Logger.h"
 #include "DnsParser.h"
 
@@ -316,6 +320,131 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_e
     return ptr;
 }
 
+DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& msg, DnsRecord& record, bool& drop)
+{
+    MemView<uint8_t> dns = MemView<uint8_t>();
+
+    // Check if message contains everything necessary
+    if (!msg.has_message())
+        throw DnsParseException("Dnstap missing message content");
+    auto& hdr = msg.message();
+
+    if (!hdr.has_type())
+        throw DnsParseException("Missing type of dnstap message");
+
+    if (!hdr.has_socket_family() || !hdr.has_query_address() || !hdr.has_response_address())
+        throw DnsParseException("IP version or address missing in dnstap message");
+
+    if (!hdr.has_socket_protocol() || !hdr.has_query_port() || !hdr.has_response_port())
+        throw DnsParseException("Transport protocol or port missing in dnstap message");
+
+    // Parse L3 information
+    if (hdr.socket_family() == dnstap::SocketFamily::INET) {
+        record.m_addr_family = DnsRecord::AddrFamily::IP4;
+        drop = block_ipv4s(reinterpret_cast<const uint8_t*>(hdr.query_address().c_str()),
+                            reinterpret_cast<const uint8_t*>(hdr.response_address().c_str()));
+        if (drop) {
+            put_back_record(record);
+            return MemView<uint8_t>();
+        }
+        set_ips(record, reinterpret_cast<const uint8_t*>(hdr.query_address().c_str()),
+            reinterpret_cast<const uint8_t*>(hdr.response_address().c_str()), IPV4_ADDRLEN);
+    }
+    else if (hdr.socket_family() == dnstap::SocketFamily::INET6) {
+        record.m_addr_family = DnsRecord::AddrFamily::IP6;
+        drop = block_ipv6s(reinterpret_cast<const uint8_t*>(hdr.query_address().c_str()),
+                            reinterpret_cast<const uint8_t*>(hdr.response_address().c_str()));
+        if (drop) {
+            put_back_record(record);
+            return MemView<uint8_t>();
+        }
+        set_ips(record, reinterpret_cast<const uint8_t*>(hdr.query_address().c_str()),
+            reinterpret_cast<const uint8_t*>(hdr.response_address().c_str()), IPV6_ADDRLEN);
+    }
+    else {
+        put_back_record(record);
+        drop = true;
+        return MemView<uint8_t>();
+    }
+
+    // Parse L4 information
+    switch (hdr.socket_protocol()) {
+        case dnstap::SocketProtocol::UDP:
+            record.m_proto = DnsRecord::Proto::UDP;
+            break;
+        case dnstap::SocketProtocol::TCP:
+        case dnstap::SocketProtocol::DOT:
+        case dnstap::SocketProtocol::DOH:
+            record.m_proto = DnsRecord::Proto::TCP;
+            break;
+        default:
+            put_back_record(record);
+            drop = true;
+            return MemView<uint8_t>();
+            break;
+    }
+
+    if (!is_dns_ports(hdr.query_port(), hdr.response_port())) {
+        put_back_record(record);
+        drop = true;
+        return MemView<uint8_t>();
+    }
+
+    record.m_port[static_cast<int>(record.m_client_index)] = hdr.query_port();
+    record.m_port[!static_cast<int>(record.m_client_index)] = hdr.response_port();
+
+    // Parse additional information (DNS wire length, timestamps)
+    switch (hdr.type()) {
+        case dnstap::Message_Type::Message_Type_CLIENT_QUERY:
+        case dnstap::Message_Type::Message_Type_RESOLVER_QUERY:
+        case dnstap::Message_Type::Message_Type_AUTH_QUERY:
+        case dnstap::Message_Type::Message_Type_FORWARDER_QUERY:
+        case dnstap::Message_Type::Message_Type_STUB_QUERY:
+        case dnstap::Message_Type::Message_Type_TOOL_QUERY:
+        case dnstap::Message_Type::Message_Type_UPDATE_QUERY:
+            if (!hdr.has_query_message())
+                throw DnsParseException("dnstap message missing query DNS data");
+
+            record.m_dns_len = hdr.query_message().size();
+            dns = MemView<uint8_t>(reinterpret_cast<const uint8_t*>(hdr.query_message().c_str()), hdr.query_message().size());
+            if (hdr.has_query_time_sec() && hdr.has_query_time_nsec()) {
+                struct timespec tm;
+                tm.tv_sec = hdr.query_time_sec();
+                tm.tv_nsec = hdr.query_time_nsec();
+                record.m_timestamp = Time(tm);
+            }
+            else
+                record.m_timestamp = Time(Time::Clock::REALTIME);
+            break;
+        case dnstap::Message_Type::Message_Type_CLIENT_RESPONSE:
+        case dnstap::Message_Type::Message_Type_RESOLVER_RESPONSE:
+        case dnstap::Message_Type::Message_Type_AUTH_RESPONSE:
+        case dnstap::Message_Type::Message_Type_FORWARDER_RESPONSE:
+        case dnstap::Message_Type::Message_Type_STUB_RESPONSE:
+        case dnstap::Message_Type::Message_Type_TOOL_RESPONSE:
+        case dnstap::Message_Type::Message_Type_UPDATE_RESPONSE:
+            if (!hdr.has_response_message())
+                throw DnsParseException("dnstap message missing response DNS data");
+
+            record.m_dns_len = hdr.response_message().size();
+            dns = MemView<uint8_t>(reinterpret_cast<const uint8_t*>(hdr.response_message().c_str()), hdr.response_message().size());
+            if (hdr.has_response_time_sec() && hdr.has_response_time_nsec()) {
+                struct timespec tm;
+                tm.tv_sec = hdr.response_time_sec();
+                tm.tv_nsec = hdr.response_time_nsec();
+                record.m_timestamp = Time(tm);
+            }
+            else
+                record.m_timestamp = Time(Time::Clock::REALTIME);
+            break;
+        default:
+            throw DnsParseException("Invalid type of dnstap message");
+            break;
+    }
+
+    return dns;
+}
+
 DDP::MemView<uint8_t> DDP::DnsParser::parse_l2(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record, bool& drop)
 {
     // Check if packet is long enough to contain valid ethernet header
@@ -373,44 +502,15 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv4(const DDP::MemView<uint8_t>& pk
         throw DnsParseException("Packet is too short. Probably missing part of IPv4 header.");
     }
 
-    if (!m_ipv4_allowlist.empty()) {
-        bool deny = true;
-        for (auto& ipv4 : m_ipv4_allowlist) {
-            if ((std::memcmp(&(ipv4_header->saddr), &ipv4, IPV4_ADDRLEN) == 0) ||
-                (std::memcmp(&(ipv4_header->daddr), &ipv4, IPV4_ADDRLEN) == 0)) {
-                deny = false;
-                break;
-            }
-        }
-
-        if (deny) {
-            drop = true;
-            put_back_record(record);
-            return pkt;
-        }
-    }
-    else if (!m_ipv4_denylist.empty() && m_ipv4_allowlist.empty()) {
-        for (auto& ipv4 : m_ipv4_denylist) {
-            if ((std::memcmp(&(ipv4_header->saddr), &ipv4, IPV4_ADDRLEN) == 0) ||
-                (std::memcmp(&(ipv4_header->daddr), &ipv4, IPV4_ADDRLEN) == 0)) {
-                drop = true;
-                put_back_record(record);
-                return pkt;
-            }
-        }
+    drop = block_ipv4s(reinterpret_cast<const uint8_t*>(&(ipv4_header->saddr)),
+                        reinterpret_cast<const uint8_t*>(&(ipv4_header->daddr)));
+    if (drop) {
+        put_back_record(record);
+        return pkt;
     }
 
-    if(std::memcmp(&(ipv4_header->saddr), &(ipv4_header->daddr), IPV4_ADDRLEN) > 0) {
-        std::memcpy(&(record.m_addr[0]), &(ipv4_header->daddr), IPV4_ADDRLEN);
-        std::memcpy(&(record.m_addr[1]), &(ipv4_header->saddr), IPV4_ADDRLEN);
-        // Indicate location of src addr
-        record.m_client_index = DnsRecord::ClientIndex::CLIENT_HIGH;
-    }
-    else {
-        std::memcpy(&(record.m_addr[0]), &(ipv4_header->saddr), IPV4_ADDRLEN);
-        std::memcpy(&(record.m_addr[1]), &(ipv4_header->daddr), IPV4_ADDRLEN);
-        record.m_client_index = DnsRecord::ClientIndex::CLIENT_LOW;
-    }
+    set_ips(record, reinterpret_cast<const uint8_t*>(&ipv4_header->saddr),
+        reinterpret_cast<const uint8_t*>(&ipv4_header->daddr), IPV4_ADDRLEN);
 
     record.m_addr_family = DnsRecord::AddrFamily::IP4;
     record.m_ttl = ipv4_header->ttl;
@@ -445,43 +545,15 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_ipv6(const DDP::MemView<uint8_t>& pk
 
     auto ipv6_header = reinterpret_cast<const ip6_hdr*>(pkt.ptr());
 
-    if (!m_ipv6_allowlist.empty()) {
-        bool deny = true;
-        for (auto& ipv6 : m_ipv6_allowlist) {
-            if ((std::memcmp(&(ipv6_header->ip6_src), ipv6.data(), IPV6_ADDRLEN) == 0) ||
-                (std::memcmp(&(ipv6_header->ip6_dst), ipv6.data(), IPV6_ADDRLEN) == 0)) {
-                deny = false;
-                break;
-            }
-        }
-
-        if (deny) {
-            drop = true;
-            put_back_record(record);
-            return pkt;
-        }
-    }
-    else if (!m_ipv6_denylist.empty() && m_ipv6_allowlist.empty()) {
-        for (auto& ipv6 : m_ipv6_denylist) {
-            if ((std::memcmp(&(ipv6_header->ip6_src), ipv6.data(), IPV6_ADDRLEN) == 0) ||
-                (std::memcmp(&(ipv6_header->ip6_dst), ipv6.data(), IPV6_ADDRLEN) == 0)) {
-                drop = true;
-                put_back_record(record);
-                return pkt;
-            }
-        }
+    drop = block_ipv6s(reinterpret_cast<const uint8_t*>(&(ipv6_header->ip6_src)),
+                        reinterpret_cast<const uint8_t*>(&(ipv6_header->ip6_dst)));
+    if (drop) {
+        put_back_record(record);
+        return pkt;
     }
 
-    if(std::memcmp(&ipv6_header->ip6_src, &ipv6_header->ip6_dst, IPV6_ADDRLEN) > 0) {
-        std::memcpy(&(record.m_addr[0]), &ipv6_header->ip6_dst, IPV6_ADDRLEN);
-        std::memcpy(&(record.m_addr[1]), &ipv6_header->ip6_src, IPV6_ADDRLEN);
-        record.m_client_index = DnsRecord::ClientIndex::CLIENT_HIGH;
-    }
-    else {
-        std::memcpy(&(record.m_addr[0]), &ipv6_header->ip6_src, IPV6_ADDRLEN);
-        std::memcpy(&(record.m_addr[1]), &ipv6_header->ip6_dst, IPV6_ADDRLEN);
-        record.m_client_index = DnsRecord::ClientIndex::CLIENT_LOW;
-    }
+    set_ips(record, reinterpret_cast<const uint8_t*>(&ipv6_header->ip6_src),
+        reinterpret_cast<const uint8_t*>(&ipv6_header->ip6_dst), IPV6_ADDRLEN);
 
     record.m_addr_family = DnsRecord::AddrFamily::IP6;
     record.m_ttl = ipv6_header->ip6_ctlun.ip6_un1.ip6_un1_hlim;
@@ -520,15 +592,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& 
     auto src_port = ntohs(udp_header->source);
     auto dst_port = ntohs(udp_header->dest);
 
-    bool is_dns = false;
-    for (auto& dns_port : m_dns_ports) {
-        if (src_port == dns_port || dst_port == dns_port) {
-            is_dns = true;
-            break;
-        }
-    }
-
-    if (!is_dns) {
+    if (!is_dns_ports(src_port, dst_port)) {
         put_back_record(record);
         drop = true;
         return pkt;
@@ -562,15 +626,7 @@ bool DDP::DnsParser::parse_l4_tcp(const DDP::MemView<uint8_t>& pkt, DDP::DnsReco
     auto src_port = ntohs(tcp_header->source);
     auto dst_port = ntohs(tcp_header->dest);
 
-    bool is_dns = false;
-    for (auto& dns_port : m_dns_ports) {
-        if (src_port == dns_port || dst_port == dns_port) {
-            is_dns = true;
-            break;
-        }
-    }
-
-    if (!is_dns)
+    if (!is_dns_ports(src_port, dst_port))
         return false;
 
     record.m_port[static_cast<int>(record.m_client_index)] = src_port;
@@ -671,32 +727,24 @@ DDP::DnsRecord& DDP::DnsParser::get_empty()
     return m_record_mempool.get();
 }
 
-std::vector<DDP::DnsRecord*> DDP::DnsParser::parse_packet(const Packet& packet)
+void DDP::DnsParser::parse_wire_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop)
 {
-    std::vector<DnsRecord*> records;
-
-    DnsRecord& record = get_empty();
-    record.m_len = packet.size();
-
     auto pkt = packet.payload();
-    m_processed_packet = &packet;
-    bool drop = false;
-
     if (!m_raw_pcap) {
         pkt = parse_l2(pkt, record, drop);
         if (drop)
-            return records;
+            return;
     }
 
     pkt = parse_l3(pkt, record, drop);
 
     if (drop)
-        return records;
+        return;
 
     if (record.m_proto == DDP::DnsRecord::Proto::UDP) {
         pkt = parse_l4_udp(pkt, record, drop);
         if (drop)
-            return records;
+            return;
 
         parse_dns(pkt, record);
         record.do_hash();
@@ -724,6 +772,47 @@ std::vector<DDP::DnsRecord*> DDP::DnsParser::parse_packet(const Packet& packet)
             }
         }
     }
+}
+
+void DDP::DnsParser::parse_dnstap_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop)
+{
+#ifdef PROBE_DNSTAP
+    auto pkt = packet.payload();
+    dnstap::Dnstap msg;
+    if (!msg.ParseFromArray(pkt.ptr(), pkt.count())) {
+        put_back_record(record);
+        throw DnsParseException("Couldn't parse dnstap message.");
+    }
+
+    pkt = parse_dnstap_header(msg, record, drop);
+
+    if (drop)
+        return;
+
+    parse_dns(pkt, record);
+
+    record.do_hash();
+    records.push_back(&record);
+#else
+    drop = true;
+    put_back_record(record);
+    return;
+#endif
+}
+
+std::vector<DDP::DnsRecord*> DDP::DnsParser::parse_packet(const Packet& packet)
+{
+    std::vector<DnsRecord*> records;
+
+    DnsRecord& record = get_empty();
+    record.m_len = packet.size();
+    m_processed_packet = &packet;
+    bool drop = false;
+
+    if (packet.type() == PacketType::DNSTAP)
+        parse_dnstap_packet(packet, record, records, drop);
+    else
+        parse_wire_packet(packet, record, records, drop);
 
     return records;
 }
@@ -788,4 +877,83 @@ uint8_t* DDP::DnsParser::copy_to_buffer(const uint8_t* msg, uint16_t size, std::
     }
     std::memcpy(m_msg_buffer.get() + offset, msg, size);
     return m_msg_buffer.get();
+}
+
+bool DDP::DnsParser::block_ipv4s(const uint8_t* src, const uint8_t* dst)
+{
+    if (!m_ipv4_allowlist.empty()) {
+        bool deny = true;
+        for (auto& ipv4 : m_ipv4_allowlist) {
+            if ((std::memcmp(src, &ipv4, IPV4_ADDRLEN) == 0) ||
+                (std::memcmp(dst, &ipv4, IPV4_ADDRLEN) == 0)) {
+                deny = false;
+                break;
+            }
+        }
+
+        if (deny)
+            return true;
+    }
+    else if (!m_ipv4_denylist.empty() && m_ipv4_allowlist.empty()) {
+        for (auto& ipv4 : m_ipv4_denylist) {
+            if ((std::memcmp(src, &ipv4, IPV4_ADDRLEN) == 0) ||
+                (std::memcmp(dst, &ipv4, IPV4_ADDRLEN) == 0)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool DDP::DnsParser::block_ipv6s(const uint8_t* src, const uint8_t* dst)
+{
+    if (!m_ipv6_allowlist.empty()) {
+        bool deny = true;
+        for (auto& ipv6 : m_ipv6_allowlist) {
+            if ((std::memcmp(src, ipv6.data(), IPV6_ADDRLEN) == 0) ||
+                (std::memcmp(dst, ipv6.data(), IPV6_ADDRLEN) == 0)) {
+                deny = false;
+                break;
+            }
+        }
+
+        if (deny)
+            return true;
+    }
+    else if (!m_ipv6_denylist.empty() && m_ipv6_allowlist.empty()) {
+        for (auto& ipv6 : m_ipv6_denylist) {
+            if ((std::memcmp(src, ipv6.data(), IPV6_ADDRLEN) == 0) ||
+                (std::memcmp(dst, ipv6.data(), IPV6_ADDRLEN) == 0)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool DDP::DnsParser::is_dns_ports(const uint16_t srcp, const uint16_t dstp)
+{
+    for (auto& dns_port : m_dns_ports) {
+        if (srcp == dns_port || dstp == dns_port)
+            return true;
+    }
+
+    return false;
+}
+
+void DDP::DnsParser::set_ips(DnsRecord& record, const uint8_t* src, const uint8_t* dst, uint8_t ip_len)
+{
+    if(std::memcmp(src, dst, ip_len) > 0) {
+        std::memcpy(&(record.m_addr[0]), dst, ip_len);
+        std::memcpy(&(record.m_addr[1]), src, ip_len);
+        // Indicate location of src addr
+        record.m_client_index = DnsRecord::ClientIndex::CLIENT_HIGH;
+    }
+    else {
+        std::memcpy(&(record.m_addr[0]), src, ip_len);
+        std::memcpy(&(record.m_addr[1]), dst, ip_len);
+        record.m_client_index = DnsRecord::ClientIndex::CLIENT_LOW;
+    }
 }

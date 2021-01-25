@@ -43,6 +43,12 @@
 #include "utils/DynamicMempool.h"
 #include "platform/Mempool.h"
 
+#ifdef PROBE_DNSTAP
+namespace dnstap {
+    class Dnstap;
+}
+#endif
+
 namespace DDP {
 
     /**
@@ -139,6 +145,26 @@ namespace DDP {
         DnsRecord& get_empty();
 
         /**
+         * @brief Fill DnsRecord structure from given wire format packet
+         * @param packet Wire format packet to parse
+         * @param record DnsRecord to fill with packet's information
+         * @param records Vector of DnsRecords with filled packet information
+         * @param drop Sets this flag to true if packet is to be dropped
+         * @throw DnsParseException
+         */
+        void parse_wire_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop);
+
+        /**
+         * @brief Fill DnsRecord structure from given dnstap message
+         * @param packet Dnstap message to parse
+         * @param record DnsRecord to fill with message's information
+         * @param records Vector of DnsRecords with filled packet information
+         * @param drop Sets this flag to true if message is to be dropped
+         * @throw DnsParseException
+         */
+        void parse_dnstap_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop);
+
+        /**
          * @brief Fill DnsRecord structure from given packet
          * @param packet Packet to parse
          * @throw DnsParseException From calling DNS parsing methods
@@ -182,6 +208,18 @@ namespace DDP {
          * @return Pointer to start of buffer containing given DNS message
          */
         uint8_t* copy_to_buffer(const uint8_t* msg, uint16_t size, std::size_t offset);
+
+        /**
+         * @brief Parse header of dnstap message
+         * @param msg Pointer to the start of unparsed part of message
+         * @param record DnsRecord to fill with message's information
+         * @param drop Sets this flag to true if packet is to be dropped
+         * @throw DnsParseException
+         * @return Pointer to the next unparsed part of packet (DNS wire format)
+         */
+#ifdef PROBE_DNSTAP
+        MemView<uint8_t> parse_dnstap_header(const dnstap::Dnstap& msg, DnsRecord& record, bool& drop);
+#endif
 
         /**
          * @brief Parse packet's L2 header
@@ -321,6 +359,42 @@ namespace DDP {
         std::unordered_set<std::array<uint32_t, 4>> m_ipv6_allowlist;
         std::unordered_set<std::array<uint32_t, 4>> m_ipv6_denylist;
         Statistics& m_stats;
+
+        /**
+         * @brief Check if given IPv4 addresses are allowed to be processed
+         * @param src Pointer to source IPv4 address in network format
+         * @param dst Pointer to destination IPv$ address in network format
+         * @return true Packet with given addresses should be dropped
+         * @return false Packet with given addresses can be further processed
+         */
+        bool block_ipv4s(const uint8_t* src, const uint8_t* dst);
+
+        /**
+         * @brief Check if given IPv6 addresses are allowed to be processed
+         * @param src Pointer to source IPv6 address in network format
+         * @param dst Pointer to destination IPv6 address in network format
+         * @return true Packet with given addresses should be dropped
+         * @return false Packet with given addresses can be further processed
+         */
+        bool block_ipv6s(const uint8_t* src, const uint8_t* dst);
+
+        /**
+         * @brief Check if given transport protocol ports are associated with DNS
+         * @param srcp Source tranport protocol port
+         * @param dstp Destination transport protocol port
+         * @return true Packet with given ports can be further processed
+         * @return false Packet with given ports should be dropped
+         */
+        bool is_dns_ports(const uint16_t srcp, const uint16_t dstp);
+
+        /**
+         * @brief Copy source and destination addresses to DnsRecord structure
+         * @param record DnsRecord to fill
+         * @param src Pointer to source IP address
+         * @param dst Pointer to destination IP address
+         * @param ip_len Length of IP addresses (4 for IPv4, 16 for IPv6)
+         */
+        void set_ips(DnsRecord& record, const uint8_t* src, const uint8_t* dst, uint8_t ip_len);
 
         /**
          * @brief Parse DNS header and fill DNS record fields
