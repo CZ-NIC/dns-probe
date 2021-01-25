@@ -200,6 +200,11 @@ void DDP::Probe::load_config(Arguments& args)
             args.dnstap_sockets.emplace_back(dt_socket);
         }
 
+#ifndef PROBE_DNSTAP
+        if (!args.dnstap_sockets.empty())
+            throw std::runtime_error("DNS Probe was built without dnstap support!");
+#endif
+
         if (args.interfaces.empty() && args.pcaps.empty() && args.dnstap_sockets.empty())
             throw std::invalid_argument("At least one interface or pcap should be specified!");
 
@@ -296,17 +301,18 @@ void DDP::Probe::init(const Arguments& args)
 }
 
 
-DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>& ports)
+DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>& ports,
+                                        std::vector<std::shared_ptr<DDP::Port>>& sockets)
 {
     if (!m_initialized)
         throw std::runtime_error("Application is not initialized!");
 
     Logger logger("Probe");
 
-    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue) {
+    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue, std::vector<std::shared_ptr<DDP::Port>> w_sockets) {
         try {
             Worker w(m_cfg, stats, m_factory_rings.at(worker).get_poll_able_ring(), m_comm_links[worker].worker_endpoint(),
-                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
+                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports, w_sockets,
                     m_cfg.match_qname, worker);
             Logger logger("Worker");
             logger.info() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
@@ -345,9 +351,15 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
     m_thread_manager->run_on_thread(slaves[0], exporter_runner, slaves[0], std::ref(m_stats[stats_index++]));
     slaves.erase(slaves.begin());
 
-    auto queue = 0;
+    unsigned queue = 0;
     for (auto worker: slaves) {
-        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++);
+        std::vector<std::shared_ptr<DDP::Port>> worker_sockets;
+        auto index = queue;
+        while (index < sockets.size()) {
+            worker_sockets.push_back(sockets[index]);
+            index += slaves.size();
+        }
+        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++, worker_sockets);
     }
 
     logger.info() << "Slave threads started.";
