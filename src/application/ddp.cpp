@@ -40,6 +40,7 @@
 #include "utils/Logger.h"
 #include "dpdk/DpdkPort.h"
 #include "dpdk/DpdkPcapPort.h"
+#include "core/UnixSocket.h"
 
 DDP::LogWriter logwriter;
 
@@ -287,6 +288,7 @@ int main(int argc, char** argv)
     }
 
     std::vector<std::shared_ptr<DDP::Port>> ready_ports;
+    std::vector<std::shared_ptr<DDP::Port>> ready_sockets;
     try {
         // Port initialization
         std::set<uint16_t> ports;
@@ -318,6 +320,10 @@ int main(int argc, char** argv)
                 ready_ports.emplace_back(new DDP::DPDKPort(port, runner.slaves_cnt() - 1, interface_mempool));
         }
 
+        for (auto& port : arguments.args.dnstap_sockets) {
+            ready_sockets.emplace_back(new DDP::UnixSocket(port.c_str()));
+        }
+
         // Set up signal handlers to print stats on exit
         struct sigaction sa{};
         sa.sa_handler = &signal_handler;
@@ -331,7 +337,7 @@ int main(int argc, char** argv)
 
         // Poll on configuration core
         try {
-            auto ret = static_cast<int>(runner.run(ready_ports));
+            auto ret = static_cast<int>(runner.run(ready_ports, ready_sockets));
             try {
                 unbind_interfaces(arguments.args);
             }
