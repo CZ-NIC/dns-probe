@@ -26,7 +26,7 @@
 #include "DpdkPacket.h"
 #include "platform/Allocator.h"
 
-DDP::DPDKPacket::DPDKPacket(rte_mbuf* mbuf) : m_payload(), m_used_mbuf(true), m_mbuf(mbuf)
+DDP::DPDKPacket::DPDKPacket(rte_mbuf* mbuf, PacketType type) : m_payload(), m_used_mbuf(true), m_type(type), m_mbuf(mbuf)
 {
     if (mbuf->nb_segs > 1) {
         auto buffer = reinterpret_cast<uint8_t*>(Alloc::malloc(mbuf->pkt_len));
@@ -53,6 +53,7 @@ DDP::DPDKPacket::DPDKPacket(rte_mbuf* mbuf) : m_payload(), m_used_mbuf(true), m_
 
 DDP::DPDKPacket::DPDKPacket(const DDP::DPDKPacket& packet) : m_payload(),
                                                              m_used_mbuf(false),
+                                                             m_type(PacketType::NONE),
                                                              m_buffer(nullptr)
 {
     if (packet.used_mbuf()) {
@@ -70,10 +71,12 @@ DDP::DPDKPacket::DPDKPacket(const DDP::DPDKPacket& packet) : m_payload(),
 
         m_payload = MemView<uint8_t>(m_buffer, packet.m_payload.count());
     }
+    m_type = packet.m_type;
 }
 
-DDP::DPDKPacket::DPDKPacket(const MemView<uint8_t>& data) : m_payload(),
+DDP::DPDKPacket::DPDKPacket(const MemView<uint8_t>& data, PacketType type) : m_payload(),
                                                             m_used_mbuf(false),
+                                                            m_type(PacketType::NONE),
                                                             m_buffer(nullptr)
 {
     m_buffer = reinterpret_cast<uint8_t*>(Alloc::malloc(data.count()));
@@ -83,12 +86,29 @@ DDP::DPDKPacket::DPDKPacket(const MemView<uint8_t>& data) : m_payload(),
     std::copy(data.ptr(), data.ptr() + data.count(), m_buffer);
 
     m_payload = MemView<uint8_t>(m_buffer, data.count());
+    m_type = type;
+}
+
+DDP::DPDKPacket::DPDKPacket(const uint8_t* packet, std::size_t size, bool, PacketType type) : m_payload(),
+                                                                                              m_used_mbuf(false),
+                                                                                              m_type(PacketType::NONE),
+                                                                                              m_buffer(nullptr)
+{
+    m_buffer = const_cast<uint8_t*>(packet);
+    m_payload = MemView<uint8_t>(m_buffer, size);
+    m_type = type;
 }
 
 void DDP::DPDKPacket::free()
 {
-    if (!m_used_mbuf)
-        Alloc::free(m_buffer);
-    else
+    if (!m_used_mbuf) {
+        if (m_type != PacketType::DNSTAP)
+            Alloc::free(m_buffer);
+        m_buffer = nullptr;
+    }
+    else {
         rte_pktmbuf_free(m_mbuf);
+        m_mbuf = nullptr;
+    }
+
 }
