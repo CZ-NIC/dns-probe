@@ -38,6 +38,10 @@
 #include "core/Statistics.h"
 #include "core/Port.h"
 
+#ifdef PROBE_DNSTAP
+#include "dnstap/DnstapUnixReader.h"
+#endif
+
 #ifdef PROBE_PARQUET
 #include "export/parquet/ParquetExport.h"
 #include "export/parquet/ParquetWriter.h"
@@ -63,6 +67,9 @@ namespace DDP {
     };
 
     class Worker : public Process {
+        /**
+         * @brief Class polling for incoming packets on a network port
+         */
         class PortPollAble : public PollAble {
         public:
             PortPollAble(Worker& worker, int port_pos) :
@@ -82,6 +89,51 @@ namespace DDP {
             int m_port_pos;
             unsigned m_queue;
         };
+
+        /**
+         * @brief Class polling for incoming connections on a socket
+         */
+        class SocketPollAble : public PollAble {
+        public:
+            SocketPollAble(Worker& worker, int sock_pos) :
+                    PollAble(PollEvents::READ),
+                    m_worker(worker),
+                    m_port(*m_worker.m_sockets[sock_pos]),
+                    m_sock_pos(sock_pos),
+                    m_queue(m_worker.m_lcore_queue) {}
+
+            void ready_read() override;
+
+            int fd() override { return m_port.fds()[0]; }
+        private:
+            Worker& m_worker;
+            Port& m_port;
+            int m_sock_pos;
+            unsigned m_queue;
+        };
+
+        /**
+         * @brief Class polling for incoming dnstap messages on a socket
+         */
+#ifdef PROBE_DNSTAP
+        class DnstapPollAble : public PollAble {
+        public:
+            DnstapPollAble(Worker& worker, int fd) :
+                PollAble(PollEvents::READ),
+                m_worker(worker),
+                m_fd(fd),
+                m_reader(fd) {}
+
+            void ready_read() override;
+
+            int fd() override { return m_fd; }
+        private:
+            Worker& m_worker;
+            int m_fd;
+            DnstapUnixReader m_reader;
+        };
+#endif
+
     public:
         /**
          * @brief Constructor. Creates worker core object with packet processing loop
@@ -101,7 +153,7 @@ namespace DDP {
         Worker(Config& cfg, Statistics& stats, PollAbleRing<boost::any> ring,
                CommLink::CommLinkEP& comm_link, Mempool<DnsRecord>& record_mempool,
                Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, std::vector<std::shared_ptr<DDP::Port>> ports,
-               bool match_qname, unsigned process_id) :
+               std::vector<std::shared_ptr<DDP::Port>> sockets, bool match_qname, unsigned process_id) :
                 Process(cfg, stats, comm_link),
                 m_record_mempool(record_mempool),
                 m_tcp_mempool(tcp_mempool),
@@ -115,6 +167,7 @@ namespace DDP {
                 m_pcap_all(cfg, cfg.pcap_export.value() == PcapExportCfg::INVALID, process_id),
                 m_lcore_queue(lcore_queue),
                 m_ports(std::move(ports)),
+                m_sockets(std::move(sockets)),
                 m_match_qname(match_qname),
                 m_total_rx_count(0),
                 m_process_id(process_id)
@@ -237,6 +290,7 @@ namespace DDP {
         PcapWriter m_pcap_all; //!< PCAP writer for saving processed packets.
         unsigned m_lcore_queue; //!< Specify packet queue for worker.
         std::vector<std::shared_ptr<DDP::Port>> m_ports; //!< List of reading ports for DNS analysis.
+        std::vector<std::shared_ptr<DDP::Port>> m_sockets; //!< List of reading sockets for DNS analysis.
         bool m_match_qname; //!< Enable comparing QNAME for matching in transaction table.
         uint32_t m_total_rx_count; //!< Maximal number of packets read from queue in one run.
         unsigned m_process_id; //!< Lcore of the worker.

@@ -96,6 +96,8 @@ if (PROBE_DNSTAP)
     target_link_libraries(DNSProbe INTERFACE ${PROTOBUF_LIBRARIES} dnstap_proto Fstrm::Fstrm)
     target_include_directories(DNSProbe INTERFACE ${PROTOBUF_INCLUDE_DIRS})
     target_compile_definitions(DNSProbe INTERFACE PROBE_DNSTAP)
+    file(GLOB DNSTAP_HEADERS CONFIGURE_DEPENDS src/dnstap/*.h)
+    file(GLOB DNSTAP_SOURCES CONFIGURE_DEPENDS src/dnstap/*.cpp)
 endif()
 
 # Add warning flags
@@ -118,7 +120,7 @@ if (AF_PACKET_BACKEND)
     file(GLOB AF_PACKET_SOURCES CONFIGURE_DEPENDS src/non-dpdk/*.cpp)
 
     set(AF_FILES ${AF_PACKET_HEADERS} ${AF_PACKET_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES}
-        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES})
+        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES})
     add_executable(dns-probe-af src/application/dp.cpp ${AF_FILES})
     target_link_libraries(dns-probe-af PUBLIC DNSProbe)
     install(TARGETS dns-probe-af RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -140,7 +142,7 @@ if (DPDK_BACKEND)
     file(GLOB DPDK_SOURCES CONFIGURE_DEPENDS src/dpdk/*.cpp)
 
     set(DPDK_FILES ${DPDK_HEADERS} ${DPDK_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES}
-        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES})
+        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES})
     add_executable(dns-probe-dpdk src/application/ddp.cpp ${DPDK_FILES})
     target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe DPDK::DPDK)
     target_compile_definitions(dns-probe-dpdk PUBLIC USE_DPDK)
