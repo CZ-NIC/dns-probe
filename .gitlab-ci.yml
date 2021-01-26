@@ -9,8 +9,8 @@ stages:
 build_docker_image:
   stage: build_docker
   image: docker:latest
-  services:
-    - docker:dind
+  tags:
+    - dind
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
