@@ -35,8 +35,8 @@ RUN apt-get update -yqq &&\
         libprotobuf-dev \
         protobuf-compiler \
         libfstrm-dev \
-        dpdk-dev &&\
-        dns-probe-af &&\
+        dpdk-dev \
+        dns-probe-af \
         dns-probe-dpdk &&\
     pip3 install pyarrow==2.0.* &&\
     apt-get -qy autoremove &&\
