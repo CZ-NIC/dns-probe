@@ -1,11 +1,28 @@
-image: registry.nic.cz/adam/dns-probe:latest
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
 
 stages:
+  - build_docker
   - build_and_test
   - deploy
 
+build_docker_image:
+  stage: build_docker
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - docker build --no-cache -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+  only:
+    changes:
+      - Dockerfile
+
 build_and_test:
   stage: build_and_test
+  image: $IMAGE_TAG
   script:
     - mkdir build
     - cd build
@@ -16,6 +33,7 @@ build_and_test:
 
 pages:
   stage: deploy
+  image: $IMAGE_TAG
   script:
     - mkdir build
     - cd build
