@@ -320,6 +320,7 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_e
     return ptr;
 }
 
+#ifdef PROBE_DNSTAP
 DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& msg, DnsRecord& record, bool& drop)
 {
     MemView<uint8_t> dns = MemView<uint8_t>();
@@ -444,6 +445,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
 
     return dns;
 }
+#endif
 
 DDP::MemView<uint8_t> DDP::DnsParser::parse_l2(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record, bool& drop)
 {
@@ -774,6 +776,8 @@ void DDP::DnsParser::parse_wire_packet(const Packet& packet, DnsRecord& record, 
     }
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void DDP::DnsParser::parse_dnstap_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop)
 {
 #ifdef PROBE_DNSTAP
@@ -799,6 +803,7 @@ void DDP::DnsParser::parse_dnstap_packet(const Packet& packet, DnsRecord& record
     return;
 #endif
 }
+#pragma GCC diagnostic pop
 
 std::vector<DDP::DnsRecord*> DDP::DnsParser::parse_packet(const Packet& packet)
 {
