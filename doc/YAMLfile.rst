@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2020-09-22
+  # Last revision: 2021-01-27
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -23,6 +23,10 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
     # List of PCAPs to process in addition to PCAPs passed with '-p' command line parameter.
     pcap-list: []
+
+    # List of unix sockets to process dnstap data from in addition to sockets passed with '-d'
+    # command line parameter.
+    dnstap-socket-list: []
 
     # Indicates RAW PCAPs as input in 'pcap-list' or from command line with '-p' parameter.
     # Might get overriden by '-r' command line parameter.

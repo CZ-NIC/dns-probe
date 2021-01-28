@@ -30,6 +30,10 @@ int DDP::Worker::run()
         for(unsigned i = 0; i < m_ports.size(); i++) {
             m_poll.emplace<PortPollAble>(*this, i);
         }
+
+        for (unsigned j = 0; j < m_sockets.size(); j++) {
+            m_poll.emplace<SocketPollAble>(*this, j);
+        }
         m_poll.loop();
     }
     catch (std::exception& e) {
@@ -278,9 +282,8 @@ void DDP::Worker::PortPollAble::ready_read() {
         return;
     }
 
-    if (rx_count == 0) {
+    if (rx_count == 0)
         return;
-    }
 
     // Process batch of packets
     for (size_t k = 0; k < rx_count; k++) {
@@ -291,3 +294,41 @@ void DDP::Worker::PortPollAble::ready_read() {
     m_worker.m_stats.active_tt_records = m_worker.m_transaction_table.records();
     m_port.free_packets(m_queue);
 }
+
+void DDP::Worker::SocketPollAble::ready_read()
+{
+    auto conn = m_port.read(nullptr, m_queue);
+    if (conn == 0)
+        return;
+
+#ifdef PROBE_DNSTAP
+    try {
+        m_worker.m_poll.emplace<DnstapPollAble>(m_worker, conn);
+    }
+    catch (std::exception& e) {
+        Logger("Socket").warning() << e.what();
+    }
+#endif
+}
+
+#ifdef PROBE_DNSTAP
+void DDP::Worker::DnstapPollAble::ready_read()
+{
+    uint16_t rx_count = 0;
+    Packet pkt;
+    try {
+        rx_count = m_reader.read(&pkt);
+    }
+    catch (PortEOF& e) {
+        poll()->unregister(*this);
+        return;
+    }
+
+    if (rx_count == 0)
+        return;
+
+    m_worker.process_packet(pkt);
+    m_worker.m_stats.packets += rx_count;
+    m_worker.m_stats.active_tt_records = m_worker.m_transaction_table.records();
+}
+#endif

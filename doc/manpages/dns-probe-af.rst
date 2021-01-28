@@ -8,14 +8,14 @@ dns-probe-af
 Synopsis
 --------
 
-:program:`dns-probe-af` [-i *interface* | -p *pcap* [-r]] [-l *logfile*] [-n *instance*] [-c *config_file*] [-h]
+:program:`dns-probe-af` [-i *interface* | -p *pcap* [-r] | -d *socket*] [-l *logfile*] [-n *instance*] [-c *config_file*] [-h]
 
 Description
 -----------
 
 :program:`dns-probe-af` is a network traffic probe that captures DNS queries and corresponding responses and exports them as configurable records about individual DNS transactions.
 
-:program:`dns-probe-af` can either listen on an interface or read packets from a PCAP file. The :option:`-i` and :option:`-p` options are mutually incompatible but either of them can be used repeatedly.
+:program:`dns-probe-af` can either listen on an interface or read packets from a PCAP file or read dnstap data from a unix socket. The :option:`-i`, :option:`-p` and :option:`-d` options are mutually incompatible but either of them can be used repeatedly.
 
 Depending on the configuration, :program:`dns-probe-af` exports the transaction records in either Parquet or C-DNS format.
 
@@ -33,6 +33,10 @@ Options
 .. option:: -r
 
    Indicates raw PCAP format.
+
+.. option:: -d socket
+
+   Read dnstap input from given unix socket.
 
 .. option:: -l logfile
 
