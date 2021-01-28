@@ -110,10 +110,12 @@ namespace DDP {
 
         /**
          * @brief Run configuration core loop on master core
+         * @param ports List of network ports to process traffic from
+         * @param sockets List of sockets to process data from
          * @throw std::runtime_error
          * @return Reason why the runner stopped.
          */
-        ReturnValue run(std::vector<std::shared_ptr<DDP::Port>>& ports);
+        ReturnValue run(std::vector<std::shared_ptr<DDP::Port>>& ports, std::vector<std::shared_ptr<DDP::Port>>& sockets);
 
         /**
          * Access main loop

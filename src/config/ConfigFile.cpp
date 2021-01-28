@@ -66,6 +66,12 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["raw-pcap"] && node["raw-pcap"].IsScalar())
         cfg.raw_pcap.add_value(node["raw-pcap"].as<bool>());
 
+    if (node["dnstap-socket-list"] && node["dnstap-socket-list"].IsSequence()) {
+        for (auto item : node["dnstap-socket-list"]) {
+            cfg.dnstap_socket_list.add_value(item.as<std::string>());
+        }
+    }
+
     if (node["log-file"] && node["log-file"].IsScalar())
         cfg.log_file.add_value(node["log-file"].as<std::string>());
 

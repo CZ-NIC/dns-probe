@@ -27,6 +27,7 @@
 #include <cstring>
 
 #include "utils/MemView.h"
+#include "core/BasePacket.h"
 
 #include <rte_mbuf.h>
 #include <rte_malloc.h>
@@ -43,13 +44,15 @@ namespace DDP {
          */
         explicit DPDKPacket() : m_payload(),
                                 m_used_mbuf(false),
+                                m_type(PacketType::NONE),
                                 m_mbuf(nullptr) {}
 
         /**
          * Creates DDP::DPDKPacket from DPDK mbuf.
          * @param mbuf Mbuf used for initialisation od DDP::DPDKPacket.
+         * @param type Format of packet stored in buffer
          */
-        explicit DPDKPacket(rte_mbuf* mbuf);
+        explicit DPDKPacket(rte_mbuf* mbuf, PacketType type = PacketType::WIRE);
 
         /**
          * Copy constructor.
@@ -63,13 +66,23 @@ namespace DDP {
          */
         DPDKPacket(DPDKPacket&& packet) noexcept : m_payload(packet.m_payload),
                                                    m_used_mbuf(packet.m_used_mbuf),
+                                                   m_type(packet.m_type),
                                                    m_mbuf(packet.m_mbuf) { packet.m_buffer = nullptr; }
 
         /**
          * Creates DDP::DPDKPacket from DDP::MemView.
          * @param data Memview used for initialisation od the DDP:DDPKPacket.
+         * @param type Format of packet stored in buffer
          */
-        DPDKPacket(const MemView<uint8_t>& data);
+        DPDKPacket(const MemView<uint8_t>& data, PacketType type = PacketType::WIRE);
+
+        /**
+         * @brief Creates DDP::DPDKPacket from data buffer
+         * @param packet Pointer to packet data buffer
+         * @param size Size of packet data in bytes
+         * @param type Format of packet stored in buffer
+         */
+        DPDKPacket(const uint8_t* packet, std::size_t size, bool, PacketType type = PacketType::WIRE);
 
         /**
          * Swap contents of two DDP:DPDKPackets.
@@ -83,6 +96,7 @@ namespace DDP {
             swap(packet1.m_used_mbuf, packet2.m_used_mbuf);
             swap(packet1.m_buffer, packet2.m_buffer);
             swap(packet1.m_payload, packet2.m_payload);
+            swap(packet1.m_type, packet2.m_type);
         }
 
         /**
@@ -121,6 +135,11 @@ namespace DDP {
         uint64_t size() const { return m_payload.count(); }
 
         /**
+         * @brief Get type of packet
+         */
+        PacketType type() const { return m_type; }
+
+        /**
          * Destructor.
          */
         virtual ~DPDKPacket() { free(); }
@@ -135,6 +154,7 @@ namespace DDP {
         void free();
 
         bool m_used_mbuf; //!< True if instance of DDP::DPDKPacket using mbuf otherwise false.
+        PacketType m_type; //!< Type of stored packet
         union
         {
             rte_mbuf* m_mbuf; //!< Pointer to associated mbuf.

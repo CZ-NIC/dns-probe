@@ -27,7 +27,7 @@
 #include "AfPacket.h"
 #include "platform/Allocator.h"
 
-DDP::AFPacket::AFPacket(const uint8_t* packet, std::size_t size)
+DDP::AFPacket::AFPacket(const uint8_t* packet, std::size_t size, PacketType type)
 {
     auto buffer = reinterpret_cast<uint8_t*>(Alloc::malloc(size));
     if (!buffer)
@@ -37,9 +37,10 @@ DDP::AFPacket::AFPacket(const uint8_t* packet, std::size_t size)
     m_buffer = buffer;
     m_payload = MemView<uint8_t>(m_buffer, size);
     m_owner = true;
+    m_type = type;
 }
 
-DDP::AFPacket::AFPacket(const uint8_t* packet, std::size_t size, bool owner)
+DDP::AFPacket::AFPacket(const uint8_t* packet, std::size_t size, bool owner, PacketType type)
 {
     if (owner) {
         auto buffer = reinterpret_cast<uint8_t*>(Alloc::malloc(size));
@@ -48,17 +49,17 @@ DDP::AFPacket::AFPacket(const uint8_t* packet, std::size_t size, bool owner)
 
         std::memcpy(buffer, packet, size);
         m_buffer = buffer;
-        m_payload = MemView<uint8_t>(m_buffer, size);
         m_owner = true;
     }
     else {
         m_buffer = const_cast<uint8_t*>(packet);
-        m_payload = MemView<uint8_t>(m_buffer, size);
         m_owner = false;
     }
+    m_payload = MemView<uint8_t>(m_buffer, size);
+    m_type = type;
 }
 
-DDP::AFPacket::AFPacket(const DDP::AFPacket& packet) : m_payload(), m_buffer(nullptr), m_owner(false)
+DDP::AFPacket::AFPacket(const DDP::AFPacket& packet) : m_payload(), m_buffer(nullptr), m_owner(false), m_type(PacketType::NONE)
 {
     if (packet.m_buffer) {
         m_buffer = reinterpret_cast<uint8_t*>(Alloc::malloc(packet.size()));
@@ -68,6 +69,7 @@ DDP::AFPacket::AFPacket(const DDP::AFPacket& packet) : m_payload(), m_buffer(nul
         std::copy(packet.m_payload.ptr(), packet.m_payload.ptr() + packet.m_payload.count(), m_buffer);
         m_payload = MemView<uint8_t>(m_buffer, packet.m_payload.count());
         m_owner = true;
+        m_type = packet.m_type;
     }
 }
 
