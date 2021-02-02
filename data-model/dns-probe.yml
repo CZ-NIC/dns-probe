@@ -133,6 +133,16 @@ default:
     # Valid values are 'all', 'invalid', 'disabled'.
     pcap-export: 'disabled'
 
+    # Path to Maxmind Country database. If this option is set to a valid database file, the 'country'
+    # field in exported Parquets or 'country-code' implementation field in exported C-DNS will be
+    # filled with ISO 3166-1 country code based on client's IP address.
+    country-maxmind-db: ''
+
+    # Path to Maxmind ASN database. If this iption is set to a valid database file, the 'asn'
+    # implementation field in exported Parquets or C-DNS will be filled with Autonomous System
+    # Number (ASN) based on client's IP address.
+    asn-maxmind-db: ''
+
   # [SECTION] Configuration of client IP anonymization in exported data (Parquet or C-DNS).
   # The optional PCAP export does NOT get anonymized!!!
   ip-anonymization:
