@@ -16,6 +16,15 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.7.1**
+     - **1.1**
+     - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Update ASN, Country Code and RTT fields in exported data schema
+   * -
+     -
+     - :doc:`Installation <Installation>`
+     - Add libmaxminddb as dependency
+   * -
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Installation <Installation>`, :doc:`Overview <Overview>`,
