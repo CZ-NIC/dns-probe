@@ -23,8 +23,9 @@
 
 #include "CdnsExport.h"
 
-DDP::CdnsExport::CdnsExport(Config& cfg)
-    : BaseExport(cfg.anonymize_ip.value()), m_fields(cfg.cdns_fields.value()), m_parameters()
+DDP::CdnsExport::CdnsExport(Config& cfg, MMDB_s& country_db, MMDB_s& asn_db)
+    : BaseExport(cfg.anonymize_ip.value(), country_db, asn_db), m_fields(cfg.cdns_fields.value()),
+      m_parameters()
 {
     m_parameters.storage_parameters.max_block_items = cfg.cdns_records_per_block.value();
     set_cdns_hints(m_parameters.storage_parameters.storage_hints.query_response_hints,
@@ -73,8 +74,11 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
         qrs_filled = true;
     }
 
+    std::string country;
+    std::string asn;
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_ADDRESS)]) {
         in6_addr* addr = record.client_address();
+        fill_asn_country(addr, record.m_addr_family == DnsRecord::AddrFamily::IP4 ? AF_INET : AF_INET6, asn, country);
         if (record.m_addr_family == DnsRecord::AddrFamily::IP4) {
 #ifdef PROBE_CRYPTOPANT
             if (m_anonymize_ip)
@@ -216,6 +220,12 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
 
     if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_DELAY)])
         qr.response_delay = record.m_tcp_rtt;
+
+    if (!asn.empty())
+        qr.asn = asn;
+
+    if (!country.empty())
+        qr.country_code = country;
 
     // Add QueryResponseSignature to the QueryResponse
     if (qrs_filled)

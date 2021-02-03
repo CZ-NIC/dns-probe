@@ -39,7 +39,7 @@ namespace DDP {
          * @brief Constructor creates new C-DNS block configured for given C-DNS fields
          * @param cfg Object witch configuration options
          */
-        CdnsExport(Config& cfg);
+        CdnsExport(Config& cfg, MMDB_s& country_db, MMDB_s& asn_db);
 
         /**
          * @brief Store DNS record into C-DNS block
