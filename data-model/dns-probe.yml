@@ -77,6 +77,7 @@ default:
     export-format: 'parquet'
 
     # This sequence indicates which fields from the C-DNS standard schema are included in exported data.
+    # 3 implementation specific fields are also included (asn, country_code, round_trip_time).
     # By default all fields available in DNS Probe are enabled as shown below.
     cdns-fields:
       - 'transaction_id'
@@ -102,7 +103,9 @@ default:
       - 'query_opt_rdata'
       - 'response_additional_sections'
       - 'response_size'
-      - 'response_delay' # TCP RTT
+      - 'asn' # asn-maxmind-db configuration option also needs to be set
+      - 'country_code' # country-maxmind-db configuration option also needs to be set
+      - 'round_trip_time' # TCP RTT
 
     # Maximum number of DNS records in one exported C-DNS block.
     cdns-records-per-block: 10000

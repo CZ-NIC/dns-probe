@@ -63,7 +63,7 @@ namespace DDP {
                    asn_db(),
                    export_format(ExportFormat::PARQUET),
                    parquet_records(5000000),
-                   cdns_fields(0xFFFFFF),
+                   cdns_fields(get_cdns_bitmask()),
                    cdns_records_per_block(10000),
                    cdns_blocks_per_file(0),
                    export_location(ExportLocation::LOCAL),

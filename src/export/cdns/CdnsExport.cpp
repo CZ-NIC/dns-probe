@@ -218,13 +218,14 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)])
         qr.response_size = record.m_res_dns_len;
 
-    if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_DELAY)])
-        qr.response_delay = record.m_tcp_rtt;
+    if (m_fields[static_cast<uint32_t>(CDNSField::ROUND_TRIP_TIME)])
+        // need to convert millisecond m_tcp_rtt to ticks which represent microseconds
+        qr.round_trip_time = record.m_tcp_rtt * 1000;
 
-    if (!asn.empty())
+    if (m_fields[static_cast<uint32_t>(CDNSField::ASN)] && !asn.empty())
         qr.asn = asn;
 
-    if (!country.empty())
+    if (m_fields[static_cast<uint32_t>(CDNSField::COUNTRY_CODE)] && !country.empty())
         qr.country_code = country;
 
     // Add QueryResponseSignature to the QueryResponse
