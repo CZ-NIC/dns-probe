@@ -35,6 +35,7 @@ RUN apt-get update -yqq &&\
         libprotobuf-dev \
         protobuf-compiler \
         libfstrm-dev \
+        libmaxminddb-dev \
         dpdk-dev \
         dns-probe-af \
         dns-probe-dpdk &&\
