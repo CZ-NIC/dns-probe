@@ -23,8 +23,9 @@
 
 #include "CdnsExport.h"
 
-DDP::CdnsExport::CdnsExport(Config& cfg)
-    : BaseExport(cfg.anonymize_ip.value()), m_fields(cfg.cdns_fields.value()), m_parameters()
+DDP::CdnsExport::CdnsExport(Config& cfg, MMDB_s& country_db, MMDB_s& asn_db)
+    : BaseExport(cfg.anonymize_ip.value(), country_db, asn_db), m_fields(cfg.cdns_fields.value()),
+      m_parameters()
 {
     m_parameters.storage_parameters.max_block_items = cfg.cdns_records_per_block.value();
     set_cdns_hints(m_parameters.storage_parameters.storage_hints.query_response_hints,
@@ -73,6 +74,9 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
         qrs_filled = true;
     }
 
+    std::string country;
+    std::string asn;
+    fill_asn_country(record.client_address(), record.m_addr_family == DnsRecord::AddrFamily::IP4 ? AF_INET : AF_INET6, asn, country);
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_ADDRESS)]) {
         in6_addr* addr = record.client_address();
         if (record.m_addr_family == DnsRecord::AddrFamily::IP4) {
@@ -214,8 +218,15 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)])
         qr.response_size = record.m_res_dns_len;
 
-    if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_DELAY)])
-        qr.response_delay = record.m_tcp_rtt;
+    if (m_fields[static_cast<uint32_t>(CDNSField::ROUND_TRIP_TIME)])
+        // need to convert millisecond m_tcp_rtt to ticks which represent microseconds
+        qr.round_trip_time = record.m_tcp_rtt * 1000;
+
+    if (m_fields[static_cast<uint32_t>(CDNSField::ASN)] && !asn.empty())
+        qr.asn = asn;
+
+    if (m_fields[static_cast<uint32_t>(CDNSField::COUNTRY_CODE)] && !country.empty())
+        qr.country_code = country;
 
     // Add QueryResponseSignature to the QueryResponse
     if (qrs_filled)

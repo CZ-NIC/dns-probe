@@ -24,6 +24,7 @@
 #pragma once
 
 #include <set>
+#include <maxminddb.h>
 #include "export/BaseExport.h"
 #include "export/BaseWriter.h"
 #include "core/DnsRecord.h"
@@ -153,7 +154,8 @@ namespace DDP {
         Worker(Config& cfg, Statistics& stats, PollAbleRing<boost::any> ring,
                CommLink::CommLinkEP& comm_link, Mempool<DnsRecord>& record_mempool,
                Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, std::vector<std::shared_ptr<DDP::Port>> ports,
-               std::vector<std::shared_ptr<DDP::Port>> sockets, bool match_qname, unsigned process_id) :
+               std::vector<std::shared_ptr<DDP::Port>> sockets, bool match_qname, unsigned process_id, MMDB_s& country_db,
+               MMDB_s& asn_db) :
                 Process(cfg, stats, comm_link),
                 m_record_mempool(record_mempool),
                 m_tcp_mempool(tcp_mempool),
@@ -174,14 +176,14 @@ namespace DDP {
         {
             if (cfg.export_format.value() == ExportFormat::PARQUET) {
 #ifdef PROBE_PARQUET
-                m_exporter = new ParquetExport(cfg);
+                m_exporter = new ParquetExport(cfg, country_db, asn_db);
 #else
                 throw std::runtime_error("DNS Probe was built without Parquet support!");
 #endif
             }
             else {
 #ifdef PROBE_CDNS
-                m_exporter = new CdnsExport(cfg);
+                m_exporter = new CdnsExport(cfg, country_db, asn_db);
 #else
                 throw std::runtime_error("DNS Probe was built without C-DNS support!");
 #endif

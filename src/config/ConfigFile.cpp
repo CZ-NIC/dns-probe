@@ -164,6 +164,12 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["export"]["pcap-export"] && node["export"]["pcap-export"].IsScalar())
         cfg.pcap_export.add_value(node["export"]["pcap-export"].as<std::string>());
 
+    if (node["export"]["country-maxmind-db"] && node["export"]["country-maxmind-db"].IsScalar())
+        cfg.country_db.add_value(node["export"]["country-maxmind-db"].as<std::string>());
+
+    if (node["export"]["asn-maxmind-db"] && node["export"]["asn-maxmind-db"].IsScalar())
+        cfg.asn_db.add_value(node["export"]["asn-maxmind-db"].as<std::string>());
+
     if (node["ip-anonymization"]["anonymize-ip"] && node["ip-anonymization"]["anonymize-ip"].IsScalar())
         cfg.anonymize_ip.add_value(node["ip-anonymization"]["anonymize-ip"].as<bool>());
 

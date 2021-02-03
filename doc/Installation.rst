@@ -91,6 +91,7 @@ distribution repositories:
 - OpenSSL (libssl-dev)
 - fstrm
 - Protocol Buffers (libprotobuf-dev, protobuf-compiler)
+- libmaxminddb
 - DPDK (only for DPDK version)
 
 Optionally, to build this user documentation (``make doc``) or manual pages (``make man``)

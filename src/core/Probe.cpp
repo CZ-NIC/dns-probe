@@ -85,8 +85,15 @@ namespace DDP {
 
 DDP::Probe::Probe() : m_cfg_loaded(false), m_initialized(false), m_running(false), m_poll(), m_cfg(),
                       m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
-                      m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
-                      m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
+                      m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(),
+                      m_country(), m_asn(), m_stats(), m_stopped_workers(0),
+                      m_ret_value(ReturnValue::STOP) {}
+
+DDP::Probe::~Probe()
+{
+    MMDB_close(&m_country);
+    MMDB_close(&m_asn);
+}
 
 DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 {
@@ -290,6 +297,28 @@ void DDP::Probe::init(const Arguments& args)
 #endif
         }
 
+        if (!m_cfg.country_db.value().empty()) {
+            int status = MMDB_open(m_cfg.country_db.value().c_str(), MMDB_MODE_MMAP, &m_country);
+            if (status != MMDB_SUCCESS) {
+                Logger("Probe").warning() << "Couldn't open Maxmind Country database!";
+                m_country.filename = nullptr;
+            }
+        }
+        else {
+            m_country.filename = nullptr;
+        }
+
+        if (!m_cfg.asn_db.value().empty()) {
+            int status = MMDB_open(m_cfg.asn_db.value().c_str(), MMDB_MODE_MMAP, &m_asn);
+            if (status != MMDB_SUCCESS) {
+                Logger("Probe").warning() << "Couldn't open Maxmind ASN database!";
+                m_asn.filename = nullptr;
+            }
+        }
+        else {
+            m_asn.filename = nullptr;
+        }
+
         if (m_cfg.export_location.value() == ExportLocation::REMOTE)
             TlsCtx::getInstance().init(m_cfg.export_ca_cert.value());
 
@@ -313,7 +342,7 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
         try {
             Worker w(m_cfg, stats, m_factory_rings.at(worker).get_poll_able_ring(), m_comm_links[worker].worker_endpoint(),
                     *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports, w_sockets,
-                    m_cfg.match_qname, worker);
+                    m_cfg.match_qname, worker, m_country, m_asn);
             Logger logger("Worker");
             logger.info() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
             w.run();

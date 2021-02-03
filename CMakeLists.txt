@@ -22,6 +22,7 @@ find_package(PCAP REQUIRED)
 find_package(Boost REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Yaml-cpp REQUIRED)
+find_package(MaxmindDB REQUIRED)
 find_package(Doxygen)
 
 include(CheckCXXCompilerFlag)
@@ -50,7 +51,7 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} ${YAML_CPP_LIBRARIES} PCAP::PCAP Threads::Threads OpenSSL::SSL)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} ${YAML_CPP_LIBRARIES} PCAP::PCAP Threads::Threads OpenSSL::SSL MaxmindDB::MaxmindDB)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
 target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS} ${YAML_CPP_INCLUDE_DIR})
 target_compile_options(DNSProbe INTERFACE -msse4)
