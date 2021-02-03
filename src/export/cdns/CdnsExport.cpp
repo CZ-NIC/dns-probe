@@ -76,9 +76,9 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
 
     std::string country;
     std::string asn;
+    fill_asn_country(record.client_address(), record.m_addr_family == DnsRecord::AddrFamily::IP4 ? AF_INET : AF_INET6, asn, country);
     if (m_fields[static_cast<uint32_t>(CDNSField::CLIENT_ADDRESS)]) {
         in6_addr* addr = record.client_address();
-        fill_asn_country(addr, record.m_addr_family == DnsRecord::AddrFamily::IP4 ? AF_INET : AF_INET6, asn, country);
         if (record.m_addr_family == DnsRecord::AddrFamily::IP4) {
 #ifdef PROBE_CRYPTOPANT
             if (m_anonymize_ip)
