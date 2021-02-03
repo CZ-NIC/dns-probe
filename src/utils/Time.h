@@ -24,6 +24,7 @@
 #pragma once
 
 #include <ctime>
+#include <cmath>
 #include <cstdint>
 #include <type_traits>
 
@@ -110,12 +111,30 @@ namespace DDP {
             }
 
             /**
+             * @brief Convert timestamp to milliseconds rounding halfway cases up
+             * @return Current rounded timestamp in milliseconds
+             */
+            milliseconds_t getMillisRounded()
+            {
+                return m_timespec.tv_sec * 1000 + std::llround(m_timespec.tv_nsec / 1000000.0);
+            }
+
+            /**
              * @brief Convert timestamp to microseconds
              * @return Current timestamp in microseconds
              */
             int64_t getMicros()
             {
                 return (m_timespec.tv_sec * 1000000) + (m_timespec.tv_nsec / 1000);
+            }
+
+            /**
+             * @brief Convert timestamp to microseconds rounding halfway cases up
+             * @return Current rounded timestamp in microseconds
+             */
+            int64_t getMicrosRounded()
+            {
+                return (m_timespec.tv_sec * 1000000) + std::llround(m_timespec.tv_nsec / 1000.0);
             }
 
             /**
