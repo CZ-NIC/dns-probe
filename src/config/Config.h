@@ -59,9 +59,11 @@ namespace DDP {
                    file_rot_size(0),
                    file_compression(true),
                    pcap_export(PcapExportCfg::DISABLED),
+                   country_db(),
+                   asn_db(),
                    export_format(ExportFormat::PARQUET),
                    parquet_records(5000000),
-                   cdns_fields(0xFFFFFF),
+                   cdns_fields(get_cdns_bitmask()),
                    cdns_records_per_block(10000),
                    cdns_blocks_per_file(0),
                    export_location(ExportLocation::LOCAL),
@@ -97,6 +99,8 @@ namespace DDP {
         ConfigItem<uint64_t> file_rot_size; //!< Exported file size limit in MB
         ConfigItem<bool> file_compression; //!< Enable GZIP compression for exported files
         ConfigItem<PcapExportCfg> pcap_export; //!< Define what will be in exported PCAPs
+        ConfigItem<std::string> country_db; //!< Path to Maxmind Country database
+        ConfigItem<std::string> asn_db; //!< Path to Maxmind ASN database
 
         ConfigItem<ExportFormat> export_format; //!< Specify export format
         ConfigItem<uint64_t> parquet_records; //!< Number of records in parquet file

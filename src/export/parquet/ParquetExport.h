@@ -77,7 +77,7 @@ namespace DDP {
          * @brief Constructor creates Parquet file schema
          * @param cfg Object with configuration options
          */
-        explicit ParquetExport(Config& cfg);
+        explicit ParquetExport(Config& cfg, MMDB_s& country_db, MMDB_s& asn_db);
 
         /**
          * @brief Store DNS record into arrow columns.

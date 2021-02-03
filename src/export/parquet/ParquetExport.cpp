@@ -35,8 +35,9 @@
 
 constexpr char DDP::ParquetExport::DIGITS[];
 
-DDP::ParquetExport::ParquetExport(Config& cfg)
-                                  : BaseExport(cfg.anonymize_ip.value()), m_records_limit(cfg.parquet_records.value())
+DDP::ParquetExport::ParquetExport(Config& cfg, MMDB_s& country_db, MMDB_s& asn_db)
+                                  : BaseExport(cfg.anonymize_ip.value(), country_db, asn_db),
+                                    m_records_limit(cfg.parquet_records.value())
 {
     m_DnsSchema = arrow::schema({arrow::field("id", arrow::int32()),
                                 arrow::field("unixtime", arrow::int64()),
@@ -161,6 +162,10 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     in6_addr* addr = record.client_address();
     int ipv = record.m_addr_family == DDP::DnsRecord::AddrFamily::IP4 ? AF_INET : AF_INET6;
 
+    std::string country;
+    std::string asn;
+    fill_asn_country(addr, ipv, asn, country);
+
 #ifdef PROBE_CRYPTOPANT
     if (m_anonymize_ip) {
         if (ipv == AF_INET)
@@ -236,10 +241,10 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     PARQUET_THROW_NOT_OK(QClass.Append(record.m_qclass));
 
     // Country
-    PARQUET_THROW_NOT_OK(Country.Append(""));
+    PARQUET_THROW_NOT_OK(Country.Append(country));
 
     // ASN
-    PARQUET_THROW_NOT_OK(ASN.Append(""));
+    PARQUET_THROW_NOT_OK(ASN.Append(asn));
 
     // EDNS UDP payload
     PARQUET_THROW_NOT_OK(EdnsUDP.Append(record.m_ednsUDP));
