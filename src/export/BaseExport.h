@@ -27,6 +27,7 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <maxminddb.h>
 
 #ifdef PROBE_CRYPTOPANT
 #include <cryptopANT.h>
@@ -48,7 +49,8 @@ namespace DDP {
     class BaseExport
     {
     public:
-        explicit BaseExport(bool anonymize_ip) : m_anonymize_ip(anonymize_ip) {}
+        explicit BaseExport(bool anonymize_ip, MMDB_s& country_db, MMDB_s& asn_db)
+        : m_anonymize_ip(anonymize_ip), m_country(country_db), m_asn(asn_db) {}
 
         virtual ~BaseExport() {};
 
@@ -79,6 +81,18 @@ namespace DDP {
         virtual void update_configuration(Config& cfg) = 0;
 
     protected:
+
+        /**
+         * @brief Fill given ASN and Country Code strings from Maxmind databases based on given IP address
+         * @param addr IP address to lookup in Maxmind databases
+         * @param ipv Version of given IP address
+         * @param asn ASN string to fill with IP's ASN
+         * @param country Country Code string to fill with IP's ISO 3166-1 country code
+         */
+        void fill_asn_country(const in6_addr* addr, int ipv, std::string& asn, std::string& country);
+
         bool m_anonymize_ip;
+        MMDB_s& m_country;
+        MMDB_s& m_asn;
     };
 }

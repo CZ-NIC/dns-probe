@@ -37,7 +37,14 @@ namespace DDP {
     using IPv4_t = uint32_t;
     using IPv6_t = std::array<uint32_t, 4>;
 
-    static constexpr uint8_t CdnsBits = 24; //!< Number of C-DNS fields options
+    static constexpr uint8_t CdnsBits = 26; //!< Number of C-DNS fields options
+    static constexpr uint64_t get_cdns_bitmask() {
+        uint64_t bitmask = 0;
+        for (unsigned i = 0; i < CdnsBits; i++) {
+            bitmask |= 1 << i;
+        }
+        return bitmask;
+    }
 
     /**
      * Available values for PCAP export config.
@@ -91,7 +98,9 @@ namespace DDP {
         QUERY_OPT_RDATA,
         RESPONSE_ADDITIONAL_SECTIONS,
         RESPONSE_SIZE,
-        RESPONSE_DELAY
+        ASN,
+        COUNTRY_CODE,
+        ROUND_TRIP_TIME
     };
 
     static const std::unordered_map<std::string, uint32_t> CdnsFieldsMap = {
@@ -117,7 +126,9 @@ namespace DDP {
         {"query_opt_data",                  static_cast<uint32_t>(CDNSField::QUERY_OPT_RDATA)},
         {"response_additional_sections",    static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)},
         {"response_size",                   static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)},
-        {"response_delay",                  static_cast<uint32_t>(CDNSField::RESPONSE_DELAY)},
+        {"asn",                             static_cast<uint32_t>(CDNSField::ASN)},
+        {"country_code",                    static_cast<uint32_t>(CDNSField::COUNTRY_CODE)},
+        {"round_trip_time",                 static_cast<uint32_t>(CDNSField::ROUND_TRIP_TIME)},
     };
 
     /**

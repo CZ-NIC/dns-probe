@@ -85,8 +85,15 @@ namespace DDP {
 
 DDP::Probe::Probe() : m_cfg_loaded(false), m_initialized(false), m_running(false), m_poll(), m_cfg(),
                       m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
-                      m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(), m_stats(),
-                      m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
+                      m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(),
+                      m_country(), m_asn(), m_stats(), m_stopped_workers(0),
+                      m_ret_value(ReturnValue::STOP) {}
+
+DDP::Probe::~Probe()
+{
+    MMDB_close(&m_country);
+    MMDB_close(&m_asn);
+}
 
 DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 {
@@ -94,7 +101,7 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     args.app = argv[0];
     int opt;
 
-    while ((opt = getopt(argc, argv, "hi:p:rl:n:c:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rd:l:n:c:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -112,6 +119,10 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 
             case 'r':
                 args.raw_pcap = true;
+                break;
+
+            case 'd':
+                args.dnstap_sockets.emplace_back(optarg);
                 break;
 
             case 'l':
@@ -150,13 +161,14 @@ void DDP::Probe::print_help(const char* app)
         interface = "interface name e.g. eth0 or PCI ID e.g. 00:1f.6";
 
     std::cout << std::endl << app << std::endl
-              << "\t-p PCAP        : input pcap files. Parameter can repeat." << std::endl
-              << "\t-i INTERFACE   : " << interface << ". Parameter can repeat." << std::endl
-              << "\t-r             : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
-              << "\t-l LOGFILE     : redirect probe's logs to LOGFILE instead of standard output" << std::endl
-              << "\t-n INSTANCE    : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
-              << "\t-c CONFIG_FILE : YAML file to load initial configuration from." << std::endl
-              << "\t-h             : this help message" << std::endl;
+              << "\t-p PCAP            : input pcap files. Parameter can repeat." << std::endl
+              << "\t-i INTERFACE       : " << interface << ". Parameter can repeat." << std::endl
+              << "\t-r                 : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
+              << "\t-d DNSTAP_SOCKET   : path to input dnstap unix socket. Parameter can repeat." << std::endl
+              << "\t-l LOGFILE         : redirect probe's logs to LOGFILE instead of standard output" << std::endl
+              << "\t-n INSTANCE        : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
+              << "\t-c CONFIG_FILE     : YAML file to load initial configuration from." << std::endl
+              << "\t-h                 : this help message" << std::endl;
 }
 
 DDP::Probe& DDP::Probe::getInstance()
@@ -191,7 +203,16 @@ void DDP::Probe::load_config(Arguments& args)
             args.pcaps.emplace_back(pcap);
         }
 
-        if (args.interfaces.empty() && args.pcaps.empty())
+        for (auto& dt_socket : m_cfg.dnstap_socket_list.value()) {
+            args.dnstap_sockets.emplace_back(dt_socket);
+        }
+
+#ifndef PROBE_DNSTAP
+        if (!args.dnstap_sockets.empty())
+            throw std::runtime_error("DNS Probe was built without dnstap support!");
+#endif
+
+        if (args.interfaces.empty() && args.pcaps.empty() && args.dnstap_sockets.empty())
             throw std::invalid_argument("At least one interface or pcap should be specified!");
 
         m_cfg_loaded = true;
@@ -276,6 +297,28 @@ void DDP::Probe::init(const Arguments& args)
 #endif
         }
 
+        if (!m_cfg.country_db.value().empty()) {
+            int status = MMDB_open(m_cfg.country_db.value().c_str(), MMDB_MODE_MMAP, &m_country);
+            if (status != MMDB_SUCCESS) {
+                Logger("Probe").warning() << "Couldn't open Maxmind Country database!";
+                m_country.filename = nullptr;
+            }
+        }
+        else {
+            m_country.filename = nullptr;
+        }
+
+        if (!m_cfg.asn_db.value().empty()) {
+            int status = MMDB_open(m_cfg.asn_db.value().c_str(), MMDB_MODE_MMAP, &m_asn);
+            if (status != MMDB_SUCCESS) {
+                Logger("Probe").warning() << "Couldn't open Maxmind ASN database!";
+                m_asn.filename = nullptr;
+            }
+        }
+        else {
+            m_asn.filename = nullptr;
+        }
+
         if (m_cfg.export_location.value() == ExportLocation::REMOTE)
             TlsCtx::getInstance().init(m_cfg.export_ca_cert.value());
 
@@ -287,18 +330,19 @@ void DDP::Probe::init(const Arguments& args)
 }
 
 
-DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>& ports)
+DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>& ports,
+                                        std::vector<std::shared_ptr<DDP::Port>>& sockets)
 {
     if (!m_initialized)
         throw std::runtime_error("Application is not initialized!");
 
     Logger logger("Probe");
 
-    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue) {
+    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue, std::vector<std::shared_ptr<DDP::Port>> w_sockets) {
         try {
             Worker w(m_cfg, stats, m_factory_rings.at(worker).get_poll_able_ring(), m_comm_links[worker].worker_endpoint(),
-                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports,
-                    m_cfg.match_qname, worker);
+                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports, w_sockets,
+                    m_cfg.match_qname, worker, m_country, m_asn);
             Logger logger("Worker");
             logger.info() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
             w.run();
@@ -336,9 +380,15 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
     m_thread_manager->run_on_thread(slaves[0], exporter_runner, slaves[0], std::ref(m_stats[stats_index++]));
     slaves.erase(slaves.begin());
 
-    auto queue = 0;
+    unsigned queue = 0;
     for (auto worker: slaves) {
-        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++);
+        std::vector<std::shared_ptr<DDP::Port>> worker_sockets;
+        auto index = queue;
+        while (index < sockets.size()) {
+            worker_sockets.push_back(sockets[index]);
+            index += slaves.size();
+        }
+        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++, worker_sockets);
     }
 
     logger.info() << "Slave threads started.";

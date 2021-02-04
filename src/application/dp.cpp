@@ -31,6 +31,7 @@
 #include "utils/Logger.h"
 #include "non-dpdk/PcapPort.h"
 #include "non-dpdk/AfPacketPort.h"
+#include "core/UnixSocket.h"
 
 constexpr int PCAP_THREADS = 3;
 DDP::LogWriter logwriter;
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
     }
 
     std::vector<std::shared_ptr<DDP::Port>> ready_ports;
+    std::vector<std::shared_ptr<DDP::Port>> ready_sockets;
     try {
         // Port initialization
         uint16_t id = 0;
@@ -76,6 +78,10 @@ int main(int argc, char** argv)
 
         for (auto& port: arguments.args.pcaps) {
             ready_ports.emplace_back(new DDP::PCAPPort(port.c_str(), runner.slaves_cnt() - 1));
+        }
+
+        for (auto& port : arguments.args.dnstap_sockets) {
+            ready_sockets.emplace_back(new DDP::UnixSocket(port.c_str()));
         }
 
         // Set up signal handlers to print stats on exit
@@ -91,7 +97,7 @@ int main(int argc, char** argv)
 
         // Poll on configuration core
         try {
-            return static_cast<int>(runner.run(ready_ports));
+            return static_cast<int>(runner.run(ready_ports, ready_sockets));
         } catch (std::exception &e) {
             logwriter.log_lvl("ERROR", "Uncaught exception: ", e.what());
             return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);

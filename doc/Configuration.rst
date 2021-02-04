@@ -24,11 +24,14 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
 
    +--rw <instance-id>?
       +--rw coremask? <uint64>
+      +--rw dnstap-socket-list?* <string>
       +--rw dns-ports?* <uint16>
       +--rw export
+      |  +--rw asn-maxmind-db? <string>
       |  +--rw cdns-blocks-per-file? <uint64>
       |  +--rw cdns-fields?* <string>
       |  +--rw cdns-records-per-block? <uint64>
+      |  +--rw country-maxmind-db? <string>
       |  +--rw export-dir? <string>
       |  +--rw export-format? <enumeration>
       |  +--rw file-compression? <boolean>
@@ -105,6 +108,14 @@ anonymize-ip
 
 If this flag is true, client IP addresses in exported data (Parquet or C-DNS, NOT optional PCAPs) will be anonymized using Crypto-PAn prefix-preserving algorithm.
 
+asn-maxmind-db
+^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/asn-maxmind-db``
+:default: empty
+
+Path to Maxmind ASN database. If this option is set to a valid database file, the ``asn`` implementation field in exported Parquets or C-DNS will be filled with Autonomous System Number (ASN) based on client's IP address.
+
 .. _cdns-blocks-per-file:
 
 cdns-blocks-per-file
@@ -156,6 +167,25 @@ coremask
 Bitmask indicating which CPU cores should DNS Probe use. At least 3 CPU cores are needed, see :ref:`dns-probe-arch`. Setting more than 3 cores in the bitmask will spawn more worker threads that are used for processing incoming packets.
 
 The default value of 7 indicates that DNS Probe should use the first 3 CPU cores with IDs of 0, 1 and 2.
+
+country-maxmind-db
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/country-maxmind-db``
+:default: empty
+
+Path to Maxmind Country database. If this option is set to a valid database file, the ``country`` field in exported Parquets or ``country-code`` implementation field in exported C-DNS will be filled with ISO 3166-1 country code based on client's IP address.
+
+.. _dnstap-socket-list:
+
+dnstap-socket-list
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/dnstap-socket-list``
+:default: empty
+
+List of unix sockets to process dnstap data from in addition to sockets passed with '-d'
+command line parameter.
 
 .. _dns-ports:
 

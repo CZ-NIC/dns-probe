@@ -27,6 +27,7 @@
 #include <functional>
 #include <vector>
 #include <set>
+#include <maxminddb.h>
 
 #include "utils/Poll.h"
 #include "utils/RingFwdDecl.h"
@@ -110,10 +111,12 @@ namespace DDP {
 
         /**
          * @brief Run configuration core loop on master core
+         * @param ports List of network ports to process traffic from
+         * @param sockets List of sockets to process data from
          * @throw std::runtime_error
          * @return Reason why the runner stopped.
          */
-        ReturnValue run(std::vector<std::shared_ptr<DDP::Port>>& ports);
+        ReturnValue run(std::vector<std::shared_ptr<DDP::Port>>& ports, std::vector<std::shared_ptr<DDP::Port>>& sockets);
 
         /**
          * Access main loop
@@ -173,6 +176,11 @@ namespace DDP {
         Probe();
 
         /**
+         * Destructor
+         */
+        ~Probe();
+
+        /**
          * Read all messages from log commlink and writes them to the output.
          */
         void process_log_messages() const;
@@ -193,6 +201,8 @@ namespace DDP {
         std::unique_ptr<Mempool<DnsTcpConnection>> m_tcp_connection_mempool; //!< Mempool for TCP connections.
         std::unordered_map<unsigned, std::unique_ptr<Ring<boost::any>>> m_export_rings; //!< Rings for sending data from workers to exporter.
         std::unordered_map<unsigned, PollAbleRingFactory<boost::any>> m_factory_rings;
+        MMDB_s m_country; //!< Maxmind Country database
+        MMDB_s m_asn; //!< Maxmind ASN database
 
         std::vector<Statistics> m_stats; //!< Statistics structure for workers. One item in vector per worker.
         AggregatedStatistics m_aggregated_stats; //!< Aggregated statistics from workers.

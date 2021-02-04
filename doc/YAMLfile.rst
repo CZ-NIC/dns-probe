@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2020-09-22
+  # Last revision: 2021-02-03
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -23,6 +23,10 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
     # List of PCAPs to process in addition to PCAPs passed with '-p' command line parameter.
     pcap-list: []
+
+    # List of unix sockets to process dnstap data from in addition to sockets passed with '-d'
+    # command line parameter.
+    dnstap-socket-list: []
 
     # Indicates RAW PCAPs as input in 'pcap-list' or from command line with '-p' parameter.
     # Might get overriden by '-r' command line parameter.
@@ -84,6 +88,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       export-format: 'parquet'
 
       # This sequence indicates which fields from the C-DNS standard schema are included in exported data.
+      # 3 implementation specific fields are also included (asn, country_code, round_trip_time).
       # By default all fields available in DNS Probe are enabled as shown below.
       cdns-fields:
         - 'transaction_id'
@@ -109,7 +114,9 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
         - 'query_opt_rdata'
         - 'response_additional_sections'
         - 'response_size'
-        - 'response_delay' # TCP RTT
+        - 'asn' # asn-maxmind-db configuration option also needs to be set
+        - 'country_code' # country-maxmind-db configuration option also needs to be set
+        - 'round_trip_time' # TCP RTT
 
       # Maximum number of DNS records in one exported C-DNS block.
       cdns-records-per-block: 10000
@@ -139,6 +146,16 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # It's recommended to use this option only for testing purposes.
       # Valid values are 'all', 'invalid', 'disabled'.
       pcap-export: 'disabled'
+
+      # Path to Maxmind Country database. If this option is set to a valid database file, the 'country'
+      # field in exported Parquets or 'country-code' implementation field in exported C-DNS will be
+      # filled with ISO 3166-1 country code based on client's IP address.
+      country-maxmind-db: ''
+
+      # Path to Maxmind ASN database. If this iption is set to a valid database file, the 'asn'
+      # implementation field in exported Parquets or C-DNS will be filled with Autonomous System
+      # Number (ASN) based on client's IP address.
+      asn-maxmind-db: ''
 
     # [SECTION] Configuration of client IP anonymization in exported data (Parquet or C-DNS).
     # The optional PCAP export does NOT get anonymized!!!

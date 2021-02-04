@@ -15,7 +15,23 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
-   * - **0.7**
+   * - **0.8.0**
+     - **1.0**
+     - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Update ASN, Country Code and RTT fields in exported data schema
+   * -
+     -
+     - :doc:`Installation <Installation>`
+     - Add libmaxminddb as dependency
+   * -
+     -
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
+       :doc:`Installation <Installation>`, :doc:`Overview <Overview>`,
+       :doc:`Default YAML file <YAMLfile>`, :doc:`AF manual pages <manpages/dns-probe-af>`,
+       :doc:`DPDK manual pages <manpages/dns-probe-dpdk>`
+     - Add dnstap as another input data format
+   * - **0.7.0**
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Glossary <Glossary>`,
@@ -35,7 +51,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      -
      - :doc:`Exported Data Schema <ExportedDataSchema>`, YANG module
      - Add TCP RTT item to exported data schema
-   * - **0.6**
+   * - **0.6.0**
      - **1.1**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
      - Domainname field in export schema is in lowercase
@@ -65,7 +81,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      -
      - :doc:`Configuration <Configuration>`, YANG module
      - Add IP filtering to YANG module
-   * - **0.5**
+   * - **0.5.0**
      - **1.1**
      - :doc:`index <index>`, :doc:`Installation <Installation>`, YANG module,
        :doc:`Record Of Changes <RecordOfChanges>`

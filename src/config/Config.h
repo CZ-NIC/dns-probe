@@ -40,6 +40,7 @@ namespace DDP {
         Config() : interface_list(),
                    pcap_list(),
                    raw_pcap(false),
+                   dnstap_socket_list(),
                    log_file(),
                    coremask(0x7),
                    dns_ports({53}),
@@ -58,9 +59,11 @@ namespace DDP {
                    file_rot_size(0),
                    file_compression(true),
                    pcap_export(PcapExportCfg::DISABLED),
+                   country_db(),
+                   asn_db(),
                    export_format(ExportFormat::PARQUET),
                    parquet_records(5000000),
-                   cdns_fields(0xFFFFFF),
+                   cdns_fields(get_cdns_bitmask()),
                    cdns_records_per_block(10000),
                    cdns_blocks_per_file(0),
                    export_location(ExportLocation::LOCAL),
@@ -74,6 +77,7 @@ namespace DDP {
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
         ConfigItem<bool> raw_pcap; //!< Defines if input PCAP files are without ethernet headers
+        ConfigItem<CList<std::string>> dnstap_socket_list; //!< List of unix sockets to process dnstap data from
         ConfigItem<std::string> log_file; //!< Log file for storing probe's logs
         ConfigItem<ThreadManager::MaskType> coremask; //!< Coremask used fo selecting cores where application will be running.
         ConfigItem<CList<Port_t>> dns_ports; //!< TCP/UDP port list used for identifying DNS traffic
@@ -95,6 +99,8 @@ namespace DDP {
         ConfigItem<uint64_t> file_rot_size; //!< Exported file size limit in MB
         ConfigItem<bool> file_compression; //!< Enable GZIP compression for exported files
         ConfigItem<PcapExportCfg> pcap_export; //!< Define what will be in exported PCAPs
+        ConfigItem<std::string> country_db; //!< Path to Maxmind Country database
+        ConfigItem<std::string> asn_db; //!< Path to Maxmind ASN database
 
         ConfigItem<ExportFormat> export_format; //!< Specify export format
         ConfigItem<uint64_t> parquet_records; //!< Number of records in parquet file
