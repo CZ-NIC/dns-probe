@@ -33,7 +33,6 @@
 #include "non-dpdk/AfPacketPort.h"
 #include "core/UnixSocket.h"
 
-constexpr int PCAP_THREADS = 3;
 DDP::LogWriter logwriter;
 
 static void signal_handler(int signum)
