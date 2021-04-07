@@ -39,10 +39,11 @@ namespace DDP {
         /**
          * @brief Constructor. Creates AF_UNIX socket in location given by "socket"
          * parameter and starts listening on it.
-         * @param socket Location where to create the socket
+         * @param sock_path Location where to create the socket
+         * @param sock_group User group under which to create the socket
          * @throw std::runtime_error
          */
-        explicit UnixSocket(const char* socket);
+        explicit UnixSocket(const char* sock_path, const std::string sock_group);
 
         /**
          * @brief Destructor. Closes the socket and deletes it from filesystem.

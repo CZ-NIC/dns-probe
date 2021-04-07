@@ -72,6 +72,9 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
         }
     }
 
+    if (node["dnstap-socket-group"] && node["dnstap-socket-group"].IsScalar())
+        cfg.dnstap_socket_group.add_value(node["dnstap-socket-group"].as<std::string>());
+
     if (node["log-file"] && node["log-file"].IsScalar())
         cfg.log_file.add_value(node["log-file"].as<std::string>());
 
