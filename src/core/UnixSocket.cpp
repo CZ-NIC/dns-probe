@@ -24,14 +24,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/stat.h>
+#include <grp.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
 #include "UnixSocket.h"
+#include "utils/Logger.h"
 
-DDP::UnixSocket::UnixSocket(const char* sock_path)
+DDP::UnixSocket::UnixSocket(const char* sock_path, const std::string sock_group)
     : Port(1), m_socket_path(sock_path), m_fd(-1)
 {
     sockaddr_un sa;
@@ -65,6 +68,21 @@ DDP::UnixSocket::UnixSocket(const char* sock_path)
         close(m_fd);
         throw std::runtime_error("Couldn't bind to dnstap socket!");
     }
+
+    if (!sock_group.empty()) {
+        auto grp = getgrnam(sock_group.c_str());
+        if (grp) {
+            auto ret = chown(m_socket_path.c_str(), -1, grp->gr_gid);
+            if (ret == -1)
+                Logger("Dnstap").warning() << "Couldn't set group " << sock_group << " on dnstap socket! Errno: " << errno;
+        }
+        else
+            Logger("Dnstap").warning() << "Couldn't set group " << sock_group << " on dnstap socket! Unknown group.";
+    }
+
+    auto err = chmod(m_socket_path.c_str(), 0776);
+    if (err == -1)
+        Logger("Dnstap").warning() << "Couldn't set 0776 permissions on dnstap socket! Keeping default permissions 0766.";
 
     if (listen(m_fd, 10) < 0) {
         close(m_fd);
