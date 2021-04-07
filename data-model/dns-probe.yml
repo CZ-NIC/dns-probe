@@ -17,6 +17,10 @@ default:
   # command line parameter.
   dnstap-socket-list: []
 
+  # Name of existing user group under which to create dnstap sockets. By default the group of
+  # probe's process is used.
+  dnstap-socket-group: ''
+
   # Indicates RAW PCAPs as input in 'pcap-list' or from command line with '-p' parameter.
   # Might get overriden by '-r' command line parameter.
   # MUST be set to 'false' if 'interface-list' or '-i' command line parameter are used.
