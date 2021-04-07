@@ -142,6 +142,8 @@ uint16_t DDP::DnstapUnixReader::read(Packet* pkt)
     }
     else if (ret == fstrm_res_stop)
         throw PortEOF();
-    else
-        return 0;
+    else {
+        Logger("Dnstap").warning() << "Connection closed unexpectedly. Fstrm error: " << ret;
+        throw PortEOF();
+    }
 }
