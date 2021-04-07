@@ -80,7 +80,7 @@ int main(int argc, char** argv)
         }
 
         for (auto& port : arguments.args.dnstap_sockets) {
-            ready_sockets.emplace_back(new DDP::UnixSocket(port.c_str()));
+            ready_sockets.emplace_back(new DDP::UnixSocket(port.c_str(), runner.config().dnstap_socket_group.value()));
         }
 
         // Set up signal handlers to print stats on exit

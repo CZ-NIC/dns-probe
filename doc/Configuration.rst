@@ -24,6 +24,7 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
 
    +--rw <instance-id>?
       +--rw coremask? <uint64>
+      +--rw dnstap-socket-group? <string>
       +--rw dnstap-socket-list?* <string>
       +--rw dns-ports?* <uint16>
       +--rw export
@@ -175,6 +176,14 @@ country-maxmind-db
 :default: empty
 
 Path to Maxmind Country database. If this option is set to a valid database file, the ``country`` field in exported Parquets or ``country-code`` implementation field in exported C-DNS will be filled with ISO 3166-1 country code based on client's IP address.
+
+dnstap-socket-group
+^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/dnstap-socket-group``
+:default: empty
+
+Name of existing user group under which to create dnstap sockets specified in :ref:`dnstap-socket-list`. By default the group of probe's process is used.
 
 .. _dnstap-socket-list:
 
