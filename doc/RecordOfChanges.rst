@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.8.0**
+     - **1.1**
+     - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`
+     - Add configuration option for setting user group on dnstap sockets
+   * -
      - **1.0**
      - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
        :doc:`Default YAML file <YAMLfile>`
