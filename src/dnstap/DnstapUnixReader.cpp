@@ -68,7 +68,7 @@ static fstrm_res fstrm__unix_reader_op_read(void* obj, void* buf, size_t nbytes)
         uint8_t* data = reinterpret_cast<uint8_t*>(buf);
         while (nbytes > 0) {
             ssize_t bytes_read = read(r->fd, data, nbytes);
-            if (bytes_read == -1 && errno == EINTR)
+            if (bytes_read == -1 && (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK))
                 continue;
             else if (bytes_read <= 0)
                 return fstrm_res_failure;

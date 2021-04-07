@@ -81,7 +81,11 @@ DDP::UnixSocket::~UnixSocket()
 
 uint16_t DDP::UnixSocket::read(Packet*, unsigned)
 {
+#if defined(SOCK_NONBLOCK)
+    int conn = accept4(m_fd, NULL, NULL, SOCK_NONBLOCK);
+#else
     int conn = accept(m_fd, NULL, NULL);
+#endif
     if (conn < 0)
         return 0;
     else
