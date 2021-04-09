@@ -25,7 +25,7 @@
 
 void DDP::set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<CdnsBits> fields)
 {
-    qr_hints = 0;
+    qr_hints = CDNS::QueryResponseHintsMask::qr_signature_index;
     qr_sig_hints = 0;
 
     if (fields[static_cast<uint32_t>(CDNSField::TRANSACTION_ID)])
