@@ -235,7 +235,7 @@ namespace DDP {
 
         // Timestamp extracted from mbuf
         Time m_timestamp;
-        int64_t m_tcp_rtt; // millisecond precision, less than 0 means no rtt
+        int64_t m_tcp_rtt; // microsecond precision, less than 0 means no rtt
 
         ClientIndex m_client_index;
 
