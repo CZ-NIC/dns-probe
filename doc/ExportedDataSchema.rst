@@ -188,5 +188,6 @@ Entrada schema.
 +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
 | server\_location                | STRING    | XXX                                   | Server location (allways empty string in Parquet)           |
 +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
-| tcp\_hs\_rtt                    | INT64     | round-trip-time (implementation field)| TCP Round Trip Time (RTT) (millisecond precision)           |
+| tcp\_hs\_rtt                    | DOUBLE    | round-trip-time (implementation field)| TCP Round Trip Time (RTT) (milliseconds with up to 3 decimal|
+|                                 |           | (microsecond precision integer)       | digits precision)                                           |
 +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+

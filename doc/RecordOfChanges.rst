@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.9.0**
+     - **1.1**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Change precision of tcp_hs_rtt field to microseconds
+   * -
      - **1.0**
      - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`
      - Add configuration option for setting user group on dnstap sockets
