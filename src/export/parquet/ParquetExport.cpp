@@ -99,7 +99,7 @@ DDP::ParquetExport::ParquetExport(Config& cfg, MMDB_s& country_db, MMDB_s& asn_d
 
                                 arrow::field("dns_res_len", arrow::int32()),
                                 arrow::field("server_location", arrow::utf8()),
-                                arrow::field("tcp_hs_rtt", arrow::int64())
+                                arrow::field("tcp_hs_rtt", arrow::float64())
     });
 }
 
@@ -352,9 +352,9 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
     // Server location
     PARQUET_THROW_NOT_OK(ServerLocation.Append(""));
 
-    // TCP RTT (milliseconds precision)
+    // TCP RTT (microseconds precision)
     if (record.m_tcp_rtt >= 0)
-        PARQUET_THROW_NOT_OK(TcpHsRtt.Append(record.m_tcp_rtt));
+        PARQUET_THROW_NOT_OK(TcpHsRtt.Append(static_cast<double>(record.m_tcp_rtt / 1000.0)));
     else
         PARQUET_THROW_NOT_OK(TcpHsRtt.AppendNull());
 
