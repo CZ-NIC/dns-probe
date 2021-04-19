@@ -342,7 +342,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                 record.m_dns_len = seg_len - 2;
                 record.m_len = packet.size();
                 if (m_state >= TcpConnectionState::ESTABLISHED) {
-                    record.m_tcp_rtt = m_rtt.getMillisRounded();
+                    record.m_tcp_rtt = m_rtt.getMicrosRounded();
                     m_rtt = Time(-1);
                 }
 
@@ -378,7 +378,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                     DnsRecord& msg = parser->get_empty();
                     fill_record_L3_L4(msg, record);
                     if (m_state >= TcpConnectionState::ESTABLISHED) {
-                        msg.m_tcp_rtt = m_rtt.getMillisRounded();
+                        msg.m_tcp_rtt = m_rtt.getMicrosRounded();
                         m_rtt = Time(-1);
                     }
 
@@ -474,7 +474,7 @@ bool DDP::DnsTcpConnection::process_segment(const Packet& packet, const MemView<
                         DnsRecord &msg = parser->get_empty();
                         fill_record_L3_L4(msg, record);
                         if (m_state >= TcpConnectionState::ESTABLISHED) {
-                            msg.m_tcp_rtt = m_rtt.getMillisRounded();
+                            msg.m_tcp_rtt = m_rtt.getMicrosRounded();
                             m_rtt = Time(-1);
                         }
 
