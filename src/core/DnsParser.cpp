@@ -325,6 +325,16 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
 {
     MemView<uint8_t> dns = MemView<uint8_t>();
 
+    // Check for RTT estimate in "extra" byte field as exported by Knot Resolver
+    if (msg.has_extra() && msg.extra().size() > 4 && msg.extra().compare(0,4, "rtt=") == 0) {
+        try {
+            record.m_tcp_rtt = static_cast<int64_t>(std::stoul(msg.extra().substr(4, msg.extra().size())));
+        }
+        catch (std::exception& e) {
+            Logger("DNSTAP").debug() << "Couldn't parse RTT from extra field";
+        }
+    }
+
     // Check if message contains everything necessary
     if (!msg.has_message())
         throw DnsParseException("Dnstap missing message content");
