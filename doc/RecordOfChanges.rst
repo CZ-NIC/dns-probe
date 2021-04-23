@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **0.10.0**
+     - **1.0**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Change precision of tcp_hs_rtt field to microseconds
    * - **0.9.0**
      - **1.0**
      - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`

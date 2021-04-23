@@ -214,7 +214,7 @@ namespace DDP {
 
         arrow::Int32Builder DNSResLen;
         arrow::StringBuilder ServerLocation;
-        arrow::Int64Builder TcpHsRtt;
+        arrow::DoubleBuilder TcpHsRtt;
 
         std::shared_ptr<arrow::Schema> m_DnsSchema;
         uint64_t m_records_limit;

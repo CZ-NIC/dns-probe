@@ -219,8 +219,7 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
         qr.response_size = record.m_res_dns_len;
 
     if (m_fields[static_cast<uint32_t>(CDNSField::ROUND_TRIP_TIME)])
-        // need to convert millisecond m_tcp_rtt to ticks which represent microseconds
-        qr.round_trip_time = record.m_tcp_rtt * 1000;
+        qr.round_trip_time = record.m_tcp_rtt; // microseconds
 
     if (m_fields[static_cast<uint32_t>(CDNSField::ASN)] && !asn.empty())
         qr.asn = asn;

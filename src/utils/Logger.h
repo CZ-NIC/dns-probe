@@ -196,7 +196,7 @@ namespace DDP {
          */
         void set_output(const std::string&& outfile) {
             m_of.close();
-            m_of.open(outfile);
+            m_of.open(outfile, std::ofstream::out | std::ofstream::app);
             m_out = m_of.rdbuf();
             m_os = std::make_unique<std::ostream>(m_out);
         }
