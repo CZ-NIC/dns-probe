@@ -42,6 +42,7 @@ DDP::UnixSocket::UnixSocket(const char* sock_path, const std::string sock_group)
     if (m_socket_path.empty() || (m_socket_path.length() + 1 > sizeof(sa.sun_path)))
         throw std::runtime_error("Invalid socket path " + std::string(sock_path));
 
+    unlink(m_socket_path.c_str());
     sa.sun_family = AF_UNIX;
     strncpy(sa.sun_path, m_socket_path.c_str(), sizeof(sa.sun_path) - 1);
 
