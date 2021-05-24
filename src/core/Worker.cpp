@@ -263,7 +263,7 @@ void DDP::Worker::stop()
 void DDP::Worker::close_port(int pos)
 {
     m_ports.erase(m_ports.begin() + pos);
-    if(m_ports.empty()) {
+    if(m_ports.empty() && m_sockets.empty()) {
         m_comm_link.send(MessageWorkerStopped(ThreadManager::current_lcore()));
         tt_cleanup();
         m_poll.disable();
