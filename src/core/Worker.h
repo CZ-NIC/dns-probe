@@ -24,6 +24,7 @@
 #pragma once
 
 #include <set>
+#include <memory>
 #include <maxminddb.h>
 #include "export/BaseExport.h"
 #include "export/BaseWriter.h"
@@ -165,8 +166,9 @@ namespace DDP {
                                     cfg.match_qname),
                 m_parser(cfg, process_id, record_mempool, tcp_mempool, stats),
                 m_exporter(nullptr),
+                m_writer(nullptr),
                 m_output_rotation_counter(0),
-                m_pcap_all(cfg, cfg.pcap_export.value() == PcapExportCfg::INVALID, process_id),
+                m_pcap_all(cfg, false, process_id),
                 m_lcore_queue(lcore_queue),
                 m_ports(std::move(ports)),
                 m_sockets(std::move(sockets)),
@@ -176,14 +178,16 @@ namespace DDP {
         {
             if (cfg.export_format.value() == ExportFormat::PARQUET) {
 #ifdef PROBE_PARQUET
-                m_exporter = new ParquetExport(cfg, country_db, asn_db);
+                m_exporter = std::make_unique<ParquetExport>(cfg,country_db, asn_db);
+                m_writer = std::make_unique<ParquetWriter>(cfg, process_id);
 #else
                 throw std::runtime_error("DNS Probe was built without Parquet support!");
 #endif
             }
             else {
 #ifdef PROBE_CDNS
-                m_exporter = new CdnsExport(cfg, country_db, asn_db);
+                m_exporter = std::make_unique<CdnsExport>(cfg, country_db, asn_db);
+                m_writer = std::make_unique<CdnsWriter>(cfg, process_id);
 #else
                 throw std::runtime_error("DNS Probe was built without C-DNS support!");
 #endif
@@ -194,34 +198,14 @@ namespace DDP {
          * @brief Destructor. Writes leftover buffered records to Parquet file
          */
         ~Worker() override {
-            BaseWriter* writer = nullptr;
             try {
-                if (m_cfg.export_format.value() == ExportFormat::PARQUET) {
-#ifdef PROBE_PARQUET
-                    writer = new ParquetWriter(m_cfg, m_process_id);
-#else
-                    throw std::runtime_error("DNS Probe was built without Parquet support!");
-#endif
-                }
-                else {
-#ifdef PROBE_CDNS
-                    writer = new CdnsWriter(m_cfg, m_process_id);
-#else
-                    throw std::runtime_error("DNS Probe was built without C-DNS support!");
-#endif
-                }
-
-                m_exporter->write_leftovers(writer, m_stats);
-                delete writer;
+                m_writer->rotate_output();
+                m_exporter->write_leftovers(m_writer.get(), m_stats);
             }
             catch (std::exception& e) {
-                if (writer)
-                    delete writer;
                 Logger("Export").warning() << "Couldn't write leftovers on worker " << m_process_id
                                          << " (" << e.what() << ")";
             }
-
-            delete m_exporter;
         }
 
         // Delete copy constructor and assignment operator
@@ -287,7 +271,8 @@ namespace DDP {
         uint32_t m_tt_timeout_count; //!< Currently processed packets before triggering timeout check.
         TransactionTable<DnsRecord> m_transaction_table; //!< Transaction table for records extracted from DNS packets.
         DnsParser m_parser; //!< DnsParser for creating records into transaction table.
-        BaseExport* m_exporter; //!< Exporter instance preparing records for exporter thread.
+        std::unique_ptr<BaseExport> m_exporter; //!< Exporter instance preparing records for exporter thread.
+        std::unique_ptr<BaseWriter> m_writer; //!< Writer instance for writing leftover records on Worker shutdown.
         uint64_t m_output_rotation_counter; //!< Distinct different files when export file has time based rotation enabled.
         PcapWriter m_pcap_all; //!< PCAP writer for saving processed packets.
         unsigned m_lcore_queue; //!< Specify packet queue for worker.

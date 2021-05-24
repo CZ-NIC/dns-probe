@@ -217,6 +217,7 @@ void DDP::Worker::new_config(Config& cfg)
     m_transaction_table.set_timeout(cfg.tt_timeout);
     m_parser.update_configuration(cfg);
     m_exporter->update_configuration(cfg);
+    m_writer->update_configuration(cfg);
     m_pcap_all.update_configuration(cfg);
 }
 

@@ -90,7 +90,7 @@ namespace DDP {
         void new_config(Config& cfg) override;
 
     private:
-        BaseWriter* m_writer;
+        std::unique_ptr<BaseWriter> m_writer;
         unsigned m_process_id;
         std::vector<Ring<boost::any>*> m_rings;
 

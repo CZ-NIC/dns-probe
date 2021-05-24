@@ -48,7 +48,7 @@ DDP::DnsParser::DnsParser(Config& cfg, unsigned process_id, DDP::Mempool<DDP::Dn
         m_msg_buffer(reinterpret_cast<uint8_t*>(Alloc::malloc(DNS_MSG_BUFFER_SIZE)), Alloc::free),
         m_raw_pcap(cfg.raw_pcap),
         m_export_invalid(cfg.pcap_export.value() == PcapExportCfg::INVALID),
-        m_pcap_inv(cfg, cfg.pcap_export.value() == PcapExportCfg::INVALID, process_id),
+        m_pcap_inv(cfg, true, process_id),
         m_processed_packet{nullptr},
         m_dns_ports(cfg.dns_ports),
         m_ipv4_allowlist(cfg.ipv4_allowlist),
