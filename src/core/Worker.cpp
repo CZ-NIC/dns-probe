@@ -211,6 +211,69 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
     return ret;
 }
 
+DDP::WorkerRetCode DDP::Worker::process_knot_datagram(const Packet& dgram)
+{
+    DDP::WorkerRetCode ret = DDP::WorkerRetCode::WORKER_OK;
+
+    // Parse datagram into DNS record.
+    std::vector<DnsRecord*> records;
+    try {
+        records = m_parser.parse_packet(dgram);
+    }
+    catch (std::exception& e) {
+        Logger("Parse error").debug() << e.what();
+        if (!records.empty())
+            m_parser.put_back_records(records);
+
+        return DDP::WorkerRetCode::WORKER_PARSE_ERROR;
+    }
+
+    for (auto& record: records) {
+        if(record->m_request) {
+            if(record->m_addr_family == DnsRecord::AddrFamily::IP4)
+                m_stats.queries[Statistics::Q_IPV4]++;
+            else if(record->m_addr_family == DnsRecord::AddrFamily::IP6)
+                m_stats.queries[Statistics::Q_IPV6]++;
+
+            if(record->m_proto == DnsRecord::Proto::TCP)
+                m_stats.queries[Statistics::Q_TCP]++;
+            else if(record->m_proto == DnsRecord::Proto::UDP)
+                m_stats.queries[Statistics::Q_UDP]++;
+        }
+
+        try {
+            auto block = m_exporter->buffer_record(*record);
+            if (!block.empty()) {
+#ifdef PROBE_PARQUET
+                if (block.type() == typeid(std::shared_ptr<arrow::Table>) &&
+                    boost::any_cast<std::shared_ptr<arrow::Table>>(block) != nullptr) {
+                    enqueue(block);
+                }
+#endif
+#ifdef PROBE_CDNS
+                if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
+                            boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(block) != nullptr) {
+                    enqueue(block);
+                }
+#endif
+            }
+        }
+#ifdef PROBE_PARQUET
+        catch(EdnsParseException& e) {
+            Logger("Parse error").debug() << e.what();
+        }
+#endif
+        catch (std::exception& e) {
+            Logger("Export").warning() << "Buffering new DNS record failed: " << e.what();
+        }
+
+        m_parser.put_back_record(*record);
+        m_stats.transactions++;
+    }
+
+    return ret;
+}
+
 void DDP::Worker::new_config(Config& cfg)
 {
     m_cfg = cfg;
@@ -288,7 +351,10 @@ void DDP::Worker::PortPollAble::ready_read() {
 
     // Process batch of packets
     for (size_t k = 0; k < rx_count; k++) {
-        m_worker.process_packet(pkts[k]);
+        if (pkts[k].type() == PacketType::WIRE)
+            m_worker.process_packet(pkts[k]);
+        else if (pkts[k].type() == PacketType::KNOT)
+            m_worker.process_knot_datagram(pkts[k]);
     }
 
     m_worker.m_stats.packets += rx_count;

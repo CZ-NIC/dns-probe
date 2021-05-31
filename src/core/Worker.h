@@ -221,11 +221,20 @@ namespace DDP {
         /**
          * @brief Main processing method. Parses given packet, matches query-response pair in transaction table
          * and if matched buffers DNS record and if there's enough DNS records buffered tries to enqueue
-         * ExporterFormat object containing buffered DNS records to export ring buffer
+         * ExporterFormat object containing buffered DNS records to export ring buffer.
          * @param pkt Packet to process
          * @return Returns PROBE_OK if successful, otherwise returns corresponding error code
          */
         WorkerRetCode process_packet(const Packet& pkt);
+
+        /**
+         * @brief Main processing method for Knot interface datagrams. Parses given datagram, buffers
+         * DNS record and if there's enough DNS records buffered tries to enqueue ExporterFormat object
+         * containing buffered DNS records to export ring buffer.
+         * @param dgram Datagram to process
+         * @return Returns PROBE_OK if successful, otherwise returns corresponding error code
+         */
+        WorkerRetCode process_knot_datagram(const Packet& dgram);
 
         /**
          * @brief Clears everything from transaction table and sends all cleared DNS records for export

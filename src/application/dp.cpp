@@ -33,6 +33,10 @@
 #include "non-dpdk/AfPacketPort.h"
 #include "core/UnixSocket.h"
 
+#ifdef PROBE_KNOT
+#include "knot/KnotSocket.h"
+#endif
+
 DDP::LogWriter logwriter;
 
 static void signal_handler(int signum)
@@ -78,6 +82,12 @@ int main(int argc, char** argv)
         for (auto& port: arguments.args.pcaps) {
             ready_ports.emplace_back(new DDP::PCAPPort(port.c_str(), runner.slaves_cnt() - 1));
         }
+
+#ifdef PROBE_KNOT
+        for (unsigned i = 0; i < arguments.args.knot_socket_count; i++) {
+            ready_ports.emplace_back(new DDP::KnotSocket(arguments.args.knot_socket_path, i + 1));
+        }
+#endif
 
         for (auto& port : arguments.args.dnstap_sockets) {
             ready_sockets.emplace_back(new DDP::UnixSocket(port.c_str(), runner.config().dnstap_socket_group.value()));
