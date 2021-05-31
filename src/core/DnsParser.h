@@ -92,6 +92,7 @@ namespace DDP {
         static constexpr uint8_t DNS_MAX_LABEL_SIZE = 63;
         static constexpr uint8_t DNS_QTYPE_QCLASS_SIZE = 4;
         static constexpr uint8_t DNS_MIN_RR_SIZE = 11;
+        static constexpr uint8_t DNS_MIN_OPTION_SIZE = 4;
         static constexpr uint8_t DNS_RR_FIELDS_SKIP = 8;
         static constexpr uint8_t DNS_LABEL_PTR = 0xC0;
 
@@ -163,6 +164,16 @@ namespace DDP {
          * @throw DnsParseException
          */
         void parse_dnstap_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop);
+
+        /**
+         * @brief Fill DnsRecord structure from given Knot interface datagram
+         * @param dgram Knot interface datagram to parse
+         * @param record DnsRecord to fill with datagram's information
+         * @param records Vector of DnsRecords with filled datagram information
+         * @param drop Sets this flag to true if datagram is to be dropped
+         * @throw DnsParseException
+         */
+        void parse_knot_dgram(const Packet& dgram, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop);
 
         /**
          * @brief Fill DnsRecord structure from given packet

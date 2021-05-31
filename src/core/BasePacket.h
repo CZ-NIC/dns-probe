@@ -32,6 +32,7 @@ namespace DDP {
     enum class PacketType : uint8_t {
         WIRE = 0, //!< wire format packet
         DNSTAP, //!< dnstap message
+        KNOT, //!< Knot interface datagram
         NONE
     };
 }
