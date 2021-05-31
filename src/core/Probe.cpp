@@ -99,9 +99,10 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 {
     DDP::Arguments args{};
     args.app = argv[0];
+    args.knot_socket_count = 0;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hi:p:rd:l:n:c:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rd:k:s:l:n:c:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -123,6 +124,14 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 
             case 'd':
                 args.dnstap_sockets.emplace_back(optarg);
+                break;
+
+            case 'k':
+                args.knot_socket_count = std::stoul(optarg);
+                break;
+
+            case 's':
+                args.knot_socket_path = optarg;
                 break;
 
             case 'l':
@@ -161,14 +170,16 @@ void DDP::Probe::print_help(const char* app)
         interface = "interface name e.g. eth0 or PCI ID e.g. 00:1f.6";
 
     std::cout << std::endl << app << std::endl
-              << "\t-p PCAP            : input pcap files. Parameter can repeat." << std::endl
-              << "\t-i INTERFACE       : " << interface << ". Parameter can repeat." << std::endl
-              << "\t-r                 : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
-              << "\t-d DNSTAP_SOCKET   : path to input dnstap unix socket. Parameter can repeat." << std::endl
-              << "\t-l LOGFILE         : redirect probe's logs to LOGFILE instead of standard output" << std::endl
-              << "\t-n INSTANCE        : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
-              << "\t-c CONFIG_FILE     : YAML file to load initial configuration from." << std::endl
-              << "\t-h                 : this help message" << std::endl;
+              << "\t-p PCAP             : input pcap files. Parameter can repeat." << std::endl
+              << "\t-i INTERFACE        : " << interface << ". Parameter can repeat." << std::endl
+              << "\t-r                  : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
+              << "\t-d DNSTAP_SOCKET    : path to input dnstap unix socket. Parameter can repeat." << std::endl
+              << "\t-k KNOT_SOCKET_COUNT: number of Knot interface sockets to create" << std::endl
+              << "\t-s KNOT_SOCKET_PATH : path to directory in which to create Knot interface sockets. Default \"/tmp\"." << std::endl
+              << "\t-l LOGFILE          : redirect probe's logs to LOGFILE instead of standard output" << std::endl
+              << "\t-n INSTANCE         : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
+              << "\t-c CONFIG_FILE      : YAML file to load initial configuration from." << std::endl
+              << "\t-h                  : this help message" << std::endl;
 }
 
 DDP::Probe& DDP::Probe::getInstance()
@@ -207,12 +218,23 @@ void DDP::Probe::load_config(Arguments& args)
             args.dnstap_sockets.emplace_back(dt_socket);
         }
 
+        if (args.knot_socket_count <= 0)
+            args.knot_socket_count = m_cfg.knot_socket_count.value();
+
+        if (args.knot_socket_path.empty())
+            args.knot_socket_path = m_cfg.knot_socket_path.value();
+
 #ifndef PROBE_DNSTAP
         if (!args.dnstap_sockets.empty())
             throw std::runtime_error("DNS Probe was built without dnstap support!");
 #endif
 
-        if (args.interfaces.empty() && args.pcaps.empty() && args.dnstap_sockets.empty())
+#ifndef PROBE_KNOT
+        if (args.knot_socket_count > 0)
+            throw std::runtime_error("DNS Probe was built without Knot interface support!");
+#endif
+
+        if (args.interfaces.empty() && args.pcaps.empty() && args.dnstap_sockets.empty() && args.knot_socket_count <= 0)
             throw std::invalid_argument("At least one interface or pcap should be specified!");
 
         m_cfg_loaded = true;
