@@ -322,7 +322,7 @@ namespace DDP {
          */
         void export_invalid(const Packet& pkt) {
             try {
-                if (m_export_invalid)
+                if (m_export_invalid && pkt.type() == PacketType::WIRE)
                     m_stats.exported_to_pcap += m_pcap_inv.write(&pkt);
             }
             catch (std::exception& e) {

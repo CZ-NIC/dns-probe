@@ -64,7 +64,7 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
 
     // If enabled in configuration, export packet to PCAP
     try {
-        if (m_cfg.pcap_export.value() == PcapExportCfg::ALL)
+        if (m_cfg.pcap_export.value() == PcapExportCfg::ALL && pkt.type() == PacketType::WIRE)
             m_stats.exported_to_pcap += m_pcap_all.write(&pkt);
     }
     catch (std::exception& e) {
