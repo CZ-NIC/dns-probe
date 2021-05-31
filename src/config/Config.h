@@ -42,6 +42,8 @@ namespace DDP {
                    raw_pcap(false),
                    dnstap_socket_list(),
                    dnstap_socket_group(),
+                   knot_socket_path("/tmp"),
+                   knot_socket_count(0),
                    log_file(),
                    coremask(0x7),
                    dns_ports({53}),
@@ -80,6 +82,8 @@ namespace DDP {
         ConfigItem<bool> raw_pcap; //!< Defines if input PCAP files are without ethernet headers
         ConfigItem<CList<std::string>> dnstap_socket_list; //!< List of unix sockets to process dnstap data from
         ConfigItem<std::string> dnstap_socket_group; //!< User group under which to create dnstap sockets
+        ConfigItem<std::string> knot_socket_path; //!< Path to directory in which to create Knot interface sockets
+        ConfigItem<uint32_t> knot_socket_count; //!< Number of Knot interface sockets to create
         ConfigItem<std::string> log_file; //!< Log file for storing probe's logs
         ConfigItem<ThreadManager::MaskType> coremask; //!< Coremask used fo selecting cores where application will be running.
         ConfigItem<CList<Port_t>> dns_ports; //!< TCP/UDP port list used for identifying DNS traffic
