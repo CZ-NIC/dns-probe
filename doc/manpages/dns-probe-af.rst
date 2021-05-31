@@ -8,14 +8,14 @@ dns-probe-af
 Synopsis
 --------
 
-:program:`dns-probe-af` [-i *interface* | -p *pcap* [-r] | -d *socket*] [-l *logfile*] [-n *instance*] [-c *config_file*] [-h]
+:program:`dns-probe-af` [-i *interface* | -p *pcap* [-r] | -d *socket* | -k *knot_count* [-s *knot_path*]] [-l *logfile*] [-n *instance*] [-c *config_file*] [-h]
 
 Description
 -----------
 
 :program:`dns-probe-af` is a network traffic probe that captures DNS queries and corresponding responses and exports them as configurable records about individual DNS transactions.
 
-:program:`dns-probe-af` can either listen on an interface or read packets from a PCAP file or read dnstap data from a unix socket. The :option:`-i`, :option:`-p` and :option:`-d` options are mutually incompatible but either of them can be used repeatedly.
+:program:`dns-probe-af` can either listen on an interface or read packets from a PCAP file or read dnstap data from a unix socket or read Knot interface data from a unix socket. The :option:`-i`, :option:`-p`, :option:`-d` and :option:`-k` options are mutually incompatible but either of them (except :option:`-k`) can be used repeatedly.
 
 Depending on the configuration, :program:`dns-probe-af` exports the transaction records in either Parquet or C-DNS format.
 
@@ -37,6 +37,14 @@ Options
 .. option:: -d socket
 
    Read dnstap input from given unix socket.
+
+.. option:: -k knot_count
+
+   Number of Knot interface sockets to create
+
+.. option:: -s knot_path
+
+   Path to directory in which to create Knot interface sockets. Default ``/tmp``.
 
 .. option:: -l logfile
 
