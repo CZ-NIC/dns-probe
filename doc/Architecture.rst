@@ -50,9 +50,10 @@ and destination IP addresses, source and destination ports, and
 transport protocol. The packet is then assigned to one of the RX queues
 based on this hash value.
 
-Unix sockets for `dnstap <https://dnstap.info/>`_ input are uniformly
-distributed among available worker threads and all traffic from a given
-socket is then processed by its assigned worker thread.
+Unix sockets for `dnstap <https://dnstap.info/>`_ or
+`Knot interface <https://www.knot-dns.cz/docs/3.0/html/modules.html#probe-dns-traffic-probe>`_
+input are uniformly distributed among available worker threads and all traffic from
+a given socket is then processed by its assigned worker thread.
 
 Backends
 ========
