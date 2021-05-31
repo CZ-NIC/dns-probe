@@ -352,18 +352,17 @@ void DDP::Probe::init(const Arguments& args)
 }
 
 
-DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>& ports,
-                                        std::vector<std::shared_ptr<DDP::Port>>& sockets)
+DDP::Probe::ReturnValue DDP::Probe::run(PortVector& ports, PortVector& sockets, PortVector& knots)
 {
     if (!m_initialized)
         throw std::runtime_error("Application is not initialized!");
 
     Logger logger("Probe");
 
-    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue, std::vector<std::shared_ptr<DDP::Port>> w_sockets) {
+    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue, PortVector w_sockets, PortVector w_knots) {
         try {
             Worker w(m_cfg, stats, m_factory_rings.at(worker).get_poll_able_ring(), m_comm_links[worker].worker_endpoint(),
-                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports, w_sockets,
+                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports, w_sockets, w_knots,
                     m_cfg.match_qname, worker, m_country, m_asn);
             Logger logger("Worker");
             logger.info() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
@@ -404,13 +403,21 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
 
     unsigned queue = 0;
     for (auto worker: slaves) {
-        std::vector<std::shared_ptr<DDP::Port>> worker_sockets;
+        PortVector worker_sockets;
         auto index = queue;
         while (index < sockets.size()) {
             worker_sockets.push_back(sockets[index]);
             index += slaves.size();
         }
-        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++, worker_sockets);
+
+        PortVector worker_knots;
+        index = queue;
+        while (index < knots.size()) {
+            worker_knots.push_back(knots[index]);
+            index += slaves.size();
+        }
+        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]),
+            queue++, worker_sockets, worker_knots);
     }
 
     logger.info() << "Slave threads started.";

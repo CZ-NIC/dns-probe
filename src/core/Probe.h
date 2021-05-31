@@ -45,6 +45,8 @@ namespace DDP {
     class Port;
     class CommLinkProxy;
 
+    using PortVector = std::vector<std::shared_ptr<DDP::Port>>;
+
     /**
      * Wrapper for application arguments and number of processed arguments.
      */
@@ -113,10 +115,11 @@ namespace DDP {
          * @brief Run configuration core loop on master core
          * @param ports List of network ports to process traffic from
          * @param sockets List of sockets to process data from
+         * @param knots List of Knot interface sockets to process data from
          * @throw std::runtime_error
          * @return Reason why the runner stopped.
          */
-        ReturnValue run(std::vector<std::shared_ptr<DDP::Port>>& ports, std::vector<std::shared_ptr<DDP::Port>>& sockets);
+        ReturnValue run(PortVector& ports, PortVector& sockets, PortVector& knots);
 
         /**
          * Access main loop
