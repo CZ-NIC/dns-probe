@@ -37,7 +37,7 @@ namespace DDP {
     class UnixSocket : public Port {
     public:
         /**
-         * @brief Constructor. Creates AF_UNIX socket in location given by "socket"
+         * @brief Constructor. Creates AF_UNIX socket in location given by "sock_path"
          * parameter and starts listening on it.
          * @param sock_path Location where to create the socket
          * @param sock_group User group under which to create the socket
