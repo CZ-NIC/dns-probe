@@ -10,6 +10,8 @@ RUN apt-get update -yqq &&\
     apt-get install -yqq -V ./apache-arrow-archive-keyring-latest-$(lsb_release --codename --short).deb &&\
     echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | tee /etc/apt/sources.list.d/dns-probe.list &&\
     curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null &&\
+    wget -O /etc/apt/trusted.gpg.d/knot-latest.gpg https://deb.knot-dns.cz/knot-latest/apt.gpg &&\
+    sh -c 'echo "deb https://deb.knot-dns.cz/knot-latest/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/knot-latest.list' &&\
     apt-get update -yqq &&\
     apt-get install -yqq --no-install-recommends \
         pkg-config \
@@ -36,6 +38,7 @@ RUN apt-get update -yqq &&\
         protobuf-compiler \
         libfstrm-dev \
         libmaxminddb-dev \
+        libknot-dev \
         dpdk-dev \
         dns-probe-af \
         dns-probe-dpdk &&\
