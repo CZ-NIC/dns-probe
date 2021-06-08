@@ -747,6 +747,7 @@ DDP::DnsRecord& DDP::DnsParser::get_empty()
 
 void DDP::DnsParser::parse_wire_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop)
 {
+    record.m_len = packet.size();
     auto pkt = packet.payload();
     if (!m_raw_pcap) {
         pkt = parse_l2(pkt, record, drop);
@@ -960,7 +961,6 @@ std::vector<DDP::DnsRecord*> DDP::DnsParser::parse_packet(const Packet& packet)
     std::vector<DnsRecord*> records;
 
     DnsRecord& record = get_empty();
-    record.m_len = packet.size();
     m_processed_packet = &packet;
     bool drop = false;
 
