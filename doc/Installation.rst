@@ -7,7 +7,7 @@ DNS Probe can be used on Linux with kernel version at least
 Installation packages are available from `OBS (openSUSE Build Service)
 <https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe>`_.
 The following distributions are currently supported: Debian 10 and 9,
-Ubuntu 20.04, 18.04 and 16.04.
+Ubuntu 20.04 and 18.04.
 
 The OBS repository also contains packages with several dependencies
 that are not provided by the distribution's standard
@@ -55,13 +55,6 @@ Ubuntu 18.04
    echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_18.04/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
    curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/xUbuntu_18.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
-Ubuntu 16.04
-------------
-
-.. code:: shell
-
-   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_16.04/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
-   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/xUbuntu_16.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
 The remaining steps are then identical for all distributions: the repository list is
 updated, and finally the DNS Probe package is installed:
@@ -92,6 +85,7 @@ distribution repositories:
 - fstrm
 - Protocol Buffers (libprotobuf-dev, protobuf-compiler)
 - libmaxminddb
+- libknot, version at least 3.0.6
 - DPDK (only for DPDK version)
 
 Optionally, to build this user documentation (``make doc``) or manual pages (``make man``)
@@ -158,6 +152,14 @@ cryptopANT
    make install
    cd "$DEP_DIR"
 
+libknot
+-------
+
+In case your distribution doesn't yet have libknot >= 3.0.6, the latest package can
+be installed from `Knot DNS's <https://www.knot-dns.cz/download/>`_ own repositories.
+Debian/Ubuntu ``libknot-dev`` package or its equivalent in other distributions needs
+to be installed for successful compilation of DNS probe.
+
 DNS Probe
 ---------
 
@@ -168,6 +170,7 @@ DNS Probe
    # For building without IP anonymization support add `-DPROBE_CRYPTOPANT=Off`
    # For building without support for one of the export formats add `-DPROBE_PARQUET=Off` or `-DPROBE_CDNS=Off`
    # For building without support for dnstap input add `-DPROBE_DNSTAP=Off`
+   # For building without support for Knot interface input add `-DPROBE_KNOT=Off`
    cmake <GIT_REPO> -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DAF_PACKET_BACKEND=On -DDPDK_BACKEND=On -DBUILD_COLLECTOR=On
    make -j
    make install
