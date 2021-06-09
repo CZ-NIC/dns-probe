@@ -136,6 +136,27 @@ namespace DDP {
         };
 #endif
 
+        /**
+         * @brief Class polling for incoming Knot interface datagrams on a socket
+         */
+        class KnotPollAble : public PollAble {
+        public:
+            KnotPollAble(Worker& worker, int port_pos) :
+                    PollAble(PollEvents::READ),
+                    m_worker(worker),
+                    m_port(*m_worker.m_knots[port_pos]),
+                    m_port_pos(port_pos) {}
+
+            void ready_read() override;
+
+            int fd() override { return m_port.fds()[0]; }
+
+        protected:
+            Worker& m_worker;
+            Port& m_port;
+            int m_port_pos;
+        };
+
     public:
         /**
          * @brief Constructor. Creates worker core object with packet processing loop
@@ -146,6 +167,8 @@ namespace DDP {
          * @param tcp_mempool Mempool for TCP connection structures
          * @param lcore_queue NIC RX/TX queue for given process
          * @param ports Network ports to handle for given process
+         * @param sockets Dnstap unix sockets to handle for given process
+         * @param knots Knot interface unix sockets to handle for given process
          * @param match_qname True if records should be matched by QNAME
          * @param process_id ID of core where Worker is spawned
          * @throw std::bad_alloc From calling TransactionTable constructor
@@ -154,9 +177,9 @@ namespace DDP {
          */
         Worker(Config& cfg, Statistics& stats, PollAbleRing<boost::any> ring,
                CommLink::CommLinkEP& comm_link, Mempool<DnsRecord>& record_mempool,
-               Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, std::vector<std::shared_ptr<DDP::Port>> ports,
-               std::vector<std::shared_ptr<DDP::Port>> sockets, bool match_qname, unsigned process_id, MMDB_s& country_db,
-               MMDB_s& asn_db) :
+               Mempool<DnsTcpConnection>& tcp_mempool, unsigned lcore_queue, PortVector ports,
+               PortVector sockets, PortVector knots, bool match_qname, unsigned process_id,
+               MMDB_s& country_db, MMDB_s& asn_db) :
                 Process(cfg, stats, comm_link),
                 m_record_mempool(record_mempool),
                 m_tcp_mempool(tcp_mempool),
@@ -172,6 +195,7 @@ namespace DDP {
                 m_lcore_queue(lcore_queue),
                 m_ports(std::move(ports)),
                 m_sockets(std::move(sockets)),
+                m_knots(std::move(knots)),
                 m_match_qname(match_qname),
                 m_total_rx_count(0),
                 m_process_id(process_id)
@@ -221,11 +245,20 @@ namespace DDP {
         /**
          * @brief Main processing method. Parses given packet, matches query-response pair in transaction table
          * and if matched buffers DNS record and if there's enough DNS records buffered tries to enqueue
-         * ExporterFormat object containing buffered DNS records to export ring buffer
+         * ExporterFormat object containing buffered DNS records to export ring buffer.
          * @param pkt Packet to process
          * @return Returns PROBE_OK if successful, otherwise returns corresponding error code
          */
         WorkerRetCode process_packet(const Packet& pkt);
+
+        /**
+         * @brief Main processing method for Knot interface datagrams. Parses given datagram, buffers
+         * DNS record and if there's enough DNS records buffered tries to enqueue ExporterFormat object
+         * containing buffered DNS records to export ring buffer.
+         * @param dgram Datagram to process
+         * @return Returns PROBE_OK if successful, otherwise returns corresponding error code
+         */
+        WorkerRetCode process_knot_datagram(const Packet& dgram);
 
         /**
          * @brief Clears everything from transaction table and sends all cleared DNS records for export
@@ -276,8 +309,9 @@ namespace DDP {
         uint64_t m_output_rotation_counter; //!< Distinct different files when export file has time based rotation enabled.
         PcapWriter m_pcap_all; //!< PCAP writer for saving processed packets.
         unsigned m_lcore_queue; //!< Specify packet queue for worker.
-        std::vector<std::shared_ptr<DDP::Port>> m_ports; //!< List of reading ports for DNS analysis.
-        std::vector<std::shared_ptr<DDP::Port>> m_sockets; //!< List of reading sockets for DNS analysis.
+        PortVector m_ports; //!< List of reading ports for DNS analysis.
+        PortVector m_sockets; //!< List of reading sockets for DNS analysis.
+        PortVector m_knots; //!< List of Knot interface reading sockets for DNS analysis.
         bool m_match_qname; //!< Enable comparing QNAME for matching in transaction table.
         uint32_t m_total_rx_count; //!< Maximal number of packets read from queue in one run.
         unsigned m_process_id; //!< Lcore of the worker.

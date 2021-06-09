@@ -11,6 +11,7 @@ set(PROBE_CRYPTOPANT ON CACHE BOOL "Enable IP anonymization with cryptopANT libr
 set(PROBE_PARQUET ON CACHE BOOL "Enable export to Parquet format with Apache Arrow library")
 set(PROBE_CDNS ON CACHE BOOL "Enable export to C-DNS format with C-DNS library")
 set(PROBE_DNSTAP ON CACHE BOOL "Enable support for dnstap as input data format")
+set(PROBE_KNOT ON CACHE BOOL "Enable support for Knot probe interface as input data format")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 14)
@@ -101,6 +102,14 @@ if (PROBE_DNSTAP)
     file(GLOB DNSTAP_SOURCES CONFIGURE_DEPENDS src/dnstap/*.cpp)
 endif()
 
+if (PROBE_KNOT)
+    find_package(Libknot REQUIRED)
+    target_link_libraries(DNSProbe INTERFACE Libknot::Libknot)
+    target_compile_definitions(DNSProbe INTERFACE PROBE_KNOT)
+    file(GLOB KNOT_HEADERS CONFIGURE_DEPENDS src/knot/*.h)
+    file(GLOB KNOT_SOURCES CONFIGURE_DEPENDS src/knot/*.cpp)
+endif()
+
 # Add warning flags
 function(set_warning param)
     check_cxx_compiler_flag(-W${param} WARNING_${param})
@@ -121,7 +130,7 @@ if (AF_PACKET_BACKEND)
     file(GLOB AF_PACKET_SOURCES CONFIGURE_DEPENDS src/non-dpdk/*.cpp)
 
     set(AF_FILES ${AF_PACKET_HEADERS} ${AF_PACKET_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES}
-        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES})
+        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES} ${KNOT_HEADERS} ${KNOT_SOURCES})
     add_executable(dns-probe-af src/application/dp.cpp ${AF_FILES})
     target_link_libraries(dns-probe-af PUBLIC DNSProbe)
     install(TARGETS dns-probe-af RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -143,7 +152,7 @@ if (DPDK_BACKEND)
     file(GLOB DPDK_SOURCES CONFIGURE_DEPENDS src/dpdk/*.cpp)
 
     set(DPDK_FILES ${DPDK_HEADERS} ${DPDK_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES}
-        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES})
+        ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES} ${KNOT_HEADERS} ${KNOT_SOURCES})
     add_executable(dns-probe-dpdk src/application/ddp.cpp ${DPDK_FILES})
     target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe DPDK::DPDK)
     target_compile_definitions(dns-probe-dpdk PUBLIC USE_DPDK)

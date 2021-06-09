@@ -36,6 +36,12 @@
 #include "dnstap.pb.h"
 #endif
 
+#ifdef PROBE_KNOT
+extern "C" {
+    #include <libknot/libknot.h>
+}
+#endif
+
 #include "utils/Logger.h"
 #include "DnsParser.h"
 
@@ -741,6 +747,7 @@ DDP::DnsRecord& DDP::DnsParser::get_empty()
 
 void DDP::DnsParser::parse_wire_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop)
 {
+    record.m_len = packet.size();
     auto pkt = packet.payload();
     if (!m_raw_pcap) {
         pkt = parse_l2(pkt, record, drop);
@@ -810,7 +817,141 @@ void DDP::DnsParser::parse_dnstap_packet(const Packet& packet, DnsRecord& record
 #else
     drop = true;
     put_back_record(record);
-    return;
+#endif
+}
+#pragma GCC diagnostic pop
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+void DDP::DnsParser::parse_knot_dgram(const Packet& dgram, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop)
+{
+#ifdef PROBE_KNOT
+    const knot_probe_data_t* data = reinterpret_cast<const knot_probe_data_t*>(dgram.payload().ptr());
+
+    if (data->reply.size == 0) {
+        put_back_record(record);
+        throw DnsParseException("Response missing in Knot interface datagram.");
+    }
+
+    // Parse general information
+    record.m_dns_len = data->query.size;
+    record.m_res_dns_len = data->reply.size;
+    record.m_timestamp = Time(Time::Clock::REALTIME);
+    record.m_request = data->query.size > 0 ? true : false;
+    record.m_response = data->reply.size > 0 ? true : false;
+    if (data->tcp_rtt > 0)
+        record.m_tcp_rtt = static_cast<int64_t>(data->tcp_rtt);
+
+    // Parse L3 information
+    if (data->ip == 4) {
+        record.m_addr_family = DnsRecord::AddrFamily::IP4;
+        drop = block_ipv4s(data->remote.addr, data->local.addr);
+
+        if (drop) {
+            put_back_record(record);
+            return;
+        }
+        set_ips(record, data->remote.addr, data->local.addr, IPV4_ADDRLEN);
+    }
+    else if (data->ip == 6) {
+        record.m_addr_family = DnsRecord::AddrFamily::IP6;
+        drop = block_ipv6s(data->remote.addr, data->local.addr);
+
+        if (drop) {
+            put_back_record(record);
+            return;
+        }
+        set_ips(record, data->remote.addr, data->local.addr, IPV6_ADDRLEN);
+    }
+    else {
+        put_back_record(record);
+        drop = true;
+        return;
+    }
+
+    // Parse L4 information
+    switch (data->proto) {
+        case KNOT_PROBE_PROTO_UDP:
+            record.m_proto = DnsRecord::Proto::UDP;
+            break;
+        case KNOT_PROBE_PROTO_TCP:
+        case KNOT_PROBE_PROTO_TLS:
+        case KNOT_PROBE_PROTO_HTTPS:
+            record.m_proto = DnsRecord::Proto::TCP;
+            break;
+        default:
+            put_back_record(record);
+            drop = true;
+            return;
+            break;
+    }
+
+    if (!is_dns_ports(data->remote.port, data->local.port)) {
+        put_back_record(record);
+        drop = true;
+        return;
+    }
+
+    record.m_port[static_cast<int>(record.m_client_index)] = data->remote.port;
+    record.m_port[!static_cast<int>(record.m_client_index)] = data->local.port;
+
+    // Parse DNS data
+    record.m_id = ntohs(data->query.hdr.id);
+    record.m_opcode = (data->query.hdr.byte3 & DNS_HEADER_OPCODE) >> DNS_HEADER_OPCODE_SHIFT;
+    record.m_aa = data->reply.hdr.byte3 & DNS_HEADER_AA;
+    record.m_tc = data->reply.hdr.byte3 & DNS_HEADER_TC;
+    record.m_rd = data->query.hdr.byte3 & DNS_HEADER_RD;
+    record.m_ra = data->query.hdr.byte4 & DNS_HEADER_RA;
+    record.m_ad = data->query.hdr.byte4 & DNS_HEADER_AD;
+    record.m_cd = data->query.hdr.byte4 & DNS_HEADER_CD;
+    record.m_z = data->query.hdr.byte4 & DNS_HEADER_Z;
+    record.m_rcode = data->reply.rcode;
+    record.m_qdcount = ntohs(data->query.hdr.questions);
+    record.m_ancount = ntohs(data->reply.hdr.answers);
+    record.m_nscount = ntohs(data->reply.hdr.authorities);
+    record.m_arcount = ntohs(data->reply.hdr.additionals);
+    record.m_qclass = data->query.qclass;
+    record.m_qtype = data->query.qtype;
+    std::memcpy(record.m_qname, data->query.qname, data->query.qname_len);
+
+    // Parse EDNS
+    if (data->query_edns.present) {
+        record.m_ednsUDP = data->query_edns.payload;
+        record.m_ednsVersion = data->query_edns.version;
+        record.m_ednsDO = data->query_edns.flag_do;
+
+        if (data->query_edns.options) {
+            uint16_t rdata_len = 0;
+            uint32_t options = data->query_edns.options;
+
+            // Brian Kernighan's algorithm to count set bits. The number of loops is equal
+            // to bits set in integer.
+            while (options) {
+                options &= (options - 1);
+                rdata_len += DNS_MIN_OPTION_SIZE;
+            }
+
+            record.m_req_ednsRdata = static_cast<uint8_t*>(m_edns_mempool.get(rdata_len));
+            record.m_req_ednsRdata_size = rdata_len;
+
+            uint32_t count = 0;
+            for (uint16_t i = 0; i < sizeof(data->query_edns.options) * 8; i++) {
+                if (data->query_edns.options & (1 << i)) {
+                    uint16_t* ptr = reinterpret_cast<uint16_t*>(record.m_req_ednsRdata) + (count * (DNS_MIN_OPTION_SIZE / 2));
+                    *ptr = htons(i);
+                    *(ptr + 1) = htons(0);
+                    count++;
+                }
+            }
+        }
+    }
+
+
+    record.do_hash();
+    records.push_back(&record);
+#else
+    drop = true;
+    put_back_record(record);
 #endif
 }
 #pragma GCC diagnostic pop
@@ -820,12 +961,13 @@ std::vector<DDP::DnsRecord*> DDP::DnsParser::parse_packet(const Packet& packet)
     std::vector<DnsRecord*> records;
 
     DnsRecord& record = get_empty();
-    record.m_len = packet.size();
     m_processed_packet = &packet;
     bool drop = false;
 
     if (packet.type() == PacketType::DNSTAP)
         parse_dnstap_packet(packet, record, records, drop);
+    else if (packet.type() == PacketType::KNOT)
+        parse_knot_dgram(packet, record, records, drop);
     else
         parse_wire_packet(packet, record, records, drop);
 

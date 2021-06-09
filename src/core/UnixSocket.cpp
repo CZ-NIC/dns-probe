@@ -105,6 +105,13 @@ uint16_t DDP::UnixSocket::read(Packet*, unsigned)
 #else
     int conn = accept(m_fd, NULL, NULL);
 #endif
+
+    /**
+     * accept[4]() returns negative integer on error, but this method returns only non-negative
+     * values. To indicate no new connection from this method we set return value as 0, because
+     * file descriptor 0 should always be assigned to stdin and therefore never be returned by
+     * accept[4]() as a file descriptor for new socket connection.
+     */
     if (conn < 0)
         return 0;
     else

@@ -33,6 +33,10 @@
 #include "non-dpdk/AfPacketPort.h"
 #include "core/UnixSocket.h"
 
+#ifdef PROBE_KNOT
+#include "knot/KnotSocket.h"
+#endif
+
 DDP::LogWriter logwriter;
 
 static void signal_handler(int signum)
@@ -65,8 +69,9 @@ int main(int argc, char** argv)
         return static_cast<uint8_t>(DDP::Probe::ReturnValue::ERROR);
     }
 
-    std::vector<std::shared_ptr<DDP::Port>> ready_ports;
-    std::vector<std::shared_ptr<DDP::Port>> ready_sockets;
+    DDP::PortVector ready_ports;
+    DDP::PortVector ready_sockets;
+    DDP::PortVector ready_knots;
     try {
         // Port initialization
         uint16_t id = 0;
@@ -83,6 +88,12 @@ int main(int argc, char** argv)
             ready_sockets.emplace_back(new DDP::UnixSocket(port.c_str(), runner.config().dnstap_socket_group.value()));
         }
 
+#ifdef PROBE_KNOT
+        for (unsigned i = 0; i < arguments.args.knot_socket_count; i++) {
+            ready_knots.emplace_back(new DDP::KnotSocket(arguments.args.knot_socket_path, i + 1));
+        }
+#endif
+
         // Set up signal handlers to print stats on exit
         struct sigaction sa = {};
         sa.sa_handler = &signal_handler;
@@ -96,7 +107,7 @@ int main(int argc, char** argv)
 
         // Poll on configuration core
         try {
-            return static_cast<int>(runner.run(ready_ports, ready_sockets));
+            return static_cast<int>(runner.run(ready_ports, ready_sockets, ready_knots));
         } catch (std::exception &e) {
             logwriter.log_lvl("ERROR", "Uncaught exception: ", e.what());
             return static_cast<uint8_t>(DDP::Probe::ReturnValue::UNCAUGHT_ERROR);
