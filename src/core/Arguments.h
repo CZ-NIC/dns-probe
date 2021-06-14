@@ -53,6 +53,8 @@ namespace DDP {
         std::list<PciDevice> devices; //<! List of PCI devices corresponding to interfaces list (used in DPDK version)
         std::list<std::string> pcaps; //<! List of PCAPs with data for processing
         std::list<std::string> dnstap_sockets; //<! List of unix sockets to process dnstap data from
+        std::string knot_socket_path; //<! Path to directory in which to create Knot interface sockets
+        uint32_t knot_socket_count; //<! Number of Knot interface sockets to create
         std::string log_file; //!< Log file to store probe's logs
         std::string instance_name = "default"; //!< Instance name used for getting YAML configuration
         std::string conf_file = PROBE_CONFIG; //!< YAML file to load initial configuration from

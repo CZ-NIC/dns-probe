@@ -4,7 +4,7 @@ Overview
 
 DNS Probe is a high-speed DNS monitoring software developed as a part of the `ADAM <https://adam.nic.cz/en/>`_ project by CZ.NIC Laboratories in cooperation with Brno University of Technology, Faculty of Information Technology.
 
-DNS Probe is able to extract DNS packets from live network traffic, `pcap <https://en.wikipedia.org/wiki/Pcap>`_ traces or `dnstap <https://dnstap.info/>`_ data supplied by unix sockets, match client queries with the corresponding server responses and export consolidated records about individual DNS transactions.
+DNS Probe is able to extract DNS packets from live network traffic, `pcap <https://en.wikipedia.org/wiki/Pcap>`_ traces, `dnstap <https://dnstap.info/>`_ data supplied by unix sockets or `Knot interface <https://www.knot-dns.cz/docs/3.0/html/modules.html#probe-dns-traffic-probe>`_, match client queries with the corresponding server responses and export consolidated records about individual DNS transactions.
 
 DNS Probe is typically deployed together with a DNS server (autoritative or recursive), capturing and processing the traffic received and sent by the server.
 

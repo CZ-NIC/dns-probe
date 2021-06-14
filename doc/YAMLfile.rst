@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2021-04-07
+  # Last revision: 2021-05-25
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -31,6 +31,14 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
     # Name of existing user group under which to create dnstap sockets. By default the group of
     # probe's process is used.
     dnstap-socket-group: ''
+
+    # Path to directory in which to create unix sockets for reading Knot interface data. Might get
+    # overriden by '-s' command line parameter.
+    knot-socket-path: '/tmp'
+
+    # Number of Knot interface sockets to create in 'knot-socket-path' directory. Might get
+    # overriden by '-k' command line parameter.
+    knot-socket-count: 0
 
     # Indicates RAW PCAPs as input in 'pcap-list' or from command line with '-p' parameter.
     # Might get overriden by '-r' command line parameter.

@@ -258,7 +258,7 @@ namespace DDP {
         uint8_t m_ad;
         uint8_t m_cd;
         uint8_t m_z;
-        uint8_t m_rcode;
+        uint16_t m_rcode;
         uint16_t m_qdcount;
         uint32_t m_ancount;
         uint16_t m_nscount;

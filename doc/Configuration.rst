@@ -54,6 +54,8 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       |  +--rw anonymize-ip? <boolean>
       |  +--rw encryption? <enumeration>
       |  +--rw key-path? <string>
+      +--rw knot-socket-count? <uint32>
+      +--rw knot-socket-path? <string>
       +--rw log-file? <string>
       +--rw pcap-list?* <string>
       +--rw raw-pcap? <boolean>
@@ -371,6 +373,26 @@ the key using `scramble_ips` tool installed by the cryptopANT dependency like th
 .. code:: shell
 
    scramble_ips --newkey --type=<encryption> <key_file>
+
+knot-socket-count
+^^^^^^^^^^^^^^^^^
+
+:data-node: ``<instance-id>/knot-socket-count``
+:default: ``0``
+
+Number of Knot interface sockets to create in :ref:`knot-socket-path` directory.
+Might get overriden by `-k` comand line parameter.
+
+.. _knot-socket-path:
+
+knot-socket-path
+^^^^^^^^^^^^^^^^
+
+:data-node: ``<instance-id>/knot-socket-path``
+:default: ``/tmp``
+
+Path to directory in which to create unix sockets for reading Knot interface data.
+Might get overriden by `-s` command line parameter.
 
 .. _location:
 

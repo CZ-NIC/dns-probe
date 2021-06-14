@@ -99,9 +99,10 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 {
     DDP::Arguments args{};
     args.app = argv[0];
+    args.knot_socket_count = 0;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hi:p:rd:l:n:c:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rd:k:s:l:n:c:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -123,6 +124,14 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
 
             case 'd':
                 args.dnstap_sockets.emplace_back(optarg);
+                break;
+
+            case 'k':
+                args.knot_socket_count = std::stoul(optarg);
+                break;
+
+            case 's':
+                args.knot_socket_path = optarg;
                 break;
 
             case 'l':
@@ -161,14 +170,16 @@ void DDP::Probe::print_help(const char* app)
         interface = "interface name e.g. eth0 or PCI ID e.g. 00:1f.6";
 
     std::cout << std::endl << app << std::endl
-              << "\t-p PCAP            : input pcap files. Parameter can repeat." << std::endl
-              << "\t-i INTERFACE       : " << interface << ". Parameter can repeat." << std::endl
-              << "\t-r                 : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
-              << "\t-d DNSTAP_SOCKET   : path to input dnstap unix socket. Parameter can repeat." << std::endl
-              << "\t-l LOGFILE         : redirect probe's logs to LOGFILE instead of standard output" << std::endl
-              << "\t-n INSTANCE        : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
-              << "\t-c CONFIG_FILE     : YAML file to load initial configuration from." << std::endl
-              << "\t-h                 : this help message" << std::endl;
+              << "\t-p PCAP             : input pcap files. Parameter can repeat." << std::endl
+              << "\t-i INTERFACE        : " << interface << ". Parameter can repeat." << std::endl
+              << "\t-r                  : indicates RAW PCAPs as input. Can't be used together with -i parameter." << std::endl
+              << "\t-d DNSTAP_SOCKET    : path to input dnstap unix socket. Parameter can repeat." << std::endl
+              << "\t-k KNOT_SOCKET_COUNT: number of Knot interface sockets to create" << std::endl
+              << "\t-s KNOT_SOCKET_PATH : path to directory in which to create Knot interface sockets. Default \"/tmp\"." << std::endl
+              << "\t-l LOGFILE          : redirect probe's logs to LOGFILE instead of standard output" << std::endl
+              << "\t-n INSTANCE         : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
+              << "\t-c CONFIG_FILE      : YAML file to load initial configuration from." << std::endl
+              << "\t-h                  : this help message" << std::endl;
 }
 
 DDP::Probe& DDP::Probe::getInstance()
@@ -207,12 +218,23 @@ void DDP::Probe::load_config(Arguments& args)
             args.dnstap_sockets.emplace_back(dt_socket);
         }
 
+        if (args.knot_socket_count <= 0)
+            args.knot_socket_count = m_cfg.knot_socket_count.value();
+
+        if (args.knot_socket_path.empty())
+            args.knot_socket_path = m_cfg.knot_socket_path.value();
+
 #ifndef PROBE_DNSTAP
         if (!args.dnstap_sockets.empty())
             throw std::runtime_error("DNS Probe was built without dnstap support!");
 #endif
 
-        if (args.interfaces.empty() && args.pcaps.empty() && args.dnstap_sockets.empty())
+#ifndef PROBE_KNOT
+        if (args.knot_socket_count > 0)
+            throw std::runtime_error("DNS Probe was built without Knot interface support!");
+#endif
+
+        if (args.interfaces.empty() && args.pcaps.empty() && args.dnstap_sockets.empty() && args.knot_socket_count <= 0)
             throw std::invalid_argument("At least one interface or pcap should be specified!");
 
         m_cfg_loaded = true;
@@ -330,18 +352,17 @@ void DDP::Probe::init(const Arguments& args)
 }
 
 
-DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>& ports,
-                                        std::vector<std::shared_ptr<DDP::Port>>& sockets)
+DDP::Probe::ReturnValue DDP::Probe::run(PortVector& ports, PortVector& sockets, PortVector& knots)
 {
     if (!m_initialized)
         throw std::runtime_error("Application is not initialized!");
 
     Logger logger("Probe");
 
-    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue, std::vector<std::shared_ptr<DDP::Port>> w_sockets) {
+    auto worker_runner = [this, &ports](unsigned worker, Statistics& stats, unsigned queue, PortVector w_sockets, PortVector w_knots) {
         try {
             Worker w(m_cfg, stats, m_factory_rings.at(worker).get_poll_able_ring(), m_comm_links[worker].worker_endpoint(),
-                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports, w_sockets,
+                    *m_dns_record_mempool, *m_tcp_connection_mempool, queue, ports, w_sockets, w_knots,
                     m_cfg.match_qname, worker, m_country, m_asn);
             Logger logger("Worker");
             logger.info() << "Starting worker on lcore " << ThreadManager::current_lcore() << ".";
@@ -382,13 +403,21 @@ DDP::Probe::ReturnValue DDP::Probe::run(std::vector<std::shared_ptr<DDP::Port>>&
 
     unsigned queue = 0;
     for (auto worker: slaves) {
-        std::vector<std::shared_ptr<DDP::Port>> worker_sockets;
+        PortVector worker_sockets;
         auto index = queue;
         while (index < sockets.size()) {
             worker_sockets.push_back(sockets[index]);
             index += slaves.size();
         }
-        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]), queue++, worker_sockets);
+
+        PortVector worker_knots;
+        index = queue;
+        while (index < knots.size()) {
+            worker_knots.push_back(knots[index]);
+            index += slaves.size();
+        }
+        m_thread_manager->run_on_thread(worker, worker_runner, worker, std::ref(m_stats[stats_index++]),
+            queue++, worker_sockets, worker_knots);
     }
 
     logger.info() << "Slave threads started.";

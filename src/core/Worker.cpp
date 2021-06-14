@@ -34,6 +34,11 @@ int DDP::Worker::run()
         for (unsigned j = 0; j < m_sockets.size(); j++) {
             m_poll.emplace<SocketPollAble>(*this, j);
         }
+
+        for (unsigned k = 0; k < m_knots.size(); k++) {
+            m_poll.emplace<KnotPollAble>(*this, k);
+        }
+
         m_poll.loop();
     }
     catch (std::exception& e) {
@@ -64,7 +69,7 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
 
     // If enabled in configuration, export packet to PCAP
     try {
-        if (m_cfg.pcap_export.value() == PcapExportCfg::ALL)
+        if (m_cfg.pcap_export.value() == PcapExportCfg::ALL && pkt.type() == PacketType::WIRE)
             m_stats.exported_to_pcap += m_pcap_all.write(&pkt);
     }
     catch (std::exception& e) {
@@ -211,12 +216,76 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
     return ret;
 }
 
+DDP::WorkerRetCode DDP::Worker::process_knot_datagram(const Packet& dgram)
+{
+    DDP::WorkerRetCode ret = DDP::WorkerRetCode::WORKER_OK;
+
+    // Parse datagram into DNS record.
+    std::vector<DnsRecord*> records;
+    try {
+        records = m_parser.parse_packet(dgram);
+    }
+    catch (std::exception& e) {
+        Logger("Parse error").debug() << e.what();
+        if (!records.empty())
+            m_parser.put_back_records(records);
+
+        return DDP::WorkerRetCode::WORKER_PARSE_ERROR;
+    }
+
+    for (auto& record: records) {
+        if(record->m_request) {
+            if(record->m_addr_family == DnsRecord::AddrFamily::IP4)
+                m_stats.queries[Statistics::Q_IPV4]++;
+            else if(record->m_addr_family == DnsRecord::AddrFamily::IP6)
+                m_stats.queries[Statistics::Q_IPV6]++;
+
+            if(record->m_proto == DnsRecord::Proto::TCP)
+                m_stats.queries[Statistics::Q_TCP]++;
+            else if(record->m_proto == DnsRecord::Proto::UDP)
+                m_stats.queries[Statistics::Q_UDP]++;
+        }
+
+        try {
+            auto block = m_exporter->buffer_record(*record);
+            if (!block.empty()) {
+#ifdef PROBE_PARQUET
+                if (block.type() == typeid(std::shared_ptr<arrow::Table>) &&
+                    boost::any_cast<std::shared_ptr<arrow::Table>>(block) != nullptr) {
+                    enqueue(block);
+                }
+#endif
+#ifdef PROBE_CDNS
+                if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
+                            boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(block) != nullptr) {
+                    enqueue(block);
+                }
+#endif
+            }
+        }
+#ifdef PROBE_PARQUET
+        catch(EdnsParseException& e) {
+            Logger("Parse error").debug() << e.what();
+        }
+#endif
+        catch (std::exception& e) {
+            Logger("Export").warning() << "Buffering new DNS record failed: " << e.what();
+        }
+
+        m_parser.put_back_record(*record);
+        m_stats.transactions++;
+    }
+
+    return ret;
+}
+
 void DDP::Worker::new_config(Config& cfg)
 {
     m_cfg = cfg;
     m_transaction_table.set_timeout(cfg.tt_timeout);
     m_parser.update_configuration(cfg);
     m_exporter->update_configuration(cfg);
+    m_writer->update_configuration(cfg);
     m_pcap_all.update_configuration(cfg);
 }
 
@@ -263,7 +332,7 @@ void DDP::Worker::stop()
 void DDP::Worker::close_port(int pos)
 {
     m_ports.erase(m_ports.begin() + pos);
-    if(m_ports.empty()) {
+    if(m_ports.empty() && m_sockets.empty() && m_knots.empty()) {
         m_comm_link.send(MessageWorkerStopped(ThreadManager::current_lcore()));
         tt_cleanup();
         m_poll.disable();
@@ -332,3 +401,27 @@ void DDP::Worker::DnstapPollAble::ready_read()
     m_worker.m_stats.active_tt_records = m_worker.m_transaction_table.records();
 }
 #endif
+
+void DDP::Worker::KnotPollAble::ready_read() {
+    uint16_t rx_count = 0;
+    std::array<Packet, Port::BATCH_SIZE> pkts;
+    // Read batch of packets from port
+    try {
+        rx_count = m_port.read(pkts.data(), 0);
+    } catch(PortEOF& e) {
+        m_worker.close_port(m_port_pos);
+        poll()->unregister(*this);
+        return;
+    }
+
+    if (rx_count == 0)
+        return;
+
+    // Process batch of packets
+    for (size_t k = 0; k < rx_count; k++) {
+        m_worker.process_knot_datagram(pkts[k]);
+    }
+
+    m_worker.m_stats.packets += rx_count;
+    m_worker.m_stats.active_tt_records = m_worker.m_transaction_table.records();
+}

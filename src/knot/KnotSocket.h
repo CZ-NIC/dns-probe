@@ -25,50 +25,57 @@
 
 #include <cstdint>
 #include <vector>
+#include <array>
 #include <string>
+#include <sys/un.h>
+extern "C" {
+    #include <libknot/libknot.h>
+}
 #include "core/Port.h"
 
 namespace DDP {
     /**
-     * @brief Class representing AF_UNIX socket on which incoming connections are
-     * accepted and returned by the read(Packet*, unsigned) method.
-     * Each UnixSocket object should be processed by a single thread.
+     * @brief Class for reading Knot interface datagrams from unix socket
      */
-    class UnixSocket : public Port {
+    class KnotSocket : public Port {
     public:
         /**
-         * @brief Constructor. Creates AF_UNIX socket in location given by "sock_path"
+         * @brief Constructor. Creates Knot interface socket in location given by "sock_path"
          * parameter and starts listening on it.
-         * @param sock_path Location where to create the socket
-         * @param sock_group User group under which to create the socket
-         * @throw std::runtime_error
+         * @param sock_path Directory where to create Knot socket
+         * @param idx Id of the Knot socket
          */
-        explicit UnixSocket(const char* sock_path, const std::string sock_group);
+        explicit KnotSocket(std::string& sock_path, uint32_t idx);
 
         /**
-         * @brief Destructor. Closes the socket and deletes it from filesystem.
+         * @brief Destructor. Closes the Knot interface socket.
          */
-        ~UnixSocket() override;
+        ~KnotSocket() override;
 
         // Delete copy constructor and assignment operator
-        UnixSocket(const UnixSocket&) = delete;
-        UnixSocket& operator=(const UnixSocket) = delete;
+        KnotSocket(const KnotSocket&) = delete;
+        KnotSocket& operator=(const KnotSocket) = delete;
 
         /**
-         * @brief Accept a new incoming connection on the socket
-         * @return File descriptor of the accepted connection. 0 if no new connection was accepted.
+         * @brief Read a frame stream containing one dnstap message
+         * @param pkt Packet to store read dnstap message in wire format
+         * @return 1 if a dnstap message was successfully read, 0 otherwise
+         * @throw PortEOF when client ends the connection
          */
-        uint16_t read(Packet*, unsigned) override;
+        uint16_t read(Packet* pkt, unsigned) override;
 
         void free_packets(unsigned) override {}
 
         /**
-         * @brief Return file descriptor of the AF_UNIX socket
+         * @brief Return file descriptor of the Knot interface socket
          */
         std::vector<int> fds() override { return std::vector<int>{m_fd}; }
 
     private:
-        std::string m_socket_path;
-        int m_fd;
+        std::string m_socket_path; //!< Directory where unix socket is created
+        uint32_t m_idx; //!< ID of given socket (starts from 1)
+        int m_fd; //!< File descriptor to unix socket associated with Knot interface
+        knot_probe_t* m_knot_ctx; //!< Knot interface context
+        std::array<knot_probe_data_t, BATCH_SIZE> m_data; //!< Array to store datagrams read from unix socket
     };
 }

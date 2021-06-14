@@ -15,6 +15,13 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **0.11.0**
+     - **1.0**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
+       :doc:`Installation <Installation>`, :doc:`Overview <Overview>`,
+       :doc:`Default YAML file <YAMLfile>`, :doc:`AF manual pages <manpages/dns-probe-af>`,
+       :doc:`DPDK manual pages <manpages/dns-probe-dpdk>`
+     - Add Knot interface as another input data format
    * - **0.10.0**
      - **1.0**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
