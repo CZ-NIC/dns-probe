@@ -15,8 +15,8 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
-   * - **0.10.1**
-     - **1.1**
+   * - **0.11.0**
+     - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Installation <Installation>`, :doc:`Overview <Overview>`,
        :doc:`Default YAML file <YAMLfile>`, :doc:`AF manual pages <manpages/dns-probe-af>`,
