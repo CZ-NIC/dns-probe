@@ -230,7 +230,7 @@ void DDP::Collector::run()
         if (i >= TIMEOUT_LIMIT) {
             if (!m_threads.empty()) {
                 m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
-                    [](auto& x) { return x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }));
+                    [](auto& x) { return !x.valid() || x.wait_for(std::chrono::seconds(0)) == std::future_status::ready; }), m_threads.end());
             }
             i = 0;
         }
