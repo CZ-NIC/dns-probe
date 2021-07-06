@@ -6,8 +6,8 @@ LABEL description="Debian 10 with pre-installed DNS Probe"
 
 RUN apt-get update -yqq &&\
     apt-get install -yqq gnupg curl ca-certificates lsb-release wget &&\
-    wget https://apache.bintray.com/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-archive-keyring-latest-$(lsb_release --codename --short).deb &&\
-    apt-get install -yqq -V ./apache-arrow-archive-keyring-latest-$(lsb_release --codename --short).deb &&\
+    wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb &&\
+    apt-get install -yqq -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb &&\
     echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | tee /etc/apt/sources.list.d/dns-probe.list &&\
     curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null &&\
     wget -O /etc/apt/trusted.gpg.d/knot-latest.gpg https://deb.knot-dns.cz/knot-latest/apt.gpg &&\
