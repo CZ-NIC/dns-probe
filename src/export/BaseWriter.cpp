@@ -229,6 +229,8 @@ namespace DDP {
         if (!m_threads.empty()) {
             m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
                 [this](auto& x) {
+                if (!x.valid())
+                    return true;
                 bool ret = x.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
                 if (ret) {
                     auto result = x.get();
@@ -236,7 +238,7 @@ namespace DDP {
                         m_unsent_files.insert(result);
                 }
                 return ret;
-            }));
+            }), m_threads.end());
         }
 
         if (m_files_thread.valid() &&
