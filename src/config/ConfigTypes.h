@@ -119,6 +119,7 @@ namespace DDP {
         {"query_arcount",                   static_cast<uint32_t>(CDNSField::QUERY_ARCOUNT)},
         {"query_nscount",                   static_cast<uint32_t>(CDNSField::QUERY_NSCOUNT)},
         {"query_qdcount",                   static_cast<uint32_t>(CDNSField::QUERY_QDCOUNT)},
+        {"query_opcode",                    static_cast<uint32_t>(CDNSField::QUERY_OPCODE)},
         {"response_rcode",                  static_cast<uint32_t>(CDNSField::RESPONSE_RCODE)},
         {"query_classtype",                 static_cast<uint32_t>(CDNSField::QUERY_CLASSTYPE)},
         {"query_edns_version",              static_cast<uint32_t>(CDNSField::QUERY_EDNS_VERSION)},
