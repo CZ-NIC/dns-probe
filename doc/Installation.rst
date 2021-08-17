@@ -6,7 +6,7 @@ DNS Probe can be used on Linux with kernel version at least
 3.11. It also requires the system to support C++14 standard.
 Installation packages are available from `OBS (openSUSE Build Service)
 <https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe>`_.
-The following distributions are currently supported: Debian 10 and 9,
+The following distributions are currently supported: Debian 11, 10 and 9,
 Ubuntu 20.04 and 18.04.
 
 The OBS repository also contains packages with several dependencies
@@ -22,6 +22,14 @@ Installation from packages
 The first two steps are to add the OBS repository for the given
 distribution to the system's repository list, and add the
 repository's signing key to the system keyring:
+
+Debian 11
+---------
+
+.. code:: shell
+
+   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_11/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
+   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_11/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
 
 Debian 10
 ---------
