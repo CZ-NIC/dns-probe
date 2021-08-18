@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **0.11.3**
+     - **1.0**
+     - :doc:`Installation <Installation>`
+     - Add Debian 11 package information
    * - **0.11.0**
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
