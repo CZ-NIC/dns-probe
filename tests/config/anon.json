@@ -1,0 +1,13 @@
+{
+  "cznic-dns-probe:dns-probe": [
+    {
+      "instance": "anon",
+      "configuration": {
+        "ip-anonymization": {
+            "anonymize-ip": true,
+            "key-path": "../config/key.cryptopant"
+        }
+      }
+    }
+  ]
+}

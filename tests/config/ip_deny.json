@@ -1,0 +1,11 @@
+{
+  "cznic-dns-probe:dns-probe": [
+    {
+      "instance": "ip_deny",
+      "configuration": {
+        "ipv4-denylist": [ "147.229.8.12" ]
+      }
+    }
+  ]
+}
+
