@@ -34,6 +34,10 @@ RUN apt-get update -yqq &&\
         libparquet-dev \
         libcryptopant-dev \
         libyaml-cpp-dev \
+        libyang-dev \
+        libyang-cpp-dev \
+        sysrepo-dev \
+        sysrepo-cpp-dev \
         libprotobuf-dev \
         protobuf-compiler \
         libfstrm-dev \
