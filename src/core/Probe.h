@@ -96,7 +96,7 @@ namespace DDP {
         static void print_help(const char* app = nullptr);
 
         /**
-         * @brief Loads configuration from configuration file.
+         * @brief Loads configuration from Sysrepo.
          * @param args Program arguments to be filled with network ports and PCAPs to process
          */
         void load_config(Arguments& args);
@@ -188,7 +188,7 @@ namespace DDP {
          */
         void process_log_messages() const;
 
-        bool m_cfg_loaded; //!< Information that application loaded configuration file.
+        bool m_cfg_loaded; //!< Information that application loaded configuration.
         bool m_initialized; //!< Information that application is initialized with call DDP::Probe::init.
         bool m_running; //!< Information that main application is in main loop.
 

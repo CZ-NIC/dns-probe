@@ -34,7 +34,7 @@
 #include "Worker.h"
 #include "Exporter.h"
 #include "core/Port.h"
-#include "config/ConfigFile.h"
+#include "config/ConfigSysrepo.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
 #include "platform/Platform.h"
@@ -102,7 +102,7 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
     args.knot_socket_count = 0;
     int opt;
 
-    while ((opt = getopt(argc, argv, "hi:p:rd:k:s:l:n:c:")) != EOF) {
+    while ((opt = getopt(argc, argv, "hi:p:rd:k:s:l:n:")) != EOF) {
 
         switch (opt) {
             case 'h':
@@ -143,10 +143,6 @@ DDP::ParsedArgs DDP::Probe::process_args(int argc, char** argv)
                 args.instance_name = optarg;
                 break;
 
-            case 'c':
-                args.conf_file = optarg;
-                break;
-
             default:
                 throw std::invalid_argument("Invalid arguments");
         }
@@ -178,7 +174,6 @@ void DDP::Probe::print_help(const char* app)
               << "\t-s KNOT_SOCKET_PATH : path to directory in which to create Knot interface sockets. Default \"/tmp\"." << std::endl
               << "\t-l LOGFILE          : redirect probe's logs to LOGFILE instead of standard output" << std::endl
               << "\t-n INSTANCE         : Unique identifier (for config purposes) for given instance of DNS Probe" << std::endl
-              << "\t-c CONFIG_FILE      : YAML file to load initial configuration from." << std::endl
               << "\t-h                  : this help message" << std::endl;
 }
 
@@ -198,7 +193,7 @@ void DDP::Probe::load_config(Arguments& args)
 
     try {
         // Init configuration
-        ConfigFile::load_configuration(m_cfg, args.conf_file, args.instance_name);
+        m_poll.emplace<DDP::ConfigSysrepo>(args.instance_name, m_cfg);
 
         if (args.raw_pcap)
             m_cfg.raw_pcap.add_value(args.raw_pcap);
@@ -248,7 +243,7 @@ void DDP::Probe::load_config(Arguments& args)
 void DDP::Probe::init(const Arguments& args)
 {
     if (!m_cfg_loaded)
-        throw std::runtime_error("Configuration was not loaded from configuration file yet!");
+        throw std::runtime_error("Configuration was not loaded yet!");
 
     if (m_initialized)
         return;

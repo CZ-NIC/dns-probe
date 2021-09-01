@@ -22,7 +22,8 @@ find_package(Threads REQUIRED)
 find_package(PCAP REQUIRED)
 find_package(Boost REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Yaml-cpp REQUIRED)
+find_package(LibYangCpp REQUIRED)
+find_package(SysrepoCpp REQUIRED)
 find_package(MaxmindDB REQUIRED)
 find_package(Doxygen)
 
@@ -52,9 +53,9 @@ file(GLOB PROBE_SOURCES CONFIGURE_DEPENDS src/core/Probe.cpp
         )
 
 add_library(DNSProbe INTERFACE)
-target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} ${YAML_CPP_LIBRARIES} PCAP::PCAP Threads::Threads OpenSSL::SSL MaxmindDB::MaxmindDB)
+target_link_libraries(DNSProbe INTERFACE ${Boost_LIBRARIES} PCAP::PCAP Threads::Threads OpenSSL::SSL MaxmindDB::MaxmindDB LibYangCpp::LibYangCpp SysrepoCpp::SysrepoCpp)
 target_compile_definitions(DNSProbe INTERFACE $<$<CONFIG:Debug>:PRINT_DEBUG>)
-target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS} ${YAML_CPP_INCLUDE_DIR})
+target_include_directories(DNSProbe INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src ${Boost_INCLUDE_DIRS})
 target_compile_options(DNSProbe INTERFACE -msse4)
 
 if (OPENSSL_VERSION VERSION_LESS "1.1.0")
@@ -139,9 +140,8 @@ if (AF_PACKET_BACKEND)
     configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.sh ${CMAKE_BINARY_DIR}/dp-af @ONLY)
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dns-probe@.service.in ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-af DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/dns-probe.yml DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af)
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af)
     install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
-    target_compile_definitions(dns-probe-af PUBLIC PROBE_CONFIG="${CMAKE_INSTALL_DIR}/${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af/dns-probe.yml")
 endif ()
 
 # Settings for DPDK version
@@ -171,11 +171,11 @@ if (DPDK_BACKEND)
     configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.sh ${CMAKE_BINARY_DIR}/dp-dpdk @ONLY)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-dpdk DESTINATION ${CMAKE_INSTALL_BINDIR})
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dns-probe@.service.in ${CMAKE_BINARY_DIR}/systemd/dns-probe-dpdk@.service)
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/dns-probe.yml DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk)
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/cznic-dns-probe.yang DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk)
     install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-dpdk@.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
-    target_compile_definitions(dns-probe-dpdk PUBLIC PROBE_CONFIG="${CMAKE_INSTALL_DIR}/${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk/dns-probe.yml")
 endif ()
 
+add_custom_target(install_module COMMAND sysrepoctl -i ${CMAKE_SOURCE_DIR}/data-model/czni-dns-probe.yang)
 add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/Uninstall.cmake")
 
 #Build collector
