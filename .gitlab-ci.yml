@@ -29,6 +29,7 @@ build_and_test:
     - cmake -DDPDK_BACKEND=ON -DAF_PACKET_BACKEND=ON ..
     - make
     - cd ../tests
+    - sysrepoctl -i ../data-model/cznic-dns-probe.yang
     - python3 ./run_tests.py -p ../build/dns-probe-af
 
 pages:
