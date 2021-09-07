@@ -7,7 +7,7 @@ Storing exported data
 
 DNS Probe supports storing the exported data either to local files or transferring them directly to a remote
 location via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_. This is determined
-by the :ref:`location` option in YAML configuration file.
+by the :ref:`location` option in Sysrepo configuration.
 
 Local storage
 -------------
@@ -19,11 +19,11 @@ specified by :ref:`export-dir` option. The names of these files will have the fo
 
     <prefix>yyyyMMdd.HHmmss.SSSSSS.p<proc_id>.<sufix>
 
-The *<prefix>* is determined by :ref:`file-name-prefix` option in YAML configuration file. The
+The *<prefix>* is determined by :ref:`file-name-prefix` option in Sysrepo configuration. The
 *yyyyMMdd.HHmmss.SSSSSS* represents a UTC timestamp (microsecond precision) from when the output file was
 first opened. *<proc_id>* is an internal identification of process (worker or export thread) which wrote
 the output file. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
-compression configured in YAML file.
+compression configured in Sysrepo.
 
 Export to remote location
 -------------------------

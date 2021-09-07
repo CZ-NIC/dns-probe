@@ -8,7 +8,7 @@ dns-probe-af
 Synopsis
 --------
 
-:program:`dns-probe-af` [-i *interface* | -p *pcap* [-r] | -d *socket* | -k *knot_count* [-s *knot_path*]] [-l *logfile*] [-n *instance*] [-c *config_file*] [-h]
+:program:`dns-probe-af` [-i *interface* | -p *pcap* [-r] | -d *socket* | -k *knot_count* [-s *knot_path*]] [-l *logfile*] [-n *instance*] [-h]
 
 Description
 -----------
@@ -53,10 +53,6 @@ Options
 .. option:: -n instance
 
    Unique identifier (for configuration purposes) for given instance of DNS Probe.
-
-.. option:: -c config_file
-
-   YAML file to load configuration from.
 
 .. option:: -h
 

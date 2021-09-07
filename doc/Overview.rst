@@ -19,7 +19,7 @@ Main features
 
 * configurable export of data about DNS transactions in C-DNS [RFC8618]_ or `Apache Parquet <https://parquet.apache.org>`_ formats
 
-* configuration via `YAML <https://yaml.org/>`_ file; remote management API to be implemented in future versions
+* configuration via `Sysrepo <https://www.sysrepo.org/>`_ data store; provides remote configuration management and export of runtime statistics
 
 
 License

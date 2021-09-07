@@ -19,24 +19,33 @@ The *systemd* service can be run like this:
 
 Other ``systemctl`` subcommands can be used to stop, enable or restart the service.
 
-The ``instance-id`` service parameter specifies what configuration to load from YAML configuration file at
-``/etc/dns-probe-<BACKEND>/dns-probe.yml``.
+The ``instance-id`` service parameter specifies what configuration to load from Sysrepo at startup.
 With default configuration DNS Probe doesn't have any network interface to process traffic from configured.
-User should therefore modify the YAML configuration file before running the *systemd* service for the first
+User should therefore modify Sysrepo configuration before running the *systemd* service for the first
 time. For example like this:
 
-.. code-block:: yaml
+.. code-block:: shell
 
-    inst1:
-        interface-list:
-            - 'eth0'
-            - 'eth1'
-        log-file: '/var/log/dns-probe-af@inst1.log'
+    sysrepocfg -E vim -m cznic-dns-probe
 
-    inst2:
-        interface-list:
-            - 'eth2'
-        log-file: '/var/log/dns-probe-af@inst2.log'
+.. code-block:: xml
+
+    <dns-probe xmlns="https://www.nic.cz/ns/yang/dns-probe">
+      <instance>inst1</instance>
+      <configuration>
+        <interface-list>eth0</interface-list>
+        <interface-list>eth1</interface-list>
+        <log-file>/var/log/dns-probe-af@inst1.log</log-file>
+      </configuration>
+    </dns-probe>
+
+    <dns-probe xmlns="https://www.nic.cz/ns/yang/dns-probe">
+      <instance>inst2</instance>
+      <configuration>
+        <interface-list>eth2</interface-list>
+        <log-file>/var/log/dns-probe-af@inst2.log</log-file>
+      </configuration>
+    </dns-probe>
 
 This configuration will have ``inst1`` instance of DNS Probe process traffic from ``eth0`` and ``eth1``
 interfaces and write its logs to `/var/log/dns-probe-af@inst1.log` file. ``inst2`` instance of DNS Probe
@@ -45,8 +54,8 @@ modification is done the *systemd* service can be started as shown above with ei
 as ``instance-id`` service parameter. If desired both instances can be run at the same time via two
 separate *systemd* services.
 
-For more information about configuring the YAML file see :doc:`Configuration <Configuration>` and
-:doc:`Default YAML file<YAMLfile>`.
+For more information about configuring via Sysrepo see :doc:`Configuration <Configuration>` and
+:doc:`YANG module<YANGmodule>`.
 
 Running from command line
 =========================

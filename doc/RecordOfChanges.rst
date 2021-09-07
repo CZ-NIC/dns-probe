@@ -16,6 +16,15 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.11.3**
+     - **1.1**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
+       :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Glossary <Glossary>`,
+       :doc:`Installation <Installation>`, :doc:`Overview <Overview>`, :doc:`References <References>`,
+       :doc:`Running DNS Probe <Running>`, :doc:`YANG module <YANGmodule>`,
+       :doc:`dns-probe-af manpage <manpages/dns-probe-af>`,
+       :doc:`dns-probe-dpdk manpage <manpages/dns-probe-dpdk>`
+     - Replace YAML configuration file with Sysrepo to configure DNS Probe
+   * -
      - **1.0**
      - :doc:`Installation <Installation>`
      - Add Debian 11 package information
@@ -23,7 +32,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Installation <Installation>`, :doc:`Overview <Overview>`,
-       :doc:`Default YAML file <YAMLfile>`, :doc:`AF manual pages <manpages/dns-probe-af>`,
+       Default YAML file, :doc:`AF manual pages <manpages/dns-probe-af>`,
        :doc:`DPDK manual pages <manpages/dns-probe-dpdk>`
      - Add Knot interface as another input data format
    * - **0.10.0**
@@ -32,12 +41,12 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Change precision of tcp_hs_rtt field to microseconds
    * - **0.9.0**
      - **1.0**
-     - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`
+     - :doc:`Configuration <Configuration>`, Default YAML file
      - Add configuration option for setting user group on dnstap sockets
    * - **0.8.0**
      - **1.0**
      - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
-       :doc:`Default YAML file <YAMLfile>`
+       Default YAML file
      - Update ASN, Country Code and RTT fields in exported data schema
    * -
      -
@@ -47,7 +56,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      -
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Installation <Installation>`, :doc:`Overview <Overview>`,
-       :doc:`Default YAML file <YAMLfile>`, :doc:`AF manual pages <manpages/dns-probe-af>`,
+       Default YAML file, :doc:`AF manual pages <manpages/dns-probe-af>`,
        :doc:`DPDK manual pages <manpages/dns-probe-dpdk>`
      - Add dnstap as another input data format
    * - **0.7.0**
@@ -55,7 +64,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Glossary <Glossary>`,
        :doc:`Installation <Installation>`, :doc:`Overview <Overview>`, :doc:`Running DNS Probe <Running>`,
-       :doc:`Default YAML file <YAMLfile>`, :doc:`dns-probe-af manpage <manpages/dns-probe-af>`,
+       Default YAML file, :doc:`dns-probe-af manpage <manpages/dns-probe-af>`,
        :doc:`dns-probe-dpdk manpage <manpages/dns-probe-dpdk>`
      - Replace Sysrepo with YAML file to configure DNS Probe
    * -
@@ -78,15 +87,15 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Data Collector <DataCollector>`,
-       YANG module, :doc:`Manual pages <manpages/dp-collector>`
+       :doc:`YANG module <YANGmodule>`, :doc:`Manual pages <manpages/dp-collector>`
      - Add secure export to remote location
    * -
      -
-     - :doc:`Configuration <Configuration>`, YANG module
+     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
      - Fix description of "export-dir" item in YANG module from static to dynamic configuration
    * -
      -
-     - :doc:`Configuration <Configuration>`, YANG module, :doc:`Running DNS Probe <Running>`
+     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`, :doc:`Running DNS Probe <Running>`
      - Integrate probe's command line parameters to Sysrepo configuration
    * -
      -
@@ -94,7 +103,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Update instructions for installation from packages
    * -
      -
-     - :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`, YANG module
+     - :doc:`Configuration <Configuration>`, :doc:`Installation <Installation>`, :doc:`YANG module <YANGmodule>`
      - Add client IP anonymization
    * -
      -
@@ -102,7 +111,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Add IP filtering to YANG module
    * - **0.5.0**
      - **1.1**
-     - :doc:`index <index>`, :doc:`Installation <Installation>`, YANG module,
+     - :doc:`index <index>`, :doc:`Installation <Installation>`, :doc:`YANG module <YANGmodule>`,
        :doc:`Record Of Changes <RecordOfChanges>`
      - Update GitLab URLs
    * -

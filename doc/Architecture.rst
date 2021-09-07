@@ -16,26 +16,25 @@ Configuration thread
 ====================
 
 This is the master thread of DNS Probe. The configuration thread
-loads the configuration from YAML file, initializes the network
+loads configuration from Sysrepo data store, initializes the network
 ports for packet capture, and spawns worker threads and the export
 thread. It also locks those threads to CPU's logical cores. For each
 spawned thread, the configuration thread creates a two-way
 communication link for sending configuration changes to the threads and
 for listening to messages from the threads.
 
-After the initial configuration is done, the thread polls the remote
-management API for configuration changes and messages on the communication links.
+After the initial configuration is done, the thread polls Sysrepo data store
+for configuration changes and communication links for messages from other threads.
 If a worker or export thread encounters an error, it sends a message
 through the communication link to the configuration thread and the
 configuration thread is then responsible for shutting down the rest of
-the probe. If there's a change of probe's configuration via remote management
-API, the configuration thread is alerted and it then distributes
+the probe. If there's a change of probe's configuration in Sysrepo,
+the configuration thread is alerted and it then distributes
 the updated configuration to the rest of the probe's threads. It is also
 responsible for periodic aggregation of runtime statistics from all
-threads and sending via the remote management API. If time-based
-rotation of the output is enabled in probe's configuration, the
-configuration thread takes care of the periodic timer and alerts all
-threads when it's time to rotate the output.
+threads and sending them via Sysrepo. If time-based rotation of the output
+is enabled in probe's configuration, the configuration thread takes care of
+the periodic timer and alerts all threads when it's time to rotate the output.
 
 Initialization of network ports
 -------------------------------
@@ -140,8 +139,8 @@ two formats - `Parquet <https://parquet.apache.org/>`_ or C-DNS
 [RFC8618]_. Exported data can be optionally compressed with GZIP. As
 long as the current output file is open, its name has the ``.part``
 suffix, which is removed once the output file is closed. The Parquet
-and C-DNS output files have the sufix ``.parquet`` and ``.cdns``
-suffix, respectively. If GZIP compression is enabled, a C-DNS output
+and C-DNS output files have the suffix ``.parquet`` and ``.cdns``,
+respectively. If GZIP compression is enabled, a C-DNS output
 file receives an additional suffix ``.gz``. However, this is not done
 for Parquet output files because the Parquet format doesn't compress
 the whole file – the compression is used internally only on certain
