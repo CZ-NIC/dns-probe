@@ -252,7 +252,9 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_e
 
         ptr += 2;
         record.m_ednsUDP = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
-        ptr += 3;
+        ptr += 2;
+        record.m_rcode = (*ptr << 4) | record.m_rcode;
+        ptr += 1;
         record.m_ednsVersion = *ptr;
         ptr += 1;
         record.m_ednsDO = *ptr & DNS_EDNS_DO;
