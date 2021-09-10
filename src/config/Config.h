@@ -82,5 +82,7 @@ namespace DDP {
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
         ConfigItem<std::string> ip_enc_key; //!< File with encryption key for IP anonymization
+
+        ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
     };
 }

@@ -61,6 +61,8 @@ for DNS Probe. Its schema tree looks as follows::
       |  +--rw log-file? <string>
       |  +--rw pcap-list?* <string>
       |  +--rw raw-pcap? <boolean>
+      |  +--rw statistics
+      |  |  +--rw moving-avg-window? <uint16>
       |  +--rw tcp-table
       |  |  +--rw concurrent-connections? <uint32>
       |  |  +--rw timeout? <uint64>
@@ -545,6 +547,16 @@ match-qname
 :default: **false**
 
 By default, the 5-tuple of source and destination IP address, source and destination port, and transport protocol is used to match a DNS query with the corresponding response. If this parameter is set to **true** the DNS QNAME (if present) is used as a secondary key for matching queries with responses.
+
+moving-avg-window
+^^^^^^^^^^^^^^^^^
+
+:data node: ``/cznic-dns-probe:dns-probe[instance='<instance>']/configuration/statistics/moving-avg-window``
+:default: 300
+
+Time window in seconds for which to compute moving average of *queries-per-second** statistics.
+
+Window can be set in interval from 1 second to 1 hour. By default, a 5 minute window is set.
 
 .. _parquet-records-per-file:
 

@@ -46,6 +46,11 @@ included in the project repository (`data-model/cznic-dns-probe.yang <https://gi
          records about DNS transactions in C-DNS or Apache Parquet
          format.";
 
+      revision 2021-09-10 {
+        description
+          "Add option to configure moving average window for run-time statistics";
+      }
+
       revision 2021-08-31 {
         description
           "Add dnstap interface, Knot interface and Maxmind GeoIP databases.
@@ -570,6 +575,21 @@ included in the project repository (`data-model/cznic-dns-probe.yang <https://gi
                 "Time interval after which a TCP connection is removed from
                  the transaction database if no data is received through
                  that connection.";
+            }
+          }
+          container statistics {
+            description
+              "Configuration of run-time statistics export.";
+            leaf moving-avg-window {
+              type uint16 {
+                range "1..3600";
+              }
+              units "seconds";
+              default "300";
+              description
+                "Time window in seconds for which to compute moving average
+                of queries-per-second* run-time statistics. Window can be set
+                in interval from 1 second to 1 hour.";
             }
           }
         }

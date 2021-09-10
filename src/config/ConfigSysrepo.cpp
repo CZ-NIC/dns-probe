@@ -120,6 +120,7 @@ DDP::ConfigSysrepo::ConfigSysrepo(std::string instance, Config& cfg) :
         {"ip-anonymization/anonymize-ip",      m_cfg.anonymize_ip},
         {"ip-anonymization/encryption",        m_cfg.ip_encryption},
         {"ip-anonymization/key-path",          m_cfg.ip_enc_key},
+        {"statistics/moving-avg-window",       m_cfg.moving_avg_window},
 }, m_sysrepo_session(), m_sysrepo_subscribe(), m_sysrepo_callback(), m_fd(), m_logger("Sysrepo")
 {
     m_sysrepo_register = [this] (int fd, std::function<void()> cb) {

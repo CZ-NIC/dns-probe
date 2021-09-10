@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.11.3**
+     - **1.2**
+     - :doc:`Configuration <Configuration>`, :doc:`YANG module <YANGmodule>`
+     - Add Sysrepo option to configure moving average window for run-time statistics
+   * -
      - **1.1**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Glossary <Glossary>`,
