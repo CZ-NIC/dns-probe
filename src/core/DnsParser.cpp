@@ -409,8 +409,16 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
         return MemView<uint8_t>();
     }
 
-    record.m_port[static_cast<int>(record.m_client_index)] = hdr.query_port();
-    record.m_port[!static_cast<int>(record.m_client_index)] = hdr.response_port();
+    if (hdr.query_port() > hdr.response_port()) {
+        record.m_port[0] = hdr.response_port();
+        record.m_port[1] = hdr.query_port();
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_HIGH;
+    }
+    else {
+        record.m_port[0] = hdr.query_port();
+        record.m_port[1] = hdr.response_port();
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_LOW;
+    }
 
     // Parse additional information (DNS wire length, timestamps)
     switch (hdr.type()) {
@@ -618,8 +626,16 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_l4_udp(const DDP::MemView<uint8_t>& 
         return pkt;
     }
 
-    record.m_port[static_cast<int>(record.m_client_index)] = src_port;
-    record.m_port[!static_cast<int>(record.m_client_index)] = dst_port;
+    if (src_port > dst_port) {
+        record.m_port[0] = dst_port;
+        record.m_port[1] = src_port;
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_HIGH;
+    }
+    else {
+        record.m_port[0] = src_port;
+        record.m_port[1] = dst_port;
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_LOW;
+    }
 
     record.m_udp_sum = ntohs(udp_header->check);
     record.m_dns_len = pkt.count() - end;
@@ -649,8 +665,16 @@ bool DDP::DnsParser::parse_l4_tcp(const DDP::MemView<uint8_t>& pkt, DDP::DnsReco
     if (!is_dns_ports(src_port, dst_port))
         return false;
 
-    record.m_port[static_cast<int>(record.m_client_index)] = src_port;
-    record.m_port[!static_cast<int>(record.m_client_index)] = dst_port;
+    if (src_port > dst_port) {
+        record.m_port[0] = dst_port;
+        record.m_port[1] = src_port;
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_HIGH;
+    }
+    else {
+        record.m_port[0] = src_port;
+        record.m_port[1] = dst_port;
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_LOW;
+    }
 
     DnsTcpConnection* connection = nullptr;
     try {
@@ -734,7 +758,9 @@ void DDP::DnsParser::parse_dns(DDP::MemView<uint8_t> pkt, DDP::DnsRecord& record
     // Check indexing of addresses and ports
     // Interpretation of src <-> dst ports and addresses for responses is inverse to queries
     if(record.m_response) {
-        record.m_client_index = (record.m_client_index == DnsRecord::ClientIndex::CLIENT_LOW) ?
+        record.m_client_index_ip = (record.m_client_index_ip == DnsRecord::ClientIndex::CLIENT_LOW) ?
+                DnsRecord::ClientIndex::CLIENT_HIGH : DnsRecord::ClientIndex::CLIENT_LOW;
+        record.m_client_index_port = (record.m_client_index_port == DnsRecord::ClientIndex::CLIENT_LOW) ?
                 DnsRecord::ClientIndex::CLIENT_HIGH : DnsRecord::ClientIndex::CLIENT_LOW;
     }
 
@@ -894,8 +920,16 @@ void DDP::DnsParser::parse_knot_dgram(const Packet& dgram, DnsRecord& record, st
         return;
     }
 
-    record.m_port[static_cast<int>(record.m_client_index)] = data->remote.port;
-    record.m_port[!static_cast<int>(record.m_client_index)] = data->local.port;
+    if (data->remote.port > data->local.port) {
+        record.m_port[0] = data->local.port;
+        record.m_port[1] = data->remote.port;
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_HIGH;
+    }
+    else {
+        record.m_port[0] = data->remote.port;
+        record.m_port[1] = data->local.port;
+        record.m_client_index_port = DnsRecord::ClientIndex::CLIENT_LOW;
+    }
 
     // Parse DNS data
     record.m_id = ntohs(data->query.hdr.id);
@@ -1108,11 +1142,11 @@ void DDP::DnsParser::set_ips(DnsRecord& record, const uint8_t* src, const uint8_
         std::memcpy(&(record.m_addr[0]), dst, ip_len);
         std::memcpy(&(record.m_addr[1]), src, ip_len);
         // Indicate location of src addr
-        record.m_client_index = DnsRecord::ClientIndex::CLIENT_HIGH;
+        record.m_client_index_ip = DnsRecord::ClientIndex::CLIENT_HIGH;
     }
     else {
         std::memcpy(&(record.m_addr[0]), src, ip_len);
         std::memcpy(&(record.m_addr[1]), dst, ip_len);
-        record.m_client_index = DnsRecord::ClientIndex::CLIENT_LOW;
+        record.m_client_index_ip = DnsRecord::ClientIndex::CLIENT_LOW;
     }
 }
