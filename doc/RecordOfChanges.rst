@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.11.3**
+     - **1.1**
+     - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`
+     - Add configuration option to configure moving average window for run-time statistics
+   * -
      - **1.0**
      - :doc:`Installation <Installation>`
      - Add Debian 11 package information

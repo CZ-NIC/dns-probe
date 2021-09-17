@@ -29,6 +29,7 @@
 #include <atomic>
 #include <vector>
 #include <array>
+#include <list>
 
 namespace DDP {
     /**
@@ -92,7 +93,8 @@ namespace DDP {
          * Constructor.
          */
         AggregatedStatistics() : Statistics(), qps(), m_qps_timestamp(get_timestamp()),
-                                 m_old_aggregated_queries({0, 0, 0, 0}) {}
+                                 m_old_aggregated_queries({0, 0, 0, 0}), m_moving_avg(),
+                                 m_moving_avg_window(300) {}
 
         /**
          * Copy constructor.
@@ -101,24 +103,45 @@ namespace DDP {
         AggregatedStatistics(const AggregatedStatistics& stats) = default;
 
         /**
-         * Accumulate all statistics from given vector.
+         * @brief Accumulate all statistics from given vector.
          * @param container Container with statistics to accumulate.
          */
         void aggregate(const std::vector<Statistics>& container);
 
         /**
-         * Calculate new queries per second from last saved timestamp.
+         * @brief Calculate new qps value from last saved timestamp and save it
+         * to moving average list.
          */
         void recalculate_qps();
+
+        /**
+         * @brief Accumulate all statistics from given vector and calculate current
+         * moving average of queries per second.
+         * @param container Container with statistics to accumulate.
+         */
+        void get(const std::vector<Statistics>& container);
+
+        /**
+         * @brief Update moving average window for calculating qps statistics.
+         * @param new_window New window in seconds.
+         */
+        void update_window(uint32_t new_window) {
+            if (new_window <= 0)
+                return;
+
+            m_moving_avg_window = new_window;
+        }
 
     private:
         static uint64_t get_timestamp(); //!< Provides timestamp in seconds.
 
     public:
-        std::array<double, 4> qps; //!< Queries per second.
+        std::array<uint64_t, 4> qps; //!< Queries per second.
 
     private:
         uint64_t m_qps_timestamp; //!< Last timestamp used for calculating qps.
         std::array<uint64_t, 4> m_old_aggregated_queries; //!< Last aggravated count of queries.
+        std::list<std::array<uint64_t, 4>> m_moving_avg; //!< Last m_moving_avg_window values of avg qps for calculating moving average.
+        uint32_t m_moving_avg_window; //!< Moving average window in seconds.
     };
 }

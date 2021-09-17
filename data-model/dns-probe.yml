@@ -1,4 +1,4 @@
-# Last revision: 2021-05-25
+# Last revision: 2021-09-17
 #
 # Default instance configuration.
 # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -206,6 +206,13 @@ default:
     # if no data is received through that connection.
     # Value is in milliseconds.
     timeout: 60000
+
+  # [SECTION] Configuration of run-time statistics export
+  statistics:
+
+    # Time window in seconds for which to compute moving average of queries-per-second*
+    # run-time statistics. Window can be set in interval from 1 second to 1 hour.
+    moving-avg-window: 300
 
 # Configuration for specific instances of DNS Probe (set by '-n' command line parameter).
 # Only changes to default configuration need to be specified here.

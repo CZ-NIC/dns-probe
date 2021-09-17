@@ -202,4 +202,7 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
 
     if (node["tcp-table"]["timeout"] && node["tcp-table"]["timeout"].IsScalar())
         cfg.tcp_ct_timeout.add_value(node["tcp-table"]["timeout"].as<uint64_t>());
+
+    if (node["statistics"]["moving-avg-window"] && node["statistics"]["moving-avg-window"].IsScalar())
+        cfg.moving_avg_window.add_value(node["statistics"]["moving-avg-window"].as<uint16_t>());
 }

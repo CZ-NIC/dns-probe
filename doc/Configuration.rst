@@ -59,6 +59,8 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       +--rw log-file? <string>
       +--rw pcap-list?* <string>
       +--rw raw-pcap? <boolean>
+      +--rw statistics
+      |  +-- moving-avg-window? <uint16>
       +--rw tcp-table
       |  +--rw concurrent-connections? <uint32>
       |  +--rw timeout? <uint64>
@@ -435,6 +437,16 @@ max-transactions
 The value of this parameter must be a power of 2. It specifies the maximum number of pending DNS transactions that DNS Probe can handle at any given time, which in turn affects the size of in-memory transaction table.
 
 The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS traffic at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
+moving-avg-window
+^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/moving-avg-window``
+:default: 300
+
+Time window in seconds for which to compute moving average of *queries-per-second** statistics.
+
+Window can be set in interval from 1 second to 1 hour. By default, a 5 minute window is set.
 
 .. _parquet-records-per-file:
 

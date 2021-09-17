@@ -75,7 +75,8 @@ namespace DDP {
                    export_ca_cert(),
                    anonymize_ip(false),
                    ip_encryption(IpEncryption::AES),
-                   ip_enc_key("key.cryptopant") {}
+                   ip_enc_key("key.cryptopant"),
+                   moving_avg_window(300) {}
 
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
@@ -122,5 +123,7 @@ namespace DDP {
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
         ConfigItem<std::string> ip_enc_key; //!< File with encryption key for IP anonymization
+
+        ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
     };
 }

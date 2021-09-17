@@ -86,7 +86,7 @@ namespace DDP {
 DDP::Probe::Probe() : m_cfg_loaded(false), m_initialized(false), m_running(false), m_poll(), m_cfg(),
                       m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
                       m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(),
-                      m_country(), m_asn(), m_stats(), m_stopped_workers(0),
+                      m_country(), m_asn(), m_stats(), m_aggregated_stats(), m_stopped_workers(0),
                       m_ret_value(ReturnValue::STOP) {}
 
 DDP::Probe::~Probe()
@@ -283,6 +283,12 @@ void DDP::Probe::init(const Arguments& args)
             m_stats.push_back(Statistics());
         }
 
+        if (m_cfg.moving_avg_window.value() < 1 || m_cfg.moving_avg_window.value() > 3600) {
+            Logger("Probe").warning() << "Moving-avg-window value" << m_cfg.moving_avg_window.value()
+                << "outside bounds (1 - 3600), setting to default 300!";
+            m_cfg.moving_avg_window.add_value(300);
+        }
+        m_aggregated_stats.update_window(m_cfg.moving_avg_window.value());
         auto cb = [this] {
             m_aggregated_stats.aggregate(m_stats);
             m_aggregated_stats.recalculate_qps();
@@ -487,11 +493,14 @@ void DDP::Probe::update_config()
         };
         m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.file_rot_timeout.value() * 1000);
     }
+
+    // Update moving average window for run-time statistics calculation
+    m_aggregated_stats.update_window(m_cfg.moving_avg_window.value());
 }
 
 DDP::AggregatedStatistics DDP::Probe::statistics()
 {
-    m_aggregated_stats.aggregate(m_stats);
+    m_aggregated_stats.get(m_stats);
     return m_aggregated_stats;
 }
 
