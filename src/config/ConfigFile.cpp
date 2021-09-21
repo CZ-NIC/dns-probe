@@ -117,6 +117,7 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
         }
     }
 
+    // Export configuration
     if (node["export"]["location"] && node["export"]["location"].IsScalar())
         cfg.export_location.add_value(node["export"]["location"].as<std::string>());
 
@@ -179,6 +180,7 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["export"]["asn-maxmind-db"] && node["export"]["asn-maxmind-db"].IsScalar())
         cfg.asn_db.add_value(node["export"]["asn-maxmind-db"].as<std::string>());
 
+    // IP anonymization configuration
     if (node["ip-anonymization"]["anonymize-ip"] && node["ip-anonymization"]["anonymize-ip"].IsScalar())
         cfg.anonymize_ip.add_value(node["ip-anonymization"]["anonymize-ip"].as<bool>());
 
@@ -188,6 +190,7 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["ip-anonymization"]["key-path"] && node["ip-anonymization"]["key-path"].IsScalar())
         cfg.ip_enc_key.add_value(node["ip-anonymization"]["key-path"].as<std::string>());
 
+    // Transaction table configuration
     if (node["transaction-table"]["max-transactions"] && node["transaction-table"]["max-transactions"].IsScalar())
         cfg.tt_size.add_value(node["transaction-table"]["max-transactions"].as<uint32_t>());
 
@@ -197,12 +200,48 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["transaction-table"]["match-qname"] && node["transaction-table"]["match-qname"].IsScalar())
         cfg.match_qname.add_value(node["transaction-table"]["match-qname"].as<bool>());
 
+    // TCP table configuration
     if (node["tcp-table"]["concurrent-connections"] && node["tcp-table"]["concurrent-connections"].IsScalar())
         cfg.tcp_ct_size.add_value(node["tcp-table"]["concurrent-connections"].as<uint32_t>());
 
     if (node["tcp-table"]["timeout"] && node["tcp-table"]["timeout"].IsScalar())
         cfg.tcp_ct_timeout.add_value(node["tcp-table"]["timeout"].as<uint64_t>());
 
+    // Statistics export configuration
+    if (node["statistics"]["export-stats"] && node["statistics"]["export-stats"].IsScalar())
+        cfg.export_stats.add_value(node["statistics"]["export-stats"].as<bool>());
+
+    if (node["statistics"]["stats-timeout"] && node["statistics"]["stats-timeout"].IsScalar())
+        cfg.stats_timeout.add_value(node["statistics"]["stats-timeout"].as<uint32_t>());
+
+    if (node["statistics"]["location"] && node["statistics"]["location"].IsScalar())
+        cfg.stats_location.add_value(node["statistics"]["location"].as<std::string>());
+
+    if (node["statistics"]["export-dir"] && node["statistics"]["export-dir"].IsScalar())
+        cfg.stats_directory.add_value(node["statistics"]["export-dir"].as<std::string>());
+
+    if (node["statistics"]["remote-ip"] && node["statistics"]["remote-ip"].IsScalar())
+        cfg.stats_ip.add_value(node["statistics"]["remote-ip"].as<std::string>());
+
+    if (node["statistics"]["remote-port"] && node["statistics"]["remote-port"].IsScalar())
+        cfg.stats_port.add_value(node["statistics"]["remote-port"].as<uint16_t>());
+
+    if (node["statistics"]["remote-ca-cert"] && node["statistics"]["remote-ca-cert"].IsScalar())
+        cfg.stats_ca_cert.add_value(node["statistics"]["remote-ca-cert"].as<std::string>());
+
     if (node["statistics"]["moving-avg-window"] && node["statistics"]["moving-avg-window"].IsScalar())
         cfg.moving_avg_window.add_value(node["statistics"]["moving-avg-window"].as<uint16_t>());
+
+    if (node["statistics"]["stats-fields"] && node["statistics"]["stats-fields"].IsSequence()) {
+        std::bitset<StatsBits> fields;
+        for (auto item : node["statistics"]["stats-fields"]) {
+            std::string field = item.as<std::string>();
+            std::transform(field.begin(), field.end(), field.begin(), tolower);
+            auto found = StatsFieldsMap.find(field);
+            if (found != StatsFieldsMap.end())
+                fields.set(found->second);
+        }
+
+        cfg.stats_fields.add_value(fields);
+    }
 }

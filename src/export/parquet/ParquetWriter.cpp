@@ -56,8 +56,9 @@ int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)
             throw std::runtime_error("Couldn't rename the output file!");
     }
     else {
-        check_file_transfer();
-        m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename, ".part", DEFAULT_TRIES));
+        check_file_transfer(TlsCtxIndex::TRAFFIC);
+        m_threads.emplace_back(std::async(std::launch::async, send_file, TlsCtxIndex::TRAFFIC,
+            m_cfg.export_ip.value(), m_cfg.export_port.value(), m_filename, ".part", DEFAULT_TRIES));
     }
 
     return item->num_rows();

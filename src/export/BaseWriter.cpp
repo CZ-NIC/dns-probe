@@ -33,13 +33,14 @@
 #include "utils/Logger.h"
 
 namespace DDP {
-    std::string send_file(Config cfg, std::string filename, std::string sufix, uint8_t tries)
+    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
+        std::string sufix, uint8_t tries)
     {
         auto pos = filename.find_last_of('/');
 
         for (int i = 0; i < tries; i++) {
             try {
-                TlsConnection tls(cfg);
+                TlsConnection tls(type, ip, port);
                 std::ifstream ifs(filename + sufix, std::ifstream::binary);
                 if (ifs.fail())
                     throw std::runtime_error("Couldn't read file for transfer!");
@@ -74,10 +75,11 @@ namespace DDP {
         return filename;
     }
 
-    std::unordered_set<std::string> send_files(Config cfg, std::unordered_set<std::string> flist)
+    std::unordered_set<std::string> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
+        std::unordered_set<std::string> flist)
     {
         for (auto it = flist.begin(); it != flist.end(); ) {
-            auto ret = send_file(cfg, *it, "", 1);
+            auto ret = send_file(type, ip, port, *it, "", 1);
             if (ret.empty())
                 it = flist.erase(it);
             else
@@ -87,18 +89,17 @@ namespace DDP {
         return flist;
     }
 
-    void TlsCtx::init(std::string ca_cert)
+    void TlsCtx::init(TlsCtxIndex type, std::string ca_cert)
     {
-        if (m_ctx)
+        if (m_ctx[static_cast<uint8_t>(type)])
             return;
 
-        SSL_library_init();
-        SSL_load_error_strings();
 #ifndef PROBE_OPENSSL_LEGACY
         const SSL_METHOD* method = TLS_client_method();
 #else
         const SSL_METHOD* method = TLSv1_2_client_method();
 #endif
+
         SSL_CTX* ctx = SSL_CTX_new(method);
         if (!ctx)
             throw std::runtime_error("Error creating TLS context!");
@@ -117,13 +118,16 @@ namespace DDP {
         }
 
         SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
-        m_ctx = ctx;
+        m_ctx[static_cast<uint8_t>(type)] = ctx;
     }
 
     TlsCtx::~TlsCtx()
     {
-        if (m_ctx)
-            SSL_CTX_free(m_ctx);
+        if (m_ctx[static_cast<uint8_t>(TlsCtxIndex::TRAFFIC)])
+            SSL_CTX_free(m_ctx[static_cast<uint8_t>(TlsCtxIndex::TRAFFIC)]);
+
+        if (m_ctx[static_cast<uint8_t>(TlsCtxIndex::STATISTICS)])
+            SSL_CTX_free(m_ctx[static_cast<uint8_t>(TlsCtxIndex::STATISTICS)]);
     }
 
     void TlsConnection::close()
@@ -189,7 +193,7 @@ namespace DDP {
                 throw std::runtime_error("Error connecting to server for remote export!");
         }
 
-        m_ctx = TlsCtx::getInstance().get();
+        m_ctx = TlsCtx::getInstance().get(m_connection_type);
         SSL* ssl = SSL_new(m_ctx);
         if (!ssl)
             throw std::runtime_error("Error creating TLS structure!");
@@ -224,7 +228,7 @@ namespace DDP {
                + m_id + inv + full_sufix;
     }
 
-    void BaseWriter::check_file_transfer()
+    void BaseWriter::check_file_transfer(TlsCtxIndex type)
     {
         if (!m_threads.empty()) {
             m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
@@ -249,13 +253,27 @@ namespace DDP {
             }
 
             if (!m_unsent_files.empty()) {
-                m_files_thread = std::async(std::launch::async, send_files, m_cfg, m_unsent_files);
+                if (type == TlsCtxIndex::TRAFFIC) {
+                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.export_ip.value(),
+                        m_cfg.export_port.value(), m_unsent_files);
+                }
+                else {
+                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.stats_ip.value(),
+                        m_cfg.stats_port.value(), m_unsent_files);
+                }
                 m_unsent_files.clear();
             }
         }
         else if (!m_files_thread.valid()) {
             if (!m_unsent_files.empty()) {
-                m_files_thread = std::async(std::launch::async, send_files, m_cfg, m_unsent_files);
+                if (type == TlsCtxIndex::TRAFFIC) {
+                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.export_ip.value(),
+                        m_cfg.export_port.value(), m_unsent_files);
+                }
+                else {
+                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.stats_ip.value(),
+                        m_cfg.stats_port.value(), m_unsent_files);
+                }
                 m_unsent_files.clear();
             }
         }
