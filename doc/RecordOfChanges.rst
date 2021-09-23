@@ -15,11 +15,17 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
-   * - **0.11.3**
-     - **1.1**
+   * - **0.12.0**
+     - **1.0**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration<Configuration>`,
+       :doc:`Data Collector <DataCollector>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
+       :doc:`Overview <Overview>`, :doc:`References <References>`, :doc:`Default YAML file <YAMLfile>`
+     - Add optional export of run-time statistics in JSON format
+   * -
+     -
      - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`
      - Add configuration option to configure moving average window for run-time statistics
-   * -
+   * - **0.11.3**
      - **1.0**
      - :doc:`Installation <Installation>`
      - Add Debian 11 package information

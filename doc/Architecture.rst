@@ -20,22 +20,19 @@ loads the configuration from YAML file, initializes the network
 ports for packet capture, and spawns worker threads and the export
 thread. It also locks those threads to CPU's logical cores. For each
 spawned thread, the configuration thread creates a two-way
-communication link for sending configuration changes to the threads and
-for listening to messages from the threads.
+communication link for managing the threads and for listening to messages
+from the threads.
 
-After the initial configuration is done, the thread polls the remote
-management API for configuration changes and messages on the communication links.
-If a worker or export thread encounters an error, it sends a message
-through the communication link to the configuration thread and the
-configuration thread is then responsible for shutting down the rest of
-the probe. If there's a change of probe's configuration via remote management
-API, the configuration thread is alerted and it then distributes
-the updated configuration to the rest of the probe's threads. It is also
-responsible for periodic aggregation of runtime statistics from all
-threads and sending via the remote management API. If time-based
-rotation of the output is enabled in probe's configuration, the
-configuration thread takes care of the periodic timer and alerts all
-threads when it's time to rotate the output.
+After the initial configuration is done, the thread polls for messages
+on the communication links. If a worker or export thread encounters an error,
+it sends a message through its communication link to the configuration thread
+and the configuration thread is then responsible for shutting down the rest of
+the probe. It is also responsible for periodic aggregation of run-time
+statistics from all threads and optionally exporting them either locally or
+to a remote server via encrypted network transfer using TLS. If time-based rotation
+of the traffic output is enabled in probe's configuration, the configuration thread
+takes care of the periodic timer and alerts all threads when it's time to rotate
+the output.
 
 Initialization of network ports
 -------------------------------
