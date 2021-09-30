@@ -16,6 +16,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Segment
      - Change description
    * - **0.12.0**
+     - **1.1**
+     - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Fix typo: run-time statistics have `remote-ip` option, not `remote-ip-address`
+   * -
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration<Configuration>`,
        :doc:`Data Collector <DataCollector>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
