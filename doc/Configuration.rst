@@ -59,6 +59,16 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       +--rw log-file? <string>
       +--rw pcap-list?* <string>
       +--rw raw-pcap? <boolean>
+      +--rw statistics
+      |  +-- export-dir? <string>
+      |  +-- export-stats? <boolean>
+      |  +-- location? <enumeration>
+      |  +-- moving-avg-window? <uint16>
+      |  +-- remote-ca-cert? <string>
+      |  +-- remote-ip? <string>
+      |  +-- remote-port? <uint16>
+      |  +-- stats-fields?* <string>
+      |  +-- stats-timeout? <uint32>
       +--rw tcp-table
       |  +--rw concurrent-connections? <uint32>
       |  +--rw timeout? <uint64>
@@ -246,6 +256,18 @@ Path to an existing local directory for storing export files.
 
 The default value of ``.`` means that DNS Probe will use the current working directory from which it was launched.
 
+.. _stats-export-dir:
+
+export-dir
+^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/export-dir``
+:default: ``.``
+
+Path to an existing local directory for storing run-time statistics in JSON.
+
+The default value of ``.`` means that DNS Probe will use the current working directory from which it was launched.
+
 .. _export-format:
 
 export-format
@@ -262,6 +284,16 @@ DNS transactions. Two options are currently supported:
 
 ``cdns``
    Compacted-DNS (C-DNS) [RFC8618]_.
+
+.. _export-stats:
+
+export-stats
+^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/export-stats``
+:default: **false**
+
+If this flag is true, run-time statistics will be exported in JSON format every :ref:`stats-timeout` seconds.
 
 file-compression
 ^^^^^^^^^^^^^^^^
@@ -405,6 +437,21 @@ location
 Location for the storage of exported DNS records. Determines if data is stored to local file or sent
 to remote server.
 
+Valid values are ``local`` and ``remote``.
+
+.. _stats-location:
+
+location
+^^^^^^^^
+
+:data node: ``<instance-id>/statistics/location``
+:default: ``local``
+
+Location for the storage of exported run-time statistics in JSON. Determines if data is stored to
+local file or sent to remote server.
+
+Valid values are ``local`` and ``remote``.
+
 log-file
 ^^^^^^^^
 
@@ -435,6 +482,18 @@ max-transactions
 The value of this parameter must be a power of 2. It specifies the maximum number of pending DNS transactions that DNS Probe can handle at any given time, which in turn affects the size of in-memory transaction table.
 
 The default value of 1048576 (2^20) was determined experimentally – it should suffice for handling DNS traffic at the line rate of 10 Gb/s. It is recommended to adjust this parameter to actual traffic circumstances in order to optimize memory consumption.
+
+.. _moving-avg-window:
+
+moving-avg-window
+^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/moving-avg-window``
+:default: 300
+
+Time window in seconds for which to compute moving average of *queries-per-second** statistics.
+
+Window can be set in interval from 1 second to 1 hour. By default, a 5 minute window is set.
 
 .. _parquet-records-per-file:
 
@@ -509,6 +568,18 @@ will be authenticated during TLS handshake. Will be used if :ref:`location` is s
 
 By default server's certificate will be authenticated against OpenSSL's default directory with CA certificates.
 
+remote-ca-cert
+^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/remote-ca-cert``
+:default: empty
+
+Path (including file's name) to the CA certificate against which the remote server's certificate
+will be authenticated during TLS handshake for run-time statistics export. Will be used if :ref:`stats-location`
+is set to ``remote`` and :ref:`export-stats` is set to **true**.
+
+By default server's certificate will be authenticated against OpenSSL's default directory with CA certificates.
+
 .. _remote-ip-address:
 
 remote-ip-address
@@ -519,6 +590,17 @@ remote-ip-address
 
 IP address for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
 
+.. _stats-remote-ip-address:
+
+remote-ip-address
+^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/remote-ip-address``
+:default: ``127.0.0.1``
+
+IP address for remote export of run-time statistics. Will be used if :ref:`stats-location` is set to ``remote``
+and :ref:`export-stats` is set to **true**.
+
 .. _remote-port:
 
 remote-port
@@ -528,6 +610,42 @@ remote-port
 :default: 6378
 
 Tranport protocol port number for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
+
+.. _stats-remote-port:
+
+remote-port
+^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/remote-port``
+:default: 6379
+
+Transport protocol port number for remote export of run-time statistics. Will be used if :ref:`stats-location`
+is set to ``remote`` and :ref:`export-stats` is set to **true**.
+
+stats-fields
+^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/stats-fields``
+:default: all fields
+
+This sequence indicates which run-time statistics should be exported if :ref:`export-stats` is set to **true**.
+
+By default all statistics available in DNS Probe are enabled.
+
+.. _stats-timeout:
+
+stats-timeout
+^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/stats-timeout``
+:default: 300
+
+Time interval after which run-time statistics will be periodically exported in JSON, if :ref:`export-stats`
+is set to **true**. If value is 0, statistics will be exported only on probe's exit.
+
+Value is in seconds.
+
+RECOMMENDATION: For optimal results the value should be the same as :ref:`moving-avg-window`.
 
 timeout
 ^^^^^^^

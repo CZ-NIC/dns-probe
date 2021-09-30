@@ -22,6 +22,7 @@
  */
 
 #include <algorithm>
+#include <list>
 
 #include "Statistics.h"
 
@@ -85,14 +86,36 @@ namespace DDP {
     {
         auto time_window = static_cast<double>(get_timestamp() - m_qps_timestamp);
 
+        std::array<uint64_t, 4> qps_tmp;
         if (time_window)
             for (auto i = 0u; i < 4; i++) {
-                qps[i] = static_cast<double >(queries[i] - m_old_aggregated_queries[i]) / time_window;
+                qps_tmp[i] = (queries[i] - m_old_aggregated_queries[i]) / time_window;
             }
         else
-            qps.fill(0);
+            qps_tmp.fill(0);
 
         m_qps_timestamp = get_timestamp();
         std::copy(queries.begin(), queries.end(), m_old_aggregated_queries.begin());
+
+        while (m_moving_avg.size() >= m_moving_avg_window) {
+            m_moving_avg.pop_front();
+        }
+
+        m_moving_avg.emplace_back(qps_tmp);
+    }
+
+    void AggregatedStatistics::get(const std::vector<Statistics>& container)
+    {
+        aggregate(container);
+        qps.fill(0);
+        for (auto& avg : m_moving_avg) {
+            for (auto i = 0u; i < 4; i++) {
+                qps[i] += avg[i];
+            }
+        }
+
+        for (auto i = 0u; i < 4; i++) {
+            qps[i] = qps[i] / m_moving_avg.size();
+        }
     }
 }

@@ -27,7 +27,7 @@
 bool DDP::DnsTcpConnection::update_connection(DnsRecord& record, const Packet& packet, const tcphdr* header, const MemView<uint8_t>& data,
                                               DnsParser& parser, std::vector<DnsRecord*>& records)
 {
-    uint8_t conn_side = (record.m_port[static_cast<uint8_t >(record.m_client_index)] == DnsParser::DNS_PORT) ? SERVER : CLIENT;
+    uint8_t conn_side = (record.m_port[static_cast<uint8_t >(record.m_client_index_port)] == DnsParser::DNS_PORT) ? SERVER : CLIENT;
     uint32_t pkt_seq = ntohl(header->seq);
     uint32_t seg_len = data.count();
     bool ret = false;

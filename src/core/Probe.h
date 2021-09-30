@@ -44,6 +44,7 @@ namespace DDP {
     class TimerInterface;
     class Port;
     class CommLinkProxy;
+    class StatsWriter;
 
     using PortVector = std::vector<std::shared_ptr<DDP::Port>>;
 
@@ -196,6 +197,7 @@ namespace DDP {
         Config m_cfg; //!< Application configuration.
         TimerInterface* m_aggregated_timer; //!< Timer for automatic aggregating statistics and calculating qps.
         TimerInterface* m_output_timer; //!< Timer for automatic rotation of output files
+        TimerInterface* m_export_aggregated_timer; //!< Timer for automatic export of run-time statistics.
 
         std::unique_ptr<ThreadManager> m_thread_manager; //!< Thread manager for worker cores.
         std::unordered_map<unsigned, CommLink> m_comm_links; //!< Communication links between master core and workers.
@@ -209,6 +211,7 @@ namespace DDP {
 
         std::vector<Statistics> m_stats; //!< Statistics structure for workers. One item in vector per worker.
         AggregatedStatistics m_aggregated_stats; //!< Aggregated statistics from workers.
+        std::unique_ptr<StatsWriter> m_stats_writer; //!< Aggregated statistics writer.
 
         unsigned m_stopped_workers; //!< Number of stopped workers.
         ReturnValue m_ret_value; //!< Return value from runner.

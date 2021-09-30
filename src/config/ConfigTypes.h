@@ -46,6 +46,15 @@ namespace DDP {
         return bitmask;
     }
 
+    static constexpr uint8_t StatsBits = 16; //!< Number of possible statistics to export
+    static constexpr uint64_t get_stats_bitmask() {
+        uint64_t bitmask = 0;
+        for (unsigned i = 0; i < StatsBits; i++) {
+            bitmask |= 1 << i;
+        }
+        return bitmask;
+    }
+
     /**
      * Available values for PCAP export config.
      */
@@ -130,6 +139,47 @@ namespace DDP {
         {"asn",                             static_cast<uint32_t>(CDNSField::ASN)},
         {"country_code",                    static_cast<uint32_t>(CDNSField::COUNTRY_CODE)},
         {"round_trip_time",                 static_cast<uint32_t>(CDNSField::ROUND_TRIP_TIME)},
+    };
+
+    /**
+     * Specify bits positions in bit set for statistics fields.
+     */
+    enum class StatsField : uint32_t {
+        PROCESSED_PACKETS = 0,
+        PROCESSED_TRANSACTIONS,
+        EXPORTED_RECORDS,
+        PENDING_TRANSACTIONS,
+        EXPORTED_PCAP_PACKETS,
+        QUERIES_IPV4,
+        QUERIES_IPV6,
+        QUERIES_TCP,
+        QUERIES_UDP,
+        QUERIES,
+        QUERIES_PER_SECOND_IPV4,
+        QUERIES_PER_SECOND_IPV6,
+        QUERIES_PER_SECOND_TCP,
+        QUERIES_PER_SECOND_UDP,
+        QUERIES_PER_SECOND,
+        UNIX_TIMESTAMP
+    };
+
+    static const std::unordered_map<std::string, uint32_t> StatsFieldsMap = {
+        {"processed-packets",           static_cast<uint32_t>(StatsField::PROCESSED_PACKETS)},
+        {"processed-transactions",      static_cast<uint32_t>(StatsField::PROCESSED_TRANSACTIONS)},
+        {"exported-records",            static_cast<uint32_t>(StatsField::EXPORTED_RECORDS)},
+        {"pending-transactions",        static_cast<uint32_t>(StatsField::PENDING_TRANSACTIONS)},
+        {"exported-pcap-packets",       static_cast<uint32_t>(StatsField::EXPORTED_PCAP_PACKETS)},
+        {"queries-ipv4",                static_cast<uint32_t>(StatsField::QUERIES_IPV4)},
+        {"queries-ipv6",                static_cast<uint32_t>(StatsField::QUERIES_IPV6)},
+        {"queries-tcp",                 static_cast<uint32_t>(StatsField::QUERIES_TCP)},
+        {"queries-udp",                 static_cast<uint32_t>(StatsField::QUERIES_UDP)},
+        {"queries",                     static_cast<uint32_t>(StatsField::QUERIES)},
+        {"queries-per-second-ipv4",     static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV4)},
+        {"queries-per-second-ipv6",     static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV6)},
+        {"queries-per-second-tcp",      static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_TCP)},
+        {"queries-per-second-udp",      static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_UDP)},
+        {"queries-per-second",          static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND)},
+        {"unix-timestamp",              static_cast<uint32_t>(StatsField::UNIX_TIMESTAMP)},
     };
 
     /**

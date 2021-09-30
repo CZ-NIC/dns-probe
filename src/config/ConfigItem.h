@@ -429,7 +429,7 @@ namespace DDP {
          */
         void add_value(const boost::any& value) override
         {
-            m_value = boost::any_cast<std::bitset<CdnsBits>>(value);
+            m_value = boost::any_cast<std::bitset<size>>(value);
         }
 
         /**

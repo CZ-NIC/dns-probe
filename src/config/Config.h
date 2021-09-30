@@ -75,7 +75,16 @@ namespace DDP {
                    export_ca_cert(),
                    anonymize_ip(false),
                    ip_encryption(IpEncryption::AES),
-                   ip_enc_key("key.cryptopant") {}
+                   ip_enc_key("key.cryptopant"),
+                   export_stats(false),
+                   stats_timeout(300),
+                   stats_location(ExportLocation::LOCAL),
+                   stats_directory("."),
+                   stats_ip("127.0.0.1"),
+                   stats_port(6379),
+                   stats_ca_cert(),
+                   moving_avg_window(300),
+                   stats_fields(get_stats_bitmask()) {}
 
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
@@ -122,5 +131,15 @@ namespace DDP {
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
         ConfigItem<std::string> ip_enc_key; //!< File with encryption key for IP anonymization
+
+        ConfigItem<bool> export_stats; //!< Enable export of run-time statistics
+        ConfigItem<uint32_t> stats_timeout; //!< Export run-time statistics every 'stats_timeout' seconds
+        ConfigItem<ExportLocation> stats_location; //!< Location for exported run-time statistics
+        ConfigItem<std::string> stats_directory; //!< Directory for exported run-time statistics
+        ConfigItem<std::string> stats_ip; //!< IP address for remote export of run-time statistics
+        ConfigItem<uint16_t> stats_port; //!< Transport protocol port for remote export of run-time statistics
+        ConfigItem<std::string> stats_ca_cert; //!< CA certificate for authentication of remote server's certificate
+        ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
+        ConfigBitfield<StatsBits> stats_fields; //!< Indicates which statistics should be exported
     };
 }

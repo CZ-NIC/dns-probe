@@ -25,6 +25,8 @@ first opened. *<proc_id>* is an internal identification of process (worker or ex
 the output file. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
 compression configured in YAML file.
 
+.. _export-to-remote-location:
+
 Export to remote location
 -------------------------
 
@@ -191,3 +193,35 @@ Entrada schema.
 | tcp\_hs\_rtt                    | DOUBLE    | round-trip-time (implementation field)| TCP Round Trip Time (RTT) (milliseconds with up to 3 decimal|
 |                                 |           | (microsecond precision integer)       | digits precision)                                           |
 +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
+
+Storing exported run-time statistics
+====================================
+
+DNS Probe supports periodically storing run-time statistics in JSON format to local files or transferring
+them directly to a remote lcoation via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_.
+This is determined by the :ref:`stats-location` option in YAML configuration file.
+
+Local storage
+-------------
+
+If :ref:`stats-location` option is set to `local` the exported statistics will be stored in local files
+in directory specified by :ref:`stats-export-dir` option. The names of these files will have the following
+naming convention:
+
+::
+
+    <prefix>yyyyMMdd.HHmmss.SSSSSS.stats.json
+
+The *<prefix>* is determined by :ref:`file-name-prefix` option in YAML configuration file.
+The *yyyyMMdd.HHmmss.SSSSSS* represents a UTC timestamp (microsecond precision) from when
+the JSON was exported.
+
+Export to remote location
+-------------------------
+
+If :ref:`stats-location` is set to `remote` DNS Probe will attempt to transfer the exported statistics
+to a remote server specified by :ref:`stats-remote-ip-address` and :ref:`stats-remote-port` options
+via encrypted TLS connection with remote server's authentication.
+
+The transfer uses the same simple application protocol used for traffic data transfer that was
+shown in chapter :ref:`export-to-remote-location`.

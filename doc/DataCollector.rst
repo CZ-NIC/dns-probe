@@ -7,6 +7,9 @@ via encrypted TLS connection. To collect this data on remote location's side pac
 comes with :doc:`dp-collector <manpages/dp-collector>` binary. It is recommended to run this collector as
 a `systemd <https://www.freedesktop.org/wiki/Software/systemd/>`_ service.
 
+This data collector can also be used to collect probe's exported run-time statistics in JSON format
+as it uses the same simple application protocol as traffic data transfer.
+
 Running as systemd service
 ==========================
 

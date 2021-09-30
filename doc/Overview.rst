@@ -19,7 +19,9 @@ Main features
 
 * configurable export of data about DNS transactions in C-DNS [RFC8618]_ or `Apache Parquet <https://parquet.apache.org>`_ formats
 
-* configuration via `YAML <https://yaml.org/>`_ file; remote management API to be implemented in future versions
+* optional configurable export of run-time statistics in JSON format [RFC8259]_
+
+* configuration via `YAML <https://yaml.org/>`_ file
 
 
 License

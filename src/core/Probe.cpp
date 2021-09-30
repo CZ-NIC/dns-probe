@@ -40,6 +40,7 @@
 #include "platform/Platform.h"
 #include "platform/Mempool.h"
 #include "export/BaseWriter.h"
+#include "export/StatsWriter.h"
 
 namespace DDP {
     class CommLinkProxy : public PollAble
@@ -86,8 +87,8 @@ namespace DDP {
 DDP::Probe::Probe() : m_cfg_loaded(false), m_initialized(false), m_running(false), m_poll(), m_cfg(),
                       m_aggregated_timer(nullptr), m_output_timer(nullptr), m_comm_links(),
                       m_log_link(), m_dns_record_mempool(), m_export_rings(), m_factory_rings(),
-                      m_country(), m_asn(), m_stats(), m_stopped_workers(0),
-                      m_ret_value(ReturnValue::STOP) {}
+                      m_country(), m_asn(), m_stats(), m_aggregated_stats(), m_stats_writer(),
+                      m_stopped_workers(0), m_ret_value(ReturnValue::STOP) {}
 
 DDP::Probe::~Probe()
 {
@@ -283,6 +284,12 @@ void DDP::Probe::init(const Arguments& args)
             m_stats.push_back(Statistics());
         }
 
+        if (m_cfg.moving_avg_window.value() < 1 || m_cfg.moving_avg_window.value() > 3600) {
+            Logger("Probe").warning() << "Moving-avg-window value " << m_cfg.moving_avg_window.value()
+                << " outside bounds (1 - 3600), setting to default 300!";
+            m_cfg.moving_avg_window.add_value(300);
+        }
+        m_aggregated_stats.update_window(m_cfg.moving_avg_window.value());
         auto cb = [this] {
             m_aggregated_stats.aggregate(m_stats);
             m_aggregated_stats.recalculate_qps();
@@ -296,6 +303,16 @@ void DDP::Probe::init(const Arguments& args)
                 }
             };
             m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
+        }
+
+        m_stats_writer = std::make_unique<StatsWriter>(m_cfg);
+        if (m_cfg.export_stats.value()) {
+            auto export_cb = [this] {
+                m_aggregated_stats.get(m_stats);
+                m_stats_writer->write(m_aggregated_stats);
+                Logger("Export").debug() << "Run-time statistics exported.";
+            };
+            m_export_aggregated_timer = &m_poll.emplace<Timer<decltype(export_cb)>>(export_cb);
         }
 
 #ifndef PROBE_PARQUET
@@ -342,7 +359,10 @@ void DDP::Probe::init(const Arguments& args)
         }
 
         if (m_cfg.export_location.value() == ExportLocation::REMOTE)
-            TlsCtx::getInstance().init(m_cfg.export_ca_cert.value());
+            TlsCtx::getInstance().init(TlsCtxIndex::TRAFFIC, m_cfg.export_ca_cert.value());
+
+        if (m_cfg.export_stats.value() && m_cfg.stats_location.value() == ExportLocation::REMOTE)
+            TlsCtx::getInstance().init(TlsCtxIndex::STATISTICS, m_cfg.stats_ca_cert.value());
 
         m_initialized = true;
     } catch (...) {
@@ -426,6 +446,9 @@ DDP::Probe::ReturnValue DDP::Probe::run(PortVector& ports, PortVector& sockets, 
     if (m_output_timer)
         m_output_timer->arm(m_cfg.file_rot_timeout.value() * 1000);
 
+    if (m_export_aggregated_timer && m_cfg.stats_timeout.value() > 0)
+        m_export_aggregated_timer->arm(m_cfg.stats_timeout.value() * 1000);
+
     m_running = true;
     m_poll.enable();
     m_poll.loop();
@@ -434,6 +457,14 @@ DDP::Probe::ReturnValue DDP::Probe::run(PortVector& ports, PortVector& sockets, 
     process_log_messages();
 
     m_thread_manager->join_all_threads();
+
+    // Write final statistics if enabled
+    if (m_cfg.export_stats.value()) {
+        m_aggregated_stats.get(m_stats);
+        m_stats_writer->write(m_aggregated_stats);
+        logger.debug() << "Run-time statistics exported.";
+    }
+
     process_log_messages();
 
     return m_ret_value;
@@ -487,11 +518,35 @@ void DDP::Probe::update_config()
         };
         m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender, m_cfg.file_rot_timeout.value() * 1000);
     }
+
+    // Update run-time statistics export if changed
+    if (m_cfg.export_stats.value()) {
+        if (m_aggregated_timer && (m_aggregated_timer->get_interval() / 1000 != m_cfg.stats_timeout.value())) {
+            m_aggregated_timer->disarm();
+            if (m_cfg.stats_timeout.value() > 0)
+                m_aggregated_timer->arm(m_cfg.stats_timeout.value() * 1000);
+        }
+        else if (!m_aggregated_timer && (m_cfg.stats_timeout.value() > 0)) {
+            auto export_cb = [this] {
+                m_aggregated_stats.get(m_stats);
+                m_stats_writer->write(m_aggregated_stats);
+                Logger("Export").debug() << "Run-time statistics exported.";
+            };
+            m_export_aggregated_timer = &m_poll.emplace<Timer<decltype(export_cb)>>(export_cb, m_cfg.stats_timeout.value() * 1000);
+        }
+    }
+    else {
+        if (m_aggregated_timer)
+            m_aggregated_timer->disarm();
+    }
+
+    // Update moving average window for run-time statistics calculation
+    m_aggregated_stats.update_window(m_cfg.moving_avg_window.value());
 }
 
 DDP::AggregatedStatistics DDP::Probe::statistics()
 {
-    m_aggregated_stats.aggregate(m_stats);
+    m_aggregated_stats.get(m_stats);
     return m_aggregated_stats;
 }
 

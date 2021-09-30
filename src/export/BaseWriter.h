@@ -28,6 +28,7 @@
 #include <vector>
 #include <future>
 #include <unordered_set>
+#include <array>
 
 #include "config/Config.h"
 
@@ -40,22 +41,39 @@ namespace DDP {
     constexpr static uint8_t DEFAULT_TRIES = 3; //!< Default number of attempts to transfer file
 
     /**
+     * @brief Indexes to SSL_CTX* array in TlsCtx class to differentiate between export of
+     * traffic data and run-time statistics.
+     */
+    enum class TlsCtxIndex : uint8_t {
+        TRAFFIC = 0,
+        STATISTICS
+    };
+
+    /**
      * @brief Send local file to remote server via TLS connection
-     * @param cfg Configuration (server IP, port)
+     * @param type Determines what data (traffic or statistics) will be transferred,
+     * so correct TLS context is chosen.
+     * @param ip IP address of remote server
+     * @param port Transport protocol port of remote server
      * @param filename Name of the file to send WITHOUT the ".part" sufix
      * @param sufix Sufix of the file to send (usually ".part" sufix)
      * @param tries How many times should the file transfer be attempted before giving up
      * @return Empty string on successful transfer, or filename parameter if transfer fails
      */
-    std::string send_file(Config cfg, std::string filename, std::string sufix, uint8_t tries);
+    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
+        std::string sufix, uint8_t tries);
 
     /**
      * @brief Send files given in flist to remote server via TLS connection
-     * @param cfg Configuration (server IP, port)
+     * @param type Determines what data (traffic or statistics) will be transferred,
+     * so correct TLS context is chosen.
+     * @param ip IP address of remote server
+     * @param port Transport protocol port of remote server
      * @param flist List of files to send
      * @return List of files that failed to transfer to remote server
      */
-    std::unordered_set<std::string> send_files(Config cfg, std::unordered_set<std::string> flist);
+    std::unordered_set<std::string> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
+        std::unordered_set<std::string> flist);
 
     /**
      * @brief Singleton RAII wrapper around SSL_CTX structure from OpenSSL library
@@ -77,21 +95,26 @@ namespace DDP {
 
         /**
          * @brief Initialize SSL/TLS context. Needs to be called before using the context
+         * @param type Purpose of TLS connection - traffic or statistics transfer
          * @param ca_cert CA certificate to verify server for TLS connection
          */
-        void init(std::string ca_cert);
+        void init(TlsCtxIndex type, std::string ca_cert = "");
 
-        SSL_CTX* get() { return m_ctx; }
+        /**
+         * @brief Get TLS context
+         * @param index Which TLS context to get - for traffic or statistics transfer
+         */
+        SSL_CTX* get(TlsCtxIndex index) { return m_ctx[static_cast<uint8_t>(index)]; }
 
         private:
-        TlsCtx() : m_ctx(nullptr) {}
+        TlsCtx() : m_ctx({nullptr, nullptr}) {}
 
         /**
          * @brief Free the SSL/TLX context
          */
         ~TlsCtx();
 
-        SSL_CTX* m_ctx;
+        std::array<SSL_CTX*, 2> m_ctx;
     };
 
     /**
@@ -102,11 +125,14 @@ namespace DDP {
 
         /**
          * @brief Construct a new TLS connection from given configuration
-         * @param cfg Configuration to use for new TLS connection
+         * @param type Determines what data (traffic or statistics) will be transferred,
+         * so correct TLS context is chosen.
+         * @param ip IP address of remote server
+         * @param port Transport protocol port of remote server
          */
-        TlsConnection(Config& cfg) : m_fd(-1), m_ssl(nullptr), m_ctx(nullptr),
-                                     m_ip(cfg.export_ip.value()),
-                                     m_port(cfg.export_port.value()) { open(); }
+        TlsConnection(TlsCtxIndex type, std::string ip, uint16_t port)
+            : m_fd(-1), m_ssl(nullptr), m_ctx(nullptr), m_ip(ip), m_port(port),
+              m_connection_type(type) { open(); }
 
         /**
          * @brief Destructor. Closes the TLS connection if it's still opened
@@ -143,6 +169,7 @@ namespace DDP {
         SSL_CTX* m_ctx;
         std::string m_ip;
         uint16_t m_port;
+        TlsCtxIndex m_connection_type;
     };
 
     /**
@@ -201,7 +228,7 @@ namespace DDP {
          * @brief Collects all finished transfer threads a checks for transfer success.
          * Spawns thread to resend all files from failed transfers if such thread doesn't already exist.
          */
-        void check_file_transfer();
+        void check_file_transfer(TlsCtxIndex type);
 
         Config m_cfg;
         std::string m_id;

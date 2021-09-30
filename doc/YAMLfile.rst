@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2021-05-25
+  # Last revision: 2021-09-21
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -143,6 +143,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       file-name-prefix: 'dns_'
 
       # Time interval after which the current export file is rotated.
+      # Value is in seconds.
       timeout: 0
 
       # Size limit for the export file. If the limit is exceeded, the export file is rotated.
@@ -217,6 +218,63 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # if no data is received through that connection.
       # Value is in milliseconds.
       timeout: 60000
+
+    # [SECTION] Configuration of run-time statistics export
+    statistics:
+
+      # If this flag is true, run-time statistics will be exported in JSON format every
+      # 'stats-timeout' seconds.
+      export-stats: false
+
+      # Time interval after which run-time statistics will be periodically exported in JSON locally
+      # or to remote location, if enabled by 'export-stats' option. If value is 0, statistics
+      # will be exported only on probe's exit.
+      # Value is in seconds.
+      # RECOMMENDATION: For optimal results the value should be the same as moving-avg-window.
+      stats-timeout: 300
+
+      # Location for the storage of exported run-time statistics in JSON.
+      # Valid values are 'local' and 'remote'.
+      location: 'local'
+
+      # Directory for exported run-time statistics.
+      export-dir: '.'
+
+      # IP address for remote export of run-time statistics.
+      remote-ip: '127.0.0.1'
+
+      # Transport protocol port number for remote export of run-time statistics.
+      remote-port: 6379
+
+      # Path (including file's name) to the CA certificate against which the remote server's
+      # certificate will be authenticated during TLS handshake.
+      # By default server's certificate will be authenticated against OpenSSL's default directory
+      # with CA certificates.
+      remote-ca-cert: ''
+
+      # Time window in seconds for which to compute moving average of queries-per-second*
+      # run-time statistics. Window can be set in interval from 1 second to 1 hour.
+      moving-avg-window: 300
+
+      # This sequence indicates which run-time statistics should be exported if export is enabled.
+      # By default all statistics available in DNS Probe are enabled as shown below.
+      stats-fields:
+        - 'processed-packets'
+        - 'processed-transactions'
+        - 'exported-records'
+        - 'pending-transactions'
+        - 'exported-pcap-packets'
+        - 'queries-ipv4'
+        - 'queries-ipv6'
+        - 'queries-tcp'
+        - 'queries-udp'
+        - 'queries'
+        - 'queries-per-second-ipv4'
+        - 'queries-per-second-ipv6'
+        - 'queries-per-second-tcp'
+        - 'queries-per-second-udp'
+        - 'queries-per-second'
+        - 'unix-timestamp' # timestamp of given export
 
   # Configuration for specific instances of DNS Probe (set by '-n' command line parameter).
   # Only changes to default configuration need to be specified here.

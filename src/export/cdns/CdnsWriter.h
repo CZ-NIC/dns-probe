@@ -65,7 +65,9 @@ namespace DDP {
                     chmod(m_filename.c_str(), 0666);
                     if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
                         if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str()))
-                            m_threads.emplace_back(std::async(std::launch::async, send_file, m_cfg, m_filename,
+                            m_threads.emplace_back(std::async(std::launch::async, send_file,
+                                                              TlsCtxIndex::TRAFFIC, m_cfg.export_ip.value(),
+                                                              m_cfg.export_port.value(), m_filename,
                                                               ".part", DEFAULT_TRIES));
                     }
                 }
@@ -80,7 +82,7 @@ namespace DDP {
         }
 
         /**
-         * @brief Wriite given item with buffered DNS records to output
+         * @brief Write given item with buffered DNS records to output
          * @param item Item with DNS records ready for export to output
          * @return Number of DNS records written to output
          */

@@ -95,7 +95,8 @@ namespace DDP {
                       m_addr_family(AddrFamily::INVALID),
                       m_timestamp(),
                       m_tcp_rtt(-1),
-                      m_client_index(ClientIndex::CLIENT_LOW),
+                      m_client_index_ip(ClientIndex::CLIENT_LOW),
+                      m_client_index_port(ClientIndex::CLIENT_LOW),
                       m_len(0),
                       m_dns_len(0),
                       m_res_len(0),
@@ -160,22 +161,22 @@ namespace DDP {
 
         in6_addr* client_address()
         {
-            return &m_addr[static_cast<int>(m_client_index)];
+            return &m_addr[static_cast<int>(m_client_index_ip)];
         }
 
         in6_addr* server_address()
         {
-            return &m_addr[!static_cast<int>(m_client_index)];
+            return &m_addr[!static_cast<int>(m_client_index_ip)];
         }
 
         uint16_t client_port()
         {
-            return m_port[static_cast<int>(m_client_index)];
+            return m_port[static_cast<int>(m_client_index_port)];
         }
 
         uint16_t server_port()
         {
-            return m_port[!static_cast<int>(m_client_index)];
+            return m_port[!static_cast<int>(m_client_index_port)];
         }
 
         /**
@@ -237,7 +238,8 @@ namespace DDP {
         Time m_timestamp;
         int64_t m_tcp_rtt; // microsecond precision, less than 0 means no rtt
 
-        ClientIndex m_client_index;
+        ClientIndex m_client_index_ip;
+        ClientIndex m_client_index_port;
 
         // Sizes
         size_t m_len;

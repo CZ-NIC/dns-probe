@@ -152,7 +152,8 @@ namespace DDP {
             dst.m_port[SERVER] = src.m_port[SERVER];
             dst.m_proto = src.m_proto;
             dst.m_addr_family = src.m_addr_family;
-            dst.m_client_index = src.m_client_index;
+            dst.m_client_index_ip = src.m_client_index_ip;
+            dst.m_client_index_port = src.m_client_index_port;
             dst.m_ttl = src.m_ttl;
         }
 
