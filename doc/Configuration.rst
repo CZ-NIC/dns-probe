@@ -590,12 +590,12 @@ remote-ip-address
 
 IP address for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
 
-.. _stats-remote-ip-address:
+.. _stats-remote-ip:
 
-remote-ip-address
-^^^^^^^^^^^^^^^^^
+remote-ip
+^^^^^^^^^
 
-:data node: ``<instance-id>/statistics/remote-ip-address``
+:data node: ``<instance-id>/statistics/remote-ip``
 :default: ``127.0.0.1``
 
 IP address for remote export of run-time statistics. Will be used if :ref:`stats-location` is set to ``remote``

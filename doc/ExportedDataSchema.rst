@@ -220,7 +220,7 @@ Export to remote location
 -------------------------
 
 If :ref:`stats-location` is set to `remote` DNS Probe will attempt to transfer the exported statistics
-to a remote server specified by :ref:`stats-remote-ip-address` and :ref:`stats-remote-port` options
+to a remote server specified by :ref:`stats-remote-ip` and :ref:`stats-remote-port` options
 via encrypted TLS connection with remote server's authentication.
 
 The transfer uses the same simple application protocol used for traffic data transfer that was
