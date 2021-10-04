@@ -114,8 +114,10 @@ namespace DDP {
             }
         }
 
-        for (auto i = 0u; i < 4; i++) {
-            qps[i] = qps[i] / m_moving_avg.size();
+        if (m_moving_avg.size() > 1) {
+            for (auto i = 0u; i < 4; i++) {
+                qps[i] = qps[i] / m_moving_avg.size();
+            }
         }
     }
 }
