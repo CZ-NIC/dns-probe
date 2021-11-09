@@ -358,7 +358,7 @@ namespace DDP {
         Mempool<DnsRecord>& m_record_mempool;
         Mempool<DnsTcpConnection>& m_tcp_mempool;
         DynamicMempool m_edns_mempool;
-        TransactionTable<DnsTcpConnection> m_tcp_table;
+        TransactionTable<DnsTcpConnection, TT_TIMEOUT_COUNT> m_tcp_table;
         std::unique_ptr<uint8_t, std::function<void(void*)>> m_msg_buffer;
         bool m_raw_pcap;
         bool m_export_invalid;

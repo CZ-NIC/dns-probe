@@ -55,9 +55,6 @@
 #endif
 
 namespace DDP {
-    // Number of processed packets after which transaction table timetout is triggered
-    constexpr static int TT_TIMEOUT_COUNT = 1024;
-
     /**
      * @brief Return codes for packet processing
      */
@@ -302,7 +299,7 @@ namespace DDP {
         Mempool<DnsTcpConnection>& m_tcp_mempool; //!< Mempool used for tracking TCP connections.
         PollAbleRing<boost::any> m_export_ring; //!< Export ring used for delivering data to exporter.
         uint32_t m_tt_timeout_count; //!< Currently processed packets before triggering timeout check.
-        TransactionTable<DnsRecord> m_transaction_table; //!< Transaction table for records extracted from DNS packets.
+        TransactionTable<DnsRecord, TT_TIMEOUT_COUNT> m_transaction_table; //!< Transaction table for records extracted from DNS packets.
         DnsParser m_parser; //!< DnsParser for creating records into transaction table.
         std::unique_ptr<BaseExport> m_exporter; //!< Exporter instance preparing records for exporter thread.
         std::unique_ptr<BaseWriter> m_writer; //!< Writer instance for writing leftover records on Worker shutdown.
