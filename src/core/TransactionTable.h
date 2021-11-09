@@ -35,6 +35,9 @@
 #include "utils/Time.h"
 
 namespace DDP {
+    // Number of processed packets after which transaction table timeout is triggered
+    constexpr static int TT_TIMEOUT_COUNT = 1024;
+
     /**
      * Transaction table for matching DNS requests with responses. Table holds only references to items, for memory
      * management is responsible user.
