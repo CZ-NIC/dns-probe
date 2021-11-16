@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **0.12.2**
+     - **1.0**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Add table describing all exported run-time statistics
    * - **0.12.0**
      - **1.1**
      - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`
