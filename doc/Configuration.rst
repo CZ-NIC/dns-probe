@@ -623,7 +623,7 @@ Transport protocol port number for remote export of run-time statistics. Will be
 is set to ``remote`` and :ref:`export-stats` is set to **true**.
 
 stats-fields
-^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^
 
 :data node: ``<instance-id>/statistics/stats-fields``
 :default: all fields
