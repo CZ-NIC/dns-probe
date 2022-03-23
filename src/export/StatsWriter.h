@@ -24,6 +24,7 @@
 #pragma once
 
 #include <bitset>
+#include <functional>
 
 #include "config/Config.h"
 #include "core/Statistics.h"
@@ -79,5 +80,17 @@ namespace DDP {
          * @brief Unused BaseWriter virtual method
          */
         void rotate_output() {}
+
+    private:
+        /**
+         * @brief Write run-time statistics about queries to JSON ouptut
+         * @param output Output stream
+         * @param comma Check to write a comma before new JSON item
+         * @param cb Callback to optionally write IP address as part of item name
+         * @param queries Array of cummulative query statistics
+         * @param qps Array of queries per second statistics
+         */
+        void write_queries_stats(std::ofstream& output, bool& comma, std::function<void()> cb,
+            std::array<uint64_t, 4>& queries, std::array<uint64_t, 4>& qps);
     };
 }

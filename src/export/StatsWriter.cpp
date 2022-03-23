@@ -64,55 +64,29 @@ int64_t DDP::StatsWriter::write(AggregatedStatistics item)
         output << "\"exported-pcap-packets\":" << std::to_string(item.exported_to_pcap);
     }
 
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_IPV4)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-ipv4\":" << std::to_string(item.queries[Statistics::Q_IPV4]);
+    if (m_cfg.export_stats.value() == ExportStats::DETAILED &&
+        (m_cfg.ipv4_indices.size() > 0 || m_cfg.ipv6_indices.size() > 0)) {
+        for (auto& i: m_cfg.ipv4_indices) {
+            char buff[INET_ADDRSTRLEN + 4];
+            auto* ret = inet_ntop(AF_INET, &i.first, buff, INET_ADDRSTRLEN + 4);
+            if (!ret)
+                continue;
+            auto cb = [&output, buff](){ output << "\"[" << buff << "]"; };
+            write_queries_stats(output, comma, cb, item.queries[i.second], item.qps[i.second]);
+        }
+
+        for (auto& i: m_cfg.ipv6_indices) {
+            char buff[INET6_ADDRSTRLEN + 4];
+            auto* ret = inet_ntop(AF_INET6, &i.first, buff, INET6_ADDRSTRLEN + 4);
+            if (!ret)
+                continue;
+            auto cb = [&output, buff](){ output << "\"[" << buff << "]"; };
+            write_queries_stats(output, comma, cb, item.queries[i.second], item.qps[i.second]);
+        }
     }
 
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_IPV6)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-ipv6\":" << std::to_string(item.queries[Statistics::Q_IPV6]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_TCP)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-tcp\":" << std::to_string(item.queries[Statistics::Q_TCP]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_UDP)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-udp\":" << std::to_string(item.queries[Statistics::Q_UDP]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries\":" << std::to_string(item.queries[Statistics::Q_IPV4] + item.queries[Statistics::Q_IPV6]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV4)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-per-second-ipv4\":" << std::to_string(item.qps[Statistics::Q_IPV4]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV6)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-per-second-ipv6\":" << std::to_string(item.qps[Statistics::Q_IPV6]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_TCP)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-per-second-tcp\":" << std::to_string(item.qps[Statistics::Q_TCP]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_UDP)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-per-second-udp\":" << std::to_string(item.qps[Statistics::Q_UDP]);
-    }
-
-    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND)]) {
-        if (comma) { output << ","; } else { comma = true; }
-        output << "\"queries-per-second\":" << std::to_string(item.qps[Statistics::Q_IPV4] + item.qps[Statistics::Q_IPV6]);
-    }
+    auto cb = [&output](){ output << "\""; };
+    write_queries_stats(output, comma, cb, item.queries[0], item.qps[0]);
 
     if (fields[static_cast<uint32_t>(StatsField::UNIX_TIMESTAMP)]) {
         if (comma) { output << ","; } else { comma = true; }
@@ -151,4 +125,70 @@ std::string DDP::StatsWriter::filename()
 
     return m_cfg.stats_directory.value() + "/" + m_cfg.file_prefix.value() + std::string(time)
         + ".stats.json";
+}
+
+void DDP::StatsWriter::write_queries_stats(std::ofstream& output, bool& comma, std::function<void()> cb,
+    std::array<uint64_t, 4>& queries, std::array<uint64_t, 4>& qps)
+{
+    auto fields = m_cfg.stats_fields.value();
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_IPV4)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-ipv4\":" << std::to_string(queries[Statistics::Q_IPV4]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_IPV6)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-ipv6\":" << std::to_string(queries[Statistics::Q_IPV6]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_TCP)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-tcp\":" << std::to_string(queries[Statistics::Q_TCP]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_UDP)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-udp\":" << std::to_string(queries[Statistics::Q_UDP]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries\":" << std::to_string(queries[Statistics::Q_IPV4] + queries[Statistics::Q_IPV6]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV4)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-per-second-ipv4\":" << std::to_string(qps[Statistics::Q_IPV4]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV6)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-per-second-ipv6\":" << std::to_string(qps[Statistics::Q_IPV6]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_TCP)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-per-second-tcp\":" << std::to_string(qps[Statistics::Q_TCP]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_UDP)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-per-second-udp\":" << std::to_string(qps[Statistics::Q_UDP]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-per-second\":" << std::to_string(qps[Statistics::Q_IPV4] + qps[Statistics::Q_IPV6]);
+    }
 }

@@ -42,6 +42,8 @@ void DDP::ConfigFile::load_configuration(Config& cfg, std::string conf_file, std
 
         if (instance != "default" && config[instance])
             load_instance(cfg, config[instance]);
+
+        cfg.generate_ip_indices();
     }
     catch (std::exception& e) {
         Logger("YAML").warning() << "Couldn't load configuration file " << conf_file
@@ -209,7 +211,7 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
 
     // Statistics export configuration
     if (node["statistics"]["export-stats"] && node["statistics"]["export-stats"].IsScalar())
-        cfg.export_stats.add_value(node["statistics"]["export-stats"].as<bool>());
+        cfg.export_stats.add_value(node["statistics"]["export-stats"].as<std::string>());
 
     if (node["statistics"]["stats-timeout"] && node["statistics"]["stats-timeout"].IsScalar())
         cfg.stats_timeout.add_value(node["statistics"]["stats-timeout"].as<uint32_t>());

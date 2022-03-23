@@ -276,13 +276,15 @@ void DDP::Probe::init(const Arguments& args)
         m_poll.emplace<CommLinkProxy>(m_log_link->config_endpoint());
 
         // Creates communication channels for workers
+        uint16_t runtime_stats_count = 1 + m_cfg.ipv4_indices.size() + m_cfg.ipv6_indices.size();
         for (auto slave: m_thread_manager->slave_lcores()) {
             auto cl = m_comm_links.emplace(std::piecewise_construct,
                                            std::forward_as_tuple(slave),
                                            std::forward_as_tuple(32, true));
             m_poll.emplace<CommLinkProxy>(cl.first->second.config_endpoint());
-            m_stats.push_back(Statistics());
+            m_stats.push_back(Statistics(runtime_stats_count));
         }
+        m_aggregated_stats = AggregatedStatistics(runtime_stats_count);
 
         if (m_cfg.moving_avg_window.value() < 1 || m_cfg.moving_avg_window.value() > 3600) {
             Logger("Probe").warning() << "Moving-avg-window value " << m_cfg.moving_avg_window.value()
@@ -306,7 +308,7 @@ void DDP::Probe::init(const Arguments& args)
         }
 
         m_stats_writer = std::make_unique<StatsWriter>(m_cfg);
-        if (m_cfg.export_stats.value()) {
+        if (m_cfg.export_stats.value() != ExportStats::NONE) {
             auto export_cb = [this] {
                 m_aggregated_stats.get(m_stats);
                 m_stats_writer->write(m_aggregated_stats);
@@ -361,7 +363,7 @@ void DDP::Probe::init(const Arguments& args)
         if (m_cfg.export_location.value() == ExportLocation::REMOTE)
             TlsCtx::getInstance().init(TlsCtxIndex::TRAFFIC, m_cfg.export_ca_cert.value());
 
-        if (m_cfg.export_stats.value() && m_cfg.stats_location.value() == ExportLocation::REMOTE)
+        if (m_cfg.export_stats.value() != ExportStats::NONE && m_cfg.stats_location.value() == ExportLocation::REMOTE)
             TlsCtx::getInstance().init(TlsCtxIndex::STATISTICS, m_cfg.stats_ca_cert.value());
 
         m_initialized = true;
@@ -459,7 +461,7 @@ DDP::Probe::ReturnValue DDP::Probe::run(PortVector& ports, PortVector& sockets, 
     m_thread_manager->join_all_threads();
 
     // Write final statistics if enabled
-    if (m_cfg.export_stats.value()) {
+    if (m_cfg.export_stats.value() != ExportStats::NONE) {
         m_aggregated_stats.get(m_stats);
         m_stats_writer->write(m_aggregated_stats);
         logger.debug() << "Run-time statistics exported.";
@@ -520,7 +522,7 @@ void DDP::Probe::update_config()
     }
 
     // Update run-time statistics export if changed
-    if (m_cfg.export_stats.value()) {
+    if (m_cfg.export_stats.value() != ExportStats::NONE) {
         if (m_aggregated_timer && (m_aggregated_timer->get_interval() / 1000 != m_cfg.stats_timeout.value())) {
             m_aggregated_timer->disarm();
             if (m_cfg.stats_timeout.value() > 0)

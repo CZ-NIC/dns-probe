@@ -24,6 +24,7 @@
 #pragma once
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <string>
 #include <array>
 #include <unordered_set>
@@ -35,7 +36,7 @@ namespace DDP {
 
     using Port_t = uint16_t;
     using IPv4_t = uint32_t;
-    using IPv6_t = std::array<uint32_t, 4>;
+    using IPv6_t = in6_addr;
 
     static constexpr uint8_t CdnsBits = 26; //!< Number of C-DNS fields options
     static constexpr uint64_t get_cdns_bitmask() {
@@ -139,6 +140,15 @@ namespace DDP {
         {"asn",                             static_cast<uint32_t>(CDNSField::ASN)},
         {"country_code",                    static_cast<uint32_t>(CDNSField::COUNTRY_CODE)},
         {"round_trip_time",                 static_cast<uint32_t>(CDNSField::ROUND_TRIP_TIME)},
+    };
+
+    /**
+     * Granularity of run-time statistics to export
+     */
+    enum class ExportStats : uint8_t {
+        NONE = 0, //!< Don't export any run-time statistics
+        BASIC = 1, //!< Export basic overall run-time statistics
+        DETAILED = 2 //!< Export detailed run-time statistics
     };
 
     /**

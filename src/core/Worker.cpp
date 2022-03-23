@@ -98,15 +98,40 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
     for (auto& record: records) {
         try {
             if(record->m_request) {
-                if(record->m_addr_family == DnsRecord::AddrFamily::IP4)
-                    m_stats.queries[Statistics::Q_IPV4]++;
-                else if(record->m_addr_family == DnsRecord::AddrFamily::IP6)
-                    m_stats.queries[Statistics::Q_IPV6]++;
+                auto index = 0;
+                if(record->m_addr_family == DnsRecord::AddrFamily::IP4) {
+                    if (is_detailed_stats()) {
+                        auto it = m_cfg.ipv4_indices.find(reinterpret_cast<const uint32_t*>(record->server_address())[0]);
+                        if (it == m_cfg.ipv4_indices.end())
+                            index = m_cfg.ipv4_indices[reinterpret_cast<const uint32_t*>(record->client_address())[0]];
+                        else
+                            index = it->second;
+                        m_stats.queries[index][Statistics::Q_IPV4]++;
+                    }
+                    m_stats.queries[0][Statistics::Q_IPV4]++;
+                }
+                else if(record->m_addr_family == DnsRecord::AddrFamily::IP6) {
+                    if (is_detailed_stats()) {
+                        auto it = m_cfg.ipv6_indices.find(*record->server_address());
+                        if (it == m_cfg.ipv6_indices.end())
+                            index = m_cfg.ipv6_indices[*record->client_address()];
+                        else
+                            index = it->second;
+                        m_stats.queries[index][Statistics::Q_IPV6]++;
+                    }
+                    m_stats.queries[0][Statistics::Q_IPV6]++;
+                }
 
-                if(record->m_proto == DnsRecord::Proto::TCP)
-                    m_stats.queries[Statistics::Q_TCP]++;
-                else if(record->m_proto == DnsRecord::Proto::UDP)
-                    m_stats.queries[Statistics::Q_UDP]++;
+                if(record->m_proto == DnsRecord::Proto::TCP) {
+                    if (is_detailed_stats())
+                        m_stats.queries[index][Statistics::Q_TCP]++;
+                    m_stats.queries[0][Statistics::Q_TCP]++;
+                }
+                else if(record->m_proto == DnsRecord::Proto::UDP) {
+                    if (is_detailed_stats())
+                        m_stats.queries[index][Statistics::Q_UDP]++;
+                    m_stats.queries[0][Statistics::Q_UDP]++;
+                }
             }
 
             auto gate = m_transaction_table[*record];
@@ -235,15 +260,32 @@ DDP::WorkerRetCode DDP::Worker::process_knot_datagram(const Packet& dgram)
 
     for (auto& record: records) {
         if(record->m_request) {
-            if(record->m_addr_family == DnsRecord::AddrFamily::IP4)
-                m_stats.queries[Statistics::Q_IPV4]++;
-            else if(record->m_addr_family == DnsRecord::AddrFamily::IP6)
-                m_stats.queries[Statistics::Q_IPV6]++;
+            auto index = 0;
+            if(record->m_addr_family == DnsRecord::AddrFamily::IP4) {
+                if (is_detailed_stats()) {
+                    index = m_cfg.ipv4_indices[reinterpret_cast<const uint32_t*>(record->server_address())[0]];
+                    m_stats.queries[index][Statistics::Q_IPV4]++;
+                }
+                m_stats.queries[0][Statistics::Q_IPV4]++;
+            }
+            else if(record->m_addr_family == DnsRecord::AddrFamily::IP6) {
+                if (is_detailed_stats()) {
+                    index = m_cfg.ipv6_indices[*record->server_address()];
+                    m_stats.queries[index][Statistics::Q_IPV6]++;
+                }
+                m_stats.queries[0][Statistics::Q_IPV6]++;
+            }
 
-            if(record->m_proto == DnsRecord::Proto::TCP)
-                m_stats.queries[Statistics::Q_TCP]++;
-            else if(record->m_proto == DnsRecord::Proto::UDP)
-                m_stats.queries[Statistics::Q_UDP]++;
+            if(record->m_proto == DnsRecord::Proto::TCP) {
+                if (is_detailed_stats())
+                    m_stats.queries[index][Statistics::Q_TCP]++;
+                m_stats.queries[0][Statistics::Q_TCP]++;
+            }
+            else if(record->m_proto == DnsRecord::Proto::UDP) {
+                if (is_detailed_stats())
+                    m_stats.queries[index][Statistics::Q_UDP]++;
+                m_stats.queries[0][Statistics::Q_UDP]++;
+            }
         }
 
         try {

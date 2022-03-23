@@ -294,6 +294,14 @@ namespace DDP {
         void rotate_output() override;
         void close_port(int pos);
 
+        /**
+         * @brief Check if detailed run-time statistics are being collected
+         */
+        bool is_detailed_stats() const {
+            return m_cfg.export_stats.value() == ExportStats::DETAILED &&
+                (m_cfg.ipv4_indices.size() > 0 || m_cfg.ipv6_indices.size() > 0);
+        }
+
     private:
         Mempool<DnsRecord>& m_record_mempool; //!< Mempool used for saving records extracted from DNS packets.
         Mempool<DnsTcpConnection>& m_tcp_mempool; //!< Mempool used for tracking TCP connections.

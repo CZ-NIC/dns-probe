@@ -39,9 +39,11 @@ namespace DDP {
     {
         /**
          * Constructor
+         * @param size Number of distinct query statistics instances to track. Depends on value of
+         * export_stats configuration and number of IPs in ipv4_allowlist and ipv6_allowlist.
          */
-        Statistics() : packets(), transactions(), exported_records(), active_tt_records(), exported_to_pcap(),
-                       queries() {}
+        Statistics(std::size_t size = 1) : packets(), transactions(), exported_records(),
+            active_tt_records(), exported_to_pcap(), queries(size, {0,0,0,0}) {}
 
         /**
          * Copy constructor.
@@ -75,7 +77,7 @@ namespace DDP {
         uint64_t exported_records; //!< Number of exported records.
         uint64_t active_tt_records; //!< Number of active records in transaction table.
         uint64_t exported_to_pcap; //!< Number of packets exported to PCAP.
-        std::array<uint64_t, 4> queries; //!< Number of processed queries for IPv4, IPv6, TCP and UDP.
+        std::vector<std::array<uint64_t, 4>> queries; //!< Number of processed queries for IPv4, IPv6, TCP and UDP.
 
         constexpr static auto Q_IPV4 = 0u;
         constexpr static auto Q_IPV6 = 1u;
@@ -91,10 +93,12 @@ namespace DDP {
     public:
         /**
          * Constructor.
+         * @param size Number of distinct query statistics instances to track. Depends on value of
+         * export_stats configuration and number of IPs in ipv4_allowlist and ipv6_allowlist.
          */
-        AggregatedStatistics() : Statistics(), qps(), m_qps_timestamp(get_timestamp()),
-                                 m_old_aggregated_queries({0, 0, 0, 0}), m_moving_avg(),
-                                 m_moving_avg_window(300) {}
+        AggregatedStatistics(std::size_t size = 1) : Statistics(size), qps(size, {0,0,0,0}),
+            m_qps_timestamp(get_timestamp()), m_old_aggregated_queries(size, {0,0,0,0}),
+            m_moving_avg(), m_moving_avg_window(300) {}
 
         /**
          * Copy constructor.
@@ -136,12 +140,12 @@ namespace DDP {
         static uint64_t get_timestamp(); //!< Provides timestamp in seconds.
 
     public:
-        std::array<uint64_t, 4> qps; //!< Queries per second.
+        std::vector<std::array<uint64_t, 4>> qps; //!< Queries per second.
 
     private:
         uint64_t m_qps_timestamp; //!< Last timestamp used for calculating qps.
-        std::array<uint64_t, 4> m_old_aggregated_queries; //!< Last aggravated count of queries.
-        std::list<std::array<uint64_t, 4>> m_moving_avg; //!< Last m_moving_avg_window values of avg qps for calculating moving average.
+        std::vector<std::array<uint64_t, 4>> m_old_aggregated_queries; //!< Last aggravated count of queries.
+        std::list<std::vector<std::array<uint64_t, 4>>> m_moving_avg; //!< Last m_moving_avg_window values of avg qps for calculating moving average.
         uint32_t m_moving_avg_window; //!< Moving average window in seconds.
     };
 }
