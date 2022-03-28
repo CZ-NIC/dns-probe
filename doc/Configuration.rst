@@ -61,7 +61,7 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       +--rw raw-pcap? <boolean>
       +--rw statistics
       |  +-- export-dir? <string>
-      |  +-- export-stats? <boolean>
+      |  +-- export-stats? <enumeration>
       |  +-- location? <enumeration>
       |  +-- moving-avg-window? <uint16>
       |  +-- remote-ca-cert? <string>
@@ -291,9 +291,21 @@ export-stats
 ^^^^^^^^^^^^
 
 :data node: ``<instance-id>/statistics/export-stats``
-:default: **false**
+:default: ``none``
 
-If this flag is true, run-time statistics will be exported in JSON format every :ref:`stats-timeout` seconds.
+This value indicates if run-time statistics will be exported in JSON format every :ref:`stats-timeout` seconds
+and in how much detail. Currently supported values are:
+
+``none``
+   No run-time statistics will be exported.
+
+``basic``
+   Basic overall run-time statistics of the probe will be exported.
+
+``detailed``
+   If any IP addresses are set in :ref:`ipv4-allowlist` or :ref:`ipv6-allowlist`, run-time statistics for
+   each of these IP adresses as well as overall run-time statistics will be exported. Otherwise, basic
+   overall run-time statistic like in ``basic`` option will be exported.
 
 file-compression
 ^^^^^^^^^^^^^^^^

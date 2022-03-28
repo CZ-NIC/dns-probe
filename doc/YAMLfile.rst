@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2021-09-21
+  # Last revision: 2022-03-28
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -222,9 +222,10 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
     # [SECTION] Configuration of run-time statistics export
     statistics:
 
-      # If this flag is true, run-time statistics will be exported in JSON format every
-      # 'stats-timeout' seconds.
-      export-stats: false
+      # This value indicates if run-time statistics will be exported in JSON format every
+      # 'stats-timeout' seconds and in how much detail.
+      # Valid values are 'none', 'basic' and 'detailed'.
+      export-stats: 'none'
 
       # Time interval after which run-time statistics will be periodically exported in JSON locally
       # or to remote location, if enabled by 'export-stats' option. If value is 0, statistics

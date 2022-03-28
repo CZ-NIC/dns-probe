@@ -272,3 +272,8 @@ DNS Probe can export the following run-time statistics:
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | unix-timestamp              | UINT64    | Unix timestamp in microseconds at the moment this JSON was exported                                             |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+
+The table above represents run-time statistics exported with :ref:`export-stats` option set to `basic`.
+If :ref:`export-stats` option is set to `detailed`, all above statistics are exported and in addition if any
+IP addresses are set in :ref:`ipv4-allowlist` or :ref:`ipv6-allowlist`, all `queries*` statistics are also
+exported for each of the IP addresses in format `"[<IP-address>]queries*":<value>`.

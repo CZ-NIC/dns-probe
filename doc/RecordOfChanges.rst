@@ -15,6 +15,11 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **x.x.x**
+     - **1.0**
+     - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Add more granular export of run-time statistics
    * - **0.12.2**
      - **1.0**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
