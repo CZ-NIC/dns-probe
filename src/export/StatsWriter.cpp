@@ -128,7 +128,7 @@ std::string DDP::StatsWriter::filename()
 }
 
 void DDP::StatsWriter::write_queries_stats(std::ofstream& output, bool& comma, std::function<void()> cb,
-    std::array<uint64_t, 4>& queries, std::array<uint64_t, 4>& qps)
+    Statistics::QueryStatsArray& queries, Statistics::QueryStatsArray& qps)
 {
     auto fields = m_cfg.stats_fields.value();
 
@@ -154,6 +154,18 @@ void DDP::StatsWriter::write_queries_stats(std::ofstream& output, bool& comma, s
         if (comma) { output << ","; } else { comma = true; }
         cb();
         output << "queries-udp\":" << std::to_string(queries[Statistics::Q_UDP]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_DOT)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-dot\":" << std::to_string(queries[Statistics::Q_DOT]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_DOH)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-doh\":" << std::to_string(queries[Statistics::Q_DOH]);
     }
 
     if (fields[static_cast<uint32_t>(StatsField::QUERIES)]) {
@@ -184,6 +196,18 @@ void DDP::StatsWriter::write_queries_stats(std::ofstream& output, bool& comma, s
         if (comma) { output << ","; } else { comma = true; }
         cb();
         output << "queries-per-second-udp\":" << std::to_string(qps[Statistics::Q_UDP]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_DOT)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-per-second-dot\":" << std::to_string(qps[Statistics::Q_DOT]);
+    }
+
+    if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_DOH)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        cb();
+        output << "queries-per-second-doh\":" << std::to_string(qps[Statistics::Q_DOH]);
     }
 
     if (fields[static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND)]) {

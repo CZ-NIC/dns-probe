@@ -91,6 +91,6 @@ namespace DDP {
          * @param qps Array of queries per second statistics
          */
         void write_queries_stats(std::ofstream& output, bool& comma, std::function<void()> cb,
-            std::array<uint64_t, 4>& queries, std::array<uint64_t, 4>& qps);
+            Statistics::QueryStatsArray& queries, Statistics::QueryStatsArray& qps);
     };
 }

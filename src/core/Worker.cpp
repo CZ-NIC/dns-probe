@@ -123,9 +123,21 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
                 }
 
                 if(record->m_proto == DnsRecord::Proto::TCP) {
-                    if (is_detailed_stats())
-                        m_stats.queries[index][Statistics::Q_TCP]++;
-                    m_stats.queries[0][Statistics::Q_TCP]++;
+                    if (record->server_port() == DnsParser::DOT_PORT) {
+                        if (is_detailed_stats())
+                            m_stats.queries[index][Statistics::Q_DOT]++;
+                        m_stats.queries[0][Statistics::Q_DOT]++;
+                    }
+                    else if (record->server_port() == DnsParser::DOH_PORT) {
+                        if (is_detailed_stats())
+                            m_stats.queries[index][Statistics::Q_DOH]++;
+                        m_stats.queries[0][Statistics::Q_DOH]++;
+                    }
+                    else {
+                        if (is_detailed_stats())
+                            m_stats.queries[index][Statistics::Q_TCP]++;
+                        m_stats.queries[0][Statistics::Q_TCP]++;
+                    }
                 }
                 else if(record->m_proto == DnsRecord::Proto::UDP) {
                     if (is_detailed_stats())
@@ -277,9 +289,21 @@ DDP::WorkerRetCode DDP::Worker::process_knot_datagram(const Packet& dgram)
             }
 
             if(record->m_proto == DnsRecord::Proto::TCP) {
-                if (is_detailed_stats())
-                    m_stats.queries[index][Statistics::Q_TCP]++;
-                m_stats.queries[0][Statistics::Q_TCP]++;
+                if (record->server_port() == DnsParser::DOT_PORT){
+                    if (is_detailed_stats())
+                        m_stats.queries[index][Statistics::Q_DOT]++;
+                    m_stats.queries[0][Statistics::Q_DOT]++;
+                }
+                else if (record->server_port() == DnsParser::DOH_PORT) {
+                    if (is_detailed_stats())
+                        m_stats.queries[index][Statistics::Q_DOH]++;
+                    m_stats.queries[0][Statistics::Q_DOH]++;
+                }
+                else {
+                    if (is_detailed_stats())
+                        m_stats.queries[index][Statistics::Q_TCP]++;
+                    m_stats.queries[0][Statistics::Q_TCP]++;
+                }
             }
             else if(record->m_proto == DnsRecord::Proto::UDP) {
                 if (is_detailed_stats())

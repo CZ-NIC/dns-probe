@@ -86,6 +86,9 @@ namespace DDP {
         static constexpr uint8_t IPV6_ADDRLEN = 0x10;
         static constexpr uint16_t DNS_PORT = 0x35;
 
+        static constexpr uint16_t DOT_PORT = 0x355;//853;
+        static constexpr uint16_t DOH_PORT = 0x1BB;//443;
+
         static constexpr uint8_t DNS_HEADER_SIZE = 12;
         static constexpr uint8_t DNS_MIN_QUESTION_SIZE = 5;
         static constexpr uint8_t DNS_MAX_QNAME_SIZE = 255;

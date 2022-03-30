@@ -36,7 +36,7 @@ namespace DDP {
         exported_to_pcap += rhs.exported_to_pcap;
 
         for (auto index = 0u; index < queries.size(); index++) {
-            for (auto i = 0u; i < 4; i++) {
+            for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
                 queries[index][i] += rhs.queries[index][i];
             }
         }
@@ -55,8 +55,10 @@ namespace DDP {
         for (auto i = 0u; i < queries.size(); i++) {
             str << "            IPv4 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV4] << std::endl;
             str << "            IPv6 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV6] << std::endl;
-            str << "             TCP Queries[" << std::to_string(i) << "]: " << queries[i][Q_TCP] << std::endl;
+            str << "          TCP/53 Queries[" << std::to_string(i) << "]: " << queries[i][Q_TCP] << std::endl;
             str << "             UDP Queries[" << std::to_string(i) << "]: " << queries[i][Q_UDP] << std::endl;
+            str << "             DoT Queries[" << std::to_string(i) << "]: " << queries[i][Q_DOT] << std::endl;
+            str << "             DoH Queries[" << std::to_string(i) << "]: " << queries[i][Q_DOH] << std::endl;
             str << "                 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV4] + queries[i][Q_IPV6] << std::endl;
         }
 
@@ -94,10 +96,10 @@ namespace DDP {
     {
         auto time_window = static_cast<double>(get_timestamp() - m_qps_timestamp);
 
-        std::vector<std::array<uint64_t, 4>> qps_tmp(qps.size());
+        std::vector<QueryStatsArray> qps_tmp(qps.size());
         if (time_window)
             for (auto index = 0u; index < qps.size(); index++) {
-                for (auto i = 0u; i < 4; i++) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
                     qps_tmp[index][i] = (queries[index][i] - m_old_aggregated_queries[index][i]) / time_window;
                 }
             }
@@ -125,7 +127,7 @@ namespace DDP {
         }
         for (auto& avg : m_moving_avg) {
             for (auto index = 0u; index < qps.size(); index++) {
-                for (auto i = 0u; i < 4; i++) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
                     qps[index][i] += avg[index][i];
                 }
             }
@@ -133,7 +135,7 @@ namespace DDP {
 
         if (m_moving_avg.size() > 1) {
             for (auto index = 0u; index < qps.size(); index++) {
-                for (auto i = 0u; i < 4; i++) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
                     qps[index][i] = qps[index][i] / m_moving_avg.size();
                 }
             }
