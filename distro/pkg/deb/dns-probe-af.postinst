@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+# Tell systemd to look for new DNS probe service
+systemctl daemon-reload || true
+systemctl try-restart 'dns-probe-af*.service' || true
+
+#DEBHELPER#

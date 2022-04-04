@@ -1,0 +1,10 @@
+[project]
+name = "dns-probe"
+make_archive_script = "distro/scripts/make-archive.sh"
+
+[upstream]
+archive_url = "https://gitlab.nic.cz/adam/dns-probe/-/archive/{{ version }}/dns-probe-{{ version }}.tar.gz"
+version_script = "distro/scripts/upstream-version.py"
+
+[apkg]
+compat = 2

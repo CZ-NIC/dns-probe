@@ -1,0 +1,44 @@
+Source: dns-probe
+Maintainer: Pavel Dolezal <pavel.dolezal@nic.cz>
+Section: misc
+Priority: optional
+Standards-Version: 4.3.0
+Build-Depends: debhelper (>= 9),
+               cmake (>= 3.5),
+               pkg-config,
+               python3-sphinx,
+               libboost-all-dev,
+               libssl-dev,
+               libpcap-dev,
+               libcdns-dev,
+               libarrow-dev,
+               libparquet-dev,
+               libcryptopant-dev,
+               libyaml-cpp-dev,
+               libfstrm-dev,
+               libprotobuf-dev,
+               protobuf-compiler,
+               libmaxminddb-dev,
+               libknot-dev (>= 3.0.6),
+               dpdk-dev (>= 16.11)
+
+Package: dns-probe-af
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: systemd
+Description: DNS probe with AF packet backend
+ Probe collecting records about DNS traffic in Parquet or C-DNS format.
+
+Package: dns-probe-dpdk
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, dpdk (>= 16.11)
+Recommends: systemd
+Description: DNS probe with DPDK backend
+ Probe collecting records about DNS traffic in Parquet or C-DNS format.
+
+Package: dns-probe-collector
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: systemd
+Description: Collector for data exported by DNS probe.
+ Collector for data exported by DNS probe with export to remote server enabled.

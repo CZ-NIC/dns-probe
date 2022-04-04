@@ -1,0 +1,3 @@
+usr/bin/dp-collector
+lib/systemd/system/dns-probe-collector.service
+etc/dns-probe-collector/dp-collector.conf
