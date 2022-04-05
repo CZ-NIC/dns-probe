@@ -67,10 +67,8 @@ endif()
 
 if (PROBE_PARQUET)
     find_package(Arrow REQUIRED)
-    # ARROW-12175: https://issues.apache.org/jira/browse/ARROW-12175
-    get_filename_component(MY_ARROW_DIR ${Arrow_CONFIG} DIRECTORY)
-    find_package(Parquet REQUIRED HINTS ${MY_ARROW_DIR})
-    target_link_libraries(DNSProbe INTERFACE arrow_shared parquet_shared)
+    find_package(Parquet REQUIRED)
+    target_link_libraries(DNSProbe INTERFACE Arrow::Arrow Parquet::Parquet)
     target_compile_definitions(DNSProbe INTERFACE PROBE_PARQUET)
     file(GLOB PARQUET_HEADERS CONFIGURE_DEPENDS src/export/parquet/*.h)
     file(GLOB PARQUET_SOURCES CONFIGURE_DEPENDS src/export/parquet/*.cpp)
