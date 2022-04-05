@@ -53,10 +53,6 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
 
     if (port >= rte_eth_dev_count_avail())
 #else
-    port_conf.rxmode.jumbo_frame = 1;
-    port_conf.rxmode.hw_ip_checksum = 1;
-    port_conf.rxmode.max_rx_pkt_len = 9192;
-
     if (port >= rte_eth_dev_count())
 #endif
         throw std::runtime_error("Trying to initialize a non-existing port");
@@ -76,10 +72,22 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
     if (info.rx_offload_capa & DEV_RX_OFFLOAD_CHECKSUM)
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_CHECKSUM;
 
-    if (info.rx_offload_capa & DEV_RX_OFFLOAD_JUMBO_FRAME) {
+#ifdef DPDK_21_11
+    if (info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP)
+        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_VLAN_STRIP;
+
+    port_conf.rxmode.mtu = info.max_mtu;
+#else
+    if (info.rx_offload_capa & DEV_RX_OFFLOAD_JUMBO_FRAME)
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_JUMBO_FRAME;
-        port_conf.rxmode.max_rx_pkt_len = 9192;
-    }
+
+    port_conf.rxmode.max_rx_pkt_len = info.max_rx_pktlen;
+#endif
+
+#else
+    port_conf.rxmode.jumbo_frame = 1;
+    port_conf.rxmode.hw_ip_checksum = 1;
+    port_conf.rxmode.max_rx_pkt_len = info.max_rx_pktlen;
 #endif
 
     if (rte_eth_dev_configure(port, num_queues, 0, &port_conf) < 0) {
