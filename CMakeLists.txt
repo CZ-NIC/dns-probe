@@ -157,18 +157,19 @@ if (DPDK_BACKEND)
     set(DPDK_FILES ${DPDK_HEADERS} ${DPDK_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES}
         ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES} ${KNOT_HEADERS} ${KNOT_SOURCES})
     add_executable(dns-probe-dpdk src/application/ddp.cpp ${DPDK_FILES})
-    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe DPDK::DPDK)
+    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe ${DPDK_LIBRARIES})
+    target_include_directories(dns-probe-dpdk PUBLIC ${DPDK_INCLUDE_DIRS})
     target_compile_definitions(dns-probe-dpdk PUBLIC USE_DPDK)
 
     if (DPDK_LEGACY_MEM)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
     endif ()
 
-    if (libdpdk_VERSION VERSION_LESS "18.05")
+    if (DPDK_VERSION VERSION_LESS "18.05")
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY)
     endif()
 
-    if (libdpdk_VERSION VERSION_GREATER "21.08")
+    if (DPDK_VERSION VERSION_GREATER "21.08")
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_21_11)
     endif()
 
