@@ -254,9 +254,13 @@ DNS Probe can export the following run-time statistics:
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries-ipv6                | UINT64    | Cumulative number of IPv6 DNS requests seen on wire since the start of probe                                    |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-    | queries-tcp                 | UINT64    | Cumulative number of TCP DNS requests seen on wire since the start of probe                                     |
+    | queries-tcp                 | UINT64    | Cumulative number of TCP/53 DNS requests seen on wire since the start of probe                                  |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries-udp                 | UINT64    | Cumulative number of UDP DNS requests seen on wire since the start of probe                                     |
+    +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+    | queries-dot                 | UINT64    | Cumulative number of DoT DNS requests seen on wire since the start of probe                                     |
+    +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+    | queries-doh                 | UINT64    | Cumulative number of DoH DNS requests seen on wire since the start of probe                                     |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries                     | UINT64    | Cumulative number of DNS requests seen on wire since the start of probe                                         |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
@@ -264,9 +268,13 @@ DNS Probe can export the following run-time statistics:
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries-per-second-ipv6     | UINT64    | Moving average (default 5 minutes) of IPv6 requests per second for the last :ref:`moving-avg-window` seconds    |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
-    | queries-per-second-tcp      | UINT64    | Moving average (default 5 minutes) of TCP requests per second for the last :ref:`moving-avg-window` seconds     |
+    | queries-per-second-tcp      | UINT64    | Moving average (default 5 minutes) of TCP/53 requests per second for the last :ref:`moving-avg-window` seconds  |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries-per-second-udp      | UINT64    | Moving average (default 5 minutes) of UDP requests per second for the last :ref:`moving-avg-window` seconds     |
+    +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+    | queries-per-second-dot      | UINT64    | Moving average (default 5 minutes) of DoT requests per second for the last :ref:`moving-avg-window` seconds     |
+    +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+    | queries-per-second-doh      | UINT64    | Moving average (default 5 minutes) of DoH requests per second for the last :ref:`moving-avg-window` seconds     |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries-per-second          | UINT64    | Moving average (default 5 minutes) of requests per second for the last :ref:`moving-avg-window` seconds         |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+

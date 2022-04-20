@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2022-03-28
+  # Last revision: 2022-04-20
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -269,11 +269,15 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
         - 'queries-ipv6'
         - 'queries-tcp'
         - 'queries-udp'
+        - 'queries-dot'
+        - 'queries-doh'
         - 'queries'
         - 'queries-per-second-ipv4'
         - 'queries-per-second-ipv6'
         - 'queries-per-second-tcp'
         - 'queries-per-second-udp'
+        - 'queries-per-second-dot'
+        - 'queries-per-second-doh'
         - 'queries-per-second'
         - 'unix-timestamp' # timestamp of given export
 
