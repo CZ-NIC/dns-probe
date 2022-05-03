@@ -29,22 +29,22 @@ BuildRequires: dpdk-devel
 %description
 High-speed DNS monitoring probe with export to Parquet or C-DNS
 
-%package %{name}-af
+%package af
 Summary: DNS probe with AF packet backend
 
-%description %{name}-af
+%description af
 Probe collecting records about DNS traffic in Parquet or C-DNS format.
 
-%package %{name}-dpdk
+%package dpdk
 Summary: DNS probe with DPDK backend
 
-%description %{name}-dpdk
+%description dpdk
 Probe collecting records about DNS traffic in Parquet or C-DNS format.
 
-%package %{name}-collector
+%package collector
 Summary: Collector for data exported by DNS probe
 
-%description %{name}-collector
+%description collector
 Collector for data exported by DNS probe with export to remote server enabled.
 
 %prep
@@ -68,21 +68,21 @@ make all man
 cd build
 make DESTDIR=%{buildroot} install
 
-%files %{name}-af
+%files af
 %{_bindir}/dns-probe-af
 %{_bindir}/dp-af
 %config(noreplace) %{_sysconfdir}/dns-probe-af/dns-probe.yml
 /lib/systemd/system/dns-probe-af@.service
 %{_mandir}/man1/dns-probe-af.1.gz
 
-%files %{name}-dpdk
+%files dpdk
 %{_bindir}/dns-probe-dpdk
 %{_bindir}/dp-dpdk
 %config(noreplace) %{_sysconfdir}/dns-probe-dpdk/dns-probe.yml
 /lib/systemd/system/dns-probe-dpdk@.service
 %{_mandir}/man1/dns-probe-dpdk.1.gz
 
-%files %{name}-collector
+%files collector
 %{_bindir}/dp-collector
 /lib/systemd/system/dns-probe-collector.service
 %config(noreplace) %{_sysconfdir}/dns-probe-collector/dp-collector.conf
