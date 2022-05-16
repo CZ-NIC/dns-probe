@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **x.x.x**
+     - **1.0**
+     - :doc:`Installation <Installation>`
+     - Add package installation instructions for RPM based distributions and Arch
    * - **0.12.2**
      - **1.0**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
