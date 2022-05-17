@@ -143,15 +143,6 @@ namespace DDP {
     };
 
     /**
-     * Granularity of run-time statistics to export
-     */
-    enum class ExportStats : uint8_t {
-        NONE = 0, //!< Don't export any run-time statistics
-        BASIC = 1, //!< Export basic overall run-time statistics
-        DETAILED = 2 //!< Export detailed run-time statistics
-    };
-
-    /**
      * Specify bits positions in bit set for statistics fields.
      */
     enum class StatsField : uint32_t {

@@ -64,7 +64,7 @@ int64_t DDP::StatsWriter::write(AggregatedStatistics item)
         output << "\"exported-pcap-packets\":" << std::to_string(item.exported_to_pcap);
     }
 
-    if (m_cfg.export_stats.value() == ExportStats::DETAILED &&
+    if (m_cfg.stats_per_ip.value() &&
         (m_cfg.ipv4_indices.size() > 0 || m_cfg.ipv6_indices.size() > 0)) {
         for (auto& i: m_cfg.ipv4_indices) {
             char buff[INET_ADDRSTRLEN + 4];

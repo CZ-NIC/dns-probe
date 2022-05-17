@@ -298,7 +298,7 @@ namespace DDP {
          * @brief Check if detailed run-time statistics are being collected
          */
         bool is_detailed_stats() const {
-            return m_cfg.export_stats.value() == ExportStats::DETAILED &&
+            return m_cfg.stats_per_ip.value() &&
                 (m_cfg.ipv4_indices.size() > 0 || m_cfg.ipv6_indices.size() > 0);
         }
 

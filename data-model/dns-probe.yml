@@ -1,4 +1,4 @@
-# Last revision: 2022-04-20
+# Last revision: 2022-05-17
 #
 # Default instance configuration.
 # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -61,6 +61,8 @@ default:
   # List of ports used for identifying DNS traffic.
   dns-ports:
     - 53
+    # - 853
+    # - 443
 
   # [SECTION] Items for configuration of exported data
   export:
@@ -211,10 +213,14 @@ default:
   # [SECTION] Configuration of run-time statistics export
   statistics:
 
-    # This value indicates if run-time statistics will be exported in JSON format every
-    # 'stats-timeout' seconds and in how much detail.
-    # Valid values are 'none', 'basic' and 'detailed'.
-    export-stats: 'none'
+    # If this flag is true, run-time statistics will be exported in JSON format every
+    # 'stats-timeout' seconds.
+    export-stats: false
+
+    # If this flag is true and any IP addresses are set in 'ipv4-allowlist' or 'ipv6-allowlist',
+    # 'queries*' run-time statistics will be exported for each of the IP addresses in addition
+    # to overall statistics in format '"[<IP-address>]queries*":<value>'.
+    stats-per-ip: false
 
     # Time interval after which run-time statistics will be periodically exported in JSON locally
     # or to remote location, if enabled by 'export-stats' option. If value is 0, statistics

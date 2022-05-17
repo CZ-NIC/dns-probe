@@ -76,7 +76,8 @@ namespace DDP {
                    anonymize_ip(false),
                    ip_encryption(IpEncryption::AES),
                    ip_enc_key("key.cryptopant"),
-                   export_stats(ExportStats::NONE),
+                   export_stats(false),
+                   stats_per_ip(false),
                    stats_timeout(300),
                    stats_location(ExportLocation::LOCAL),
                    stats_directory("."),
@@ -154,7 +155,8 @@ namespace DDP {
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
         ConfigItem<std::string> ip_enc_key; //!< File with encryption key for IP anonymization
 
-        ConfigItem<ExportStats> export_stats; //!< Enable export of run-time statistics
+        ConfigItem<bool> export_stats; //!< Enable export of run-time statistics
+        ConfigItem<bool> stats_per_ip; //!< Enable export of 'queries*' run-time statistics per IP address
         ConfigItem<uint32_t> stats_timeout; //!< Export run-time statistics every 'stats_timeout' seconds
         ConfigItem<ExportLocation> stats_location; //!< Location for exported run-time statistics
         ConfigItem<std::string> stats_directory; //!< Directory for exported run-time statistics

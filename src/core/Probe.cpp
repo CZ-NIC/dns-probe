@@ -308,7 +308,7 @@ void DDP::Probe::init(const Arguments& args)
         }
 
         m_stats_writer = std::make_unique<StatsWriter>(m_cfg);
-        if (m_cfg.export_stats.value() != ExportStats::NONE) {
+        if (m_cfg.export_stats.value()) {
             auto export_cb = [this] {
                 m_aggregated_stats.get(m_stats);
                 m_stats_writer->write(m_aggregated_stats);
@@ -363,7 +363,7 @@ void DDP::Probe::init(const Arguments& args)
         if (m_cfg.export_location.value() == ExportLocation::REMOTE)
             TlsCtx::getInstance().init(TlsCtxIndex::TRAFFIC, m_cfg.export_ca_cert.value());
 
-        if (m_cfg.export_stats.value() != ExportStats::NONE && m_cfg.stats_location.value() == ExportLocation::REMOTE)
+        if (m_cfg.export_stats.value() && m_cfg.stats_location.value() == ExportLocation::REMOTE)
             TlsCtx::getInstance().init(TlsCtxIndex::STATISTICS, m_cfg.stats_ca_cert.value());
 
         m_initialized = true;
@@ -461,7 +461,7 @@ DDP::Probe::ReturnValue DDP::Probe::run(PortVector& ports, PortVector& sockets, 
     m_thread_manager->join_all_threads();
 
     // Write final statistics if enabled
-    if (m_cfg.export_stats.value() != ExportStats::NONE) {
+    if (m_cfg.export_stats.value()) {
         m_aggregated_stats.get(m_stats);
         m_stats_writer->write(m_aggregated_stats);
         logger.debug() << "Run-time statistics exported.";
@@ -522,7 +522,7 @@ void DDP::Probe::update_config()
     }
 
     // Update run-time statistics export if changed
-    if (m_cfg.export_stats.value() != ExportStats::NONE) {
+    if (m_cfg.export_stats.value()) {
         if (m_aggregated_timer && (m_aggregated_timer->get_interval() / 1000 != m_cfg.stats_timeout.value())) {
             m_aggregated_timer->disarm();
             if (m_cfg.stats_timeout.value() > 0)

@@ -61,13 +61,14 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       +--rw raw-pcap? <boolean>
       +--rw statistics
       |  +-- export-dir? <string>
-      |  +-- export-stats? <enumeration>
+      |  +-- export-stats? <boolean>
       |  +-- location? <enumeration>
       |  +-- moving-avg-window? <uint16>
       |  +-- remote-ca-cert? <string>
       |  +-- remote-ip? <string>
       |  +-- remote-port? <uint16>
       |  +-- stats-fields?* <string>
+      |  +-- stats-per-ip <boolean>
       |  +-- stats-timeout? <uint32>
       +--rw tcp-table
       |  +--rw concurrent-connections? <uint32>
@@ -291,21 +292,9 @@ export-stats
 ^^^^^^^^^^^^
 
 :data node: ``<instance-id>/statistics/export-stats``
-:default: ``none``
+:default: **false**
 
-This value indicates if run-time statistics will be exported in JSON format every :ref:`stats-timeout` seconds
-and in how much detail. Currently supported values are:
-
-``none``
-   No run-time statistics will be exported.
-
-``basic``
-   Basic overall run-time statistics of the probe will be exported.
-
-``detailed``
-   If any IP addresses are set in :ref:`ipv4-allowlist` or :ref:`ipv6-allowlist`, run-time statistics for
-   each of these IP adresses as well as overall run-time statistics will be exported. Otherwise, basic
-   overall run-time statistic like in ``basic`` option will be exported.
+If this flag is true, run-time statistics will be exported in JSON format every :ref:`stats-timeout` seconds.
 
 file-compression
 ^^^^^^^^^^^^^^^^
@@ -643,6 +632,17 @@ stats-fields
 This sequence indicates which run-time statistics should be exported if :ref:`export-stats` is set to **true**.
 
 By default all statistics available in DNS Probe are enabled.
+
+.. _stats-per-ip:
+
+stats-per-ip
+^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/stats-per-ip``
+:default: **false**
+
+If this and :ref:`export-stats` flags are true and any IP addresses are set in :ref:`ipv4-allowlist` or :ref:`ipv6-allowlist`,
+run-time statistics for each of these IP addresses as well as overall run-time statistics will be exported.
 
 .. _stats-timeout:
 
