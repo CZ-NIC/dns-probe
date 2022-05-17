@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2021-09-21
+  # Last revision: 2022-05-17
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -72,6 +72,8 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
     # List of ports used for identifying DNS traffic.
     dns-ports:
       - 53
+      # - 853
+      # - 443
 
     # [SECTION] Items for configuration of exported data
     export:
@@ -226,6 +228,11 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # 'stats-timeout' seconds.
       export-stats: false
 
+      # If this flag is true and any IP addresses are set in 'ipv4-allowlist' or 'ipv6-allowlist',
+      # 'queries*' run-time statistics will be exported for each of the IP addresses in addition
+      # to overall statistics in format '"[<IP-address>]queries*":<value>'.
+      stats-per-ip: false
+
       # Time interval after which run-time statistics will be periodically exported in JSON locally
       # or to remote location, if enabled by 'export-stats' option. If value is 0, statistics
       # will be exported only on probe's exit.
@@ -268,11 +275,15 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
         - 'queries-ipv6'
         - 'queries-tcp'
         - 'queries-udp'
+        - 'queries-dot'
+        - 'queries-doh'
         - 'queries'
         - 'queries-per-second-ipv4'
         - 'queries-per-second-ipv6'
         - 'queries-per-second-tcp'
         - 'queries-per-second-udp'
+        - 'queries-per-second-dot'
+        - 'queries-per-second-doh'
         - 'queries-per-second'
         - 'unix-timestamp' # timestamp of given export
 

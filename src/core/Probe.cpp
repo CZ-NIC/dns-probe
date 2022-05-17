@@ -276,13 +276,15 @@ void DDP::Probe::init(const Arguments& args)
         m_poll.emplace<CommLinkProxy>(m_log_link->config_endpoint());
 
         // Creates communication channels for workers
+        uint16_t runtime_stats_count = 1 + m_cfg.ipv4_indices.size() + m_cfg.ipv6_indices.size();
         for (auto slave: m_thread_manager->slave_lcores()) {
             auto cl = m_comm_links.emplace(std::piecewise_construct,
                                            std::forward_as_tuple(slave),
                                            std::forward_as_tuple(32, true));
             m_poll.emplace<CommLinkProxy>(cl.first->second.config_endpoint());
-            m_stats.push_back(Statistics());
+            m_stats.push_back(Statistics(runtime_stats_count));
         }
+        m_aggregated_stats = AggregatedStatistics(runtime_stats_count);
 
         if (m_cfg.moving_avg_window.value() < 1 || m_cfg.moving_avg_window.value() > 3600) {
             Logger("Probe").warning() << "Moving-avg-window value " << m_cfg.moving_avg_window.value()

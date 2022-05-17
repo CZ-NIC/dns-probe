@@ -24,6 +24,7 @@
 #pragma once
 
 #include <sys/socket.h>
+#include <netinet/in.h>
 #include <string>
 #include <array>
 #include <unordered_set>
@@ -35,7 +36,7 @@ namespace DDP {
 
     using Port_t = uint16_t;
     using IPv4_t = uint32_t;
-    using IPv6_t = std::array<uint32_t, 4>;
+    using IPv6_t = in6_addr;
 
     static constexpr uint8_t CdnsBits = 26; //!< Number of C-DNS fields options
     static constexpr uint64_t get_cdns_bitmask() {
@@ -46,7 +47,7 @@ namespace DDP {
         return bitmask;
     }
 
-    static constexpr uint8_t StatsBits = 16; //!< Number of possible statistics to export
+    static constexpr uint8_t StatsBits = 20; //!< Number of possible statistics to export
     static constexpr uint64_t get_stats_bitmask() {
         uint64_t bitmask = 0;
         for (unsigned i = 0; i < StatsBits; i++) {
@@ -154,11 +155,15 @@ namespace DDP {
         QUERIES_IPV6,
         QUERIES_TCP,
         QUERIES_UDP,
+        QUERIES_DOT,
+        QUERIES_DOH,
         QUERIES,
         QUERIES_PER_SECOND_IPV4,
         QUERIES_PER_SECOND_IPV6,
         QUERIES_PER_SECOND_TCP,
         QUERIES_PER_SECOND_UDP,
+        QUERIES_PER_SECOND_DOT,
+        QUERIES_PER_SECOND_DOH,
         QUERIES_PER_SECOND,
         UNIX_TIMESTAMP
     };
@@ -173,11 +178,15 @@ namespace DDP {
         {"queries-ipv6",                static_cast<uint32_t>(StatsField::QUERIES_IPV6)},
         {"queries-tcp",                 static_cast<uint32_t>(StatsField::QUERIES_TCP)},
         {"queries-udp",                 static_cast<uint32_t>(StatsField::QUERIES_UDP)},
+        {"queries-dot",                 static_cast<uint32_t>(StatsField::QUERIES_DOT)},
+        {"queries-doh",                 static_cast<uint32_t>(StatsField::QUERIES_DOH)},
         {"queries",                     static_cast<uint32_t>(StatsField::QUERIES)},
         {"queries-per-second-ipv4",     static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV4)},
         {"queries-per-second-ipv6",     static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_IPV6)},
         {"queries-per-second-tcp",      static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_TCP)},
         {"queries-per-second-udp",      static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_UDP)},
+        {"queries-per-second-dot",      static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_DOT)},
+        {"queries-per-second-doh",      static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND_DOH)},
         {"queries-per-second",          static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND)},
         {"unix-timestamp",              static_cast<uint32_t>(StatsField::UNIX_TIMESTAMP)},
     };

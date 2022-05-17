@@ -68,6 +68,7 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       |  +-- remote-ip? <string>
       |  +-- remote-port? <uint16>
       |  +-- stats-fields?* <string>
+      |  +-- stats-per-ip <boolean>
       |  +-- stats-timeout? <uint32>
       +--rw tcp-table
       |  +--rw concurrent-connections? <uint32>
@@ -631,6 +632,17 @@ stats-fields
 This sequence indicates which run-time statistics should be exported if :ref:`export-stats` is set to **true**.
 
 By default all statistics available in DNS Probe are enabled.
+
+.. _stats-per-ip:
+
+stats-per-ip
+^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/stats-per-ip``
+:default: **false**
+
+If this and :ref:`export-stats` flags are true and any IP addresses are set in :ref:`ipv4-allowlist` or :ref:`ipv6-allowlist`,
+run-time statistics for each of these IP addresses as well as overall run-time statistics will be exported.
 
 .. _stats-timeout:
 

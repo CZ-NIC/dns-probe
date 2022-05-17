@@ -77,6 +77,7 @@ namespace DDP {
                    ip_encryption(IpEncryption::AES),
                    ip_enc_key("key.cryptopant"),
                    export_stats(false),
+                   stats_per_ip(false),
                    stats_timeout(300),
                    stats_location(ExportLocation::LOCAL),
                    stats_directory("."),
@@ -84,7 +85,29 @@ namespace DDP {
                    stats_port(6379),
                    stats_ca_cert(),
                    moving_avg_window(300),
-                   stats_fields(get_stats_bitmask()) {}
+                   stats_fields(get_stats_bitmask()),
+                   ipv4_indices(),
+                   ipv6_indices() {}
+
+        /**
+         * @brief Generate and save indices to run-time statistics vector for IP addresses in
+         * ipv4_allowlist and ipv6_allowlist.
+         */
+        void generate_ip_indices() {
+            uint16_t index = 1;
+
+            if (ipv4_allowlist.value().size() > 0) {
+                for (auto& ipv4 : ipv4_allowlist.value()) {
+                    ipv4_indices[ipv4] = index++;
+                }
+            }
+
+            if (ipv6_allowlist.value().size() > 0) {
+                for (auto& ipv6 : ipv6_allowlist.value()) {
+                    ipv6_indices[ipv6] = index++;
+                }
+            }
+        }
 
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
@@ -133,6 +156,7 @@ namespace DDP {
         ConfigItem<std::string> ip_enc_key; //!< File with encryption key for IP anonymization
 
         ConfigItem<bool> export_stats; //!< Enable export of run-time statistics
+        ConfigItem<bool> stats_per_ip; //!< Enable export of 'queries*' run-time statistics per IP address
         ConfigItem<uint32_t> stats_timeout; //!< Export run-time statistics every 'stats_timeout' seconds
         ConfigItem<ExportLocation> stats_location; //!< Location for exported run-time statistics
         ConfigItem<std::string> stats_directory; //!< Directory for exported run-time statistics
@@ -141,5 +165,8 @@ namespace DDP {
         ConfigItem<std::string> stats_ca_cert; //!< CA certificate for authentication of remote server's certificate
         ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
         ConfigBitfield<StatsBits> stats_fields; //!< Indicates which statistics should be exported
+
+        std::unordered_map<IPv4_t, uint16_t> ipv4_indices; //!< Indices to run-time statistics vector for IPv4 addresses in ipv4_allowlist
+        std::unordered_map<IPv6_t, uint16_t> ipv6_indices; //!< Indices to run-time statistics vector for IPv6 addresses in ipv6_allowlist
     };
 }

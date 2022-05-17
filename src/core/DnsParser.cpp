@@ -1104,8 +1104,8 @@ bool DDP::DnsParser::block_ipv6s(const uint8_t* src, const uint8_t* dst)
     if (!m_ipv6_allowlist.empty()) {
         bool deny = true;
         for (auto& ipv6 : m_ipv6_allowlist) {
-            if ((std::memcmp(src, ipv6.data(), IPV6_ADDRLEN) == 0) ||
-                (std::memcmp(dst, ipv6.data(), IPV6_ADDRLEN) == 0)) {
+            if ((std::memcmp(src, &ipv6, IPV6_ADDRLEN) == 0) ||
+                (std::memcmp(dst, &ipv6, IPV6_ADDRLEN) == 0)) {
                 deny = false;
                 break;
             }
@@ -1116,8 +1116,8 @@ bool DDP::DnsParser::block_ipv6s(const uint8_t* src, const uint8_t* dst)
     }
     else if (!m_ipv6_denylist.empty() && m_ipv6_allowlist.empty()) {
         for (auto& ipv6 : m_ipv6_denylist) {
-            if ((std::memcmp(src, ipv6.data(), IPV6_ADDRLEN) == 0) ||
-                (std::memcmp(dst, ipv6.data(), IPV6_ADDRLEN) == 0)) {
+            if ((std::memcmp(src, &ipv6, IPV6_ADDRLEN) == 0) ||
+                (std::memcmp(dst, &ipv6, IPV6_ADDRLEN) == 0)) {
                 return true;
             }
         }

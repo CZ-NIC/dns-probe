@@ -19,6 +19,11 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - **1.0**
      - :doc:`Installation <Installation>`
      - Add package installation instructions for RPM based distributions and Arch
+   * -
+     -
+     - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Add more granular export of run-time statistics
    * - **0.12.2**
      - **1.0**
      - :doc:`Exported Data Schema <ExportedDataSchema>`
