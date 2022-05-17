@@ -15,7 +15,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
-   * - **x.x.x**
+   * - **1.0.0**
      - **1.0**
      - :doc:`Installation <Installation>`
      - Add package installation instructions for RPM based distributions and Arch
