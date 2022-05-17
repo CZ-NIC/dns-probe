@@ -6,8 +6,8 @@ DNS Probe can be used on Linux with kernel version at least
 3.11. It also requires the system to support C++14 standard.
 Installation packages are available from `OBS (openSUSE Build Service)
 <https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe>`_.
-The following distributions are currently supported: Debian 11, 10 and 9,
-Ubuntu 20.04 and 18.04.
+The following distributions are currently supported: Debian 11, 10 and 9;
+Ubuntu 22.04, 20.04, 18.04; Fedora 36, 35, Rawhide; EPEL 8 and Arch.
 
 The OBS repository also contains packages with several dependencies
 that are not provided by the distribution's standard
@@ -19,58 +19,65 @@ On Linux distributions that are not (yet) supported, DNS Probe has to be compile
 Installation from packages
 ==========================
 
-The first two steps are to add the OBS repository for the given
-distribution to the system's repository list, and add the
-repository's signing key to the system keyring:
-
-Debian 11
----------
-
-.. code:: shell
-
-   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_11/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
-   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_11/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
-
-Debian 10
----------
-
-.. code:: shell
-
-   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_10/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
-   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_10/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
-
-Debian 9
---------
-
-.. code:: shell
-
-   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Debian_9.0/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
-   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/Debian_9.0/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
-
-Ubuntu 20.04
-------------
-
-.. code:: shell
-
-   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_20.04/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
-   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/xUbuntu_20.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
-
-Ubuntu 18.04
-------------
-
-.. code:: shell
-
-   echo 'deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/xUbuntu_18.04/ /' | sudo tee /etc/apt/sources.list.d/dns-probe.list
-   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/xUbuntu_18.04/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
-
-
-The remaining steps are then identical for all distributions: the repository list is
-updated, and finally the DNS Probe package is installed:
+Debian/Ubuntu
+-------------
 
 .. code:: shell
 
    sudo apt-get update
+   sudo apt-get install -y lsb-release curl gpg
+
+   DISTRO=$(lsb_release -i -s)
+   RELEASE=$(lsb_release -r -s)
+   if [[ $DISTRO == "Ubuntu" ]]; then DISTRO="xUbuntu"; fi
+   if [[ $DISTRO == "Debian" && "$RELEASE" =~ ^9\..*$ ]]; then RELEASE="9.0"; fi
+
+   echo "deb http://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/${DISTRO}_${RELEASE}/ /" | sudo tee /etc/apt/sources.list.d/dns-probe.list
+   curl -fsSL https://download.opensuse.org/repositories/home:CZ-NIC:/dns-probe/${DISTRO}_${RELEASE}/Release.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/dns-probe.gpg > /dev/null
+   sudo apt-get update
    sudo apt-get install dns-probe-af dns-probe-dpdk dns-probe-collector
+
+Fedora
+------
+
+.. code:: shell
+
+   sudo dnf config-manager --add-repo https://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Fedora_$(cut -d: -f5 /etc/system-release-cpe | cut -d. -f1)/home:CZ-NIC:dns-probe.repo
+   sudo dnf install dns-probe-af dns-probe-dpdk dns-probe-collector
+
+Fedora Rawhide
+--------------
+
+.. code:: shell
+
+   sudo dnf config-manager --add-repo https://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Fedora_Rawhide/home:CZ-NIC:dns-probe.repo
+   sudo dnf install dns-probe-af dns-probe-dpdk dns-probe-collector
+
+EPEL 8
+------
+
+.. code:: shell
+
+   cd /etc/yum.repos.d/
+   sudo wget https://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Fedora_EPEL_8_CentOS/home:CZ-NIC:dns-probe.repo
+   sudo yum install dns-probe-af dns-probe-dpdk dns-probe-collector
+
+Arch
+----
+
+.. code:: shell
+
+   echo "[home_CZ-NIC_dns-probe_Arch]" | sudo tee -a /etc/pacman.conf
+   echo "Server = https://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Arch/$(uname -m)" | sudo tee -a /etc/pacman.conf
+
+   key=$(curl -fsSL https://download.opensuse.org/repositories/home:/CZ-NIC:/dns-probe/Arch/$(uname -m)/home_CZ-NIC_dns-probe_Arch.key)
+   fingerprint=$(gpg --quiet --with-colons --import-options show-only --import --fingerprint <<< "${key}" | awk -F: '$1 == "fpr" { print $10 }')
+
+   sudo pacman-key --init
+   sudo pacman-key --add - <<< "${key}"
+   sudo pacman-key --lsign-key "${fingerprint}"
+
+   sudo pacman -Sy home_CZ-NIC_dns-probe_Arch/c-dns
 
 Three alternative packages are available:
 

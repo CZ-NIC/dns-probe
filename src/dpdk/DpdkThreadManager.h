@@ -49,7 +49,11 @@ namespace DDP {
         explicit DPDKThreadManager(ThreadManagerBase::MaskType cores) : ThreadManagerBase(cores), m_slave_lcores()
         {
             unsigned lcore;
+#ifdef DPDK_21_11
+            RTE_LCORE_FOREACH_WORKER(lcore) {
+#else
             RTE_LCORE_FOREACH_SLAVE(lcore) {
+#endif
                 m_slave_lcores.push_back(lcore);
             }
         }
@@ -58,7 +62,13 @@ namespace DDP {
          * Provides access to logical core id of master core
          * @return Logical ID of master core
          */
-        static unsigned master_lcore_impl() { return rte_get_master_lcore(); }
+        static unsigned master_lcore_impl() {
+#ifdef DPDK_21_11
+            return rte_get_main_lcore();
+#else
+            return rte_get_master_lcore();
+#endif
+        }
 
         /**
         * Provides access to logical core id of current thread
@@ -141,7 +151,11 @@ namespace DDP {
          */
         void check_slave_lcore_id(uintmax_t lcore) override
         {
+#ifdef DPDK_21_11
+            if (lcore == rte_get_main_lcore())
+#else
             if (lcore == rte_get_master_lcore())
+#endif
                 throw std::runtime_error("LCore cannot be master core!");
             else if (lcore >= RTE_MAX_LCORE || !rte_lcore_is_enabled(lcore))
                 throw std::runtime_error("Invalid LCore ID!");

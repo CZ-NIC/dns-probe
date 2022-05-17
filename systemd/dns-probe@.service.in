@@ -1,7 +1,7 @@
 # DNS probe daemon
 # Service parameter represents unique ID of DNS Probe instance.
 # The ID specifies what configuration to load from YAML configuration file
-# in @CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_SYSCONFDIR@/dns-probe-@BACKEND@/dns-probe.yml
+# in @CMAKE_INSTALL_PREFIX@/etc/dns-probe-@BACKEND@/dns-probe.yml
 [Unit]
 Description=Daemon for DNS probe
 After=network.target

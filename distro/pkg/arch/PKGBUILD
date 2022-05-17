@@ -1,0 +1,30 @@
+pkgname=dns-probe
+pkgver='{{ version }}'
+pkgrel='{{ release }}'
+pkgdesc='DNS traffic monitoring probe'
+arch=('x86_64')
+url='https://gitlab.nic.cz/adam/dns-probe'
+license=('GPL3')
+depends=('make' 'cmake' 'boost' 'openssl' 'python-sphinx' 'python-pandas' 'python-pyarrow' 'libpcap' 'arrow' 'yaml-cpp' 'fstrm' 'protobuf' 'libmaxminddb' 'knot' 'dpdk' 'c-dns' 'cryptopant')
+source=('https://gitlab.nic.cz/adam/dns-probe/-/archive/{{ version }}/dns-probe-{{ version }}.tar.gz')
+sha256sums=('SKIP')
+
+build() {
+    cd "${srcdir}/${pkgname}-${pkgver}"
+    mkdir build
+    cd build
+
+    cmake \
+        -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+        -DAF_PACKET_BACKEND=ON \
+        -DDPDK_BACKEND=ON \
+        -DBUILD_COLLECTOR=ON \
+        -DBUILD_DOC=ON \
+        ..
+    make all man
+}
+
+package() {
+    cd "${srcdir}/${pkgname}-${pkgver}/build"
+    make DESTDIR="${pkgdir}" install
+}

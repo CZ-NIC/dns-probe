@@ -1,0 +1,4 @@
+usr/bin/dns-probe-dpdk
+usr/bin/dp-dpdk
+lib/systemd/system/dns-probe-dpdk@.service
+etc/dns-probe-dpdk/dns-probe.yml

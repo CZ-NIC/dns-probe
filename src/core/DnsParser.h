@@ -86,6 +86,9 @@ namespace DDP {
         static constexpr uint8_t IPV6_ADDRLEN = 0x10;
         static constexpr uint16_t DNS_PORT = 0x35;
 
+        static constexpr uint16_t DOT_PORT = 0x355;//853;
+        static constexpr uint16_t DOH_PORT = 0x1BB;//443;
+
         static constexpr uint8_t DNS_HEADER_SIZE = 12;
         static constexpr uint8_t DNS_MIN_QUESTION_SIZE = 5;
         static constexpr uint8_t DNS_MAX_QNAME_SIZE = 255;
@@ -365,10 +368,10 @@ namespace DDP {
         PcapWriter m_pcap_inv;
         const Packet* m_processed_packet;
         std::unordered_set<uint16_t> m_dns_ports;
-        std::unordered_set<uint32_t> m_ipv4_allowlist;
-        std::unordered_set<uint32_t> m_ipv4_denylist;
-        std::unordered_set<std::array<uint32_t, 4>> m_ipv6_allowlist;
-        std::unordered_set<std::array<uint32_t, 4>> m_ipv6_denylist;
+        std::unordered_set<IPv4_t> m_ipv4_allowlist;
+        std::unordered_set<IPv4_t> m_ipv4_denylist;
+        std::unordered_set<IPv6_t> m_ipv6_allowlist;
+        std::unordered_set<IPv6_t> m_ipv6_denylist;
         Statistics& m_stats;
 
         /**

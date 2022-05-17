@@ -1,0 +1,25 @@
+/var/log/dns-probe-dpdk*.log
+{
+	rotate 7
+	daily
+	maxage 7
+	missingok
+	notifempty
+	copytruncate
+	compress
+	delaycompress
+	sharedscripts
+}
+
+/var/log/dns-probe-dpdk/dns-probe-dpdk*.log
+{
+	rotate 7
+	daily
+	maxage 7
+	missingok
+	notifempty
+	copytruncate
+	compress
+	delaycompress
+	sharedscripts
+}

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project("DNS Probe" VERSION 0.12.2)
+project("DNS Probe" VERSION 1.0.0)
 
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
@@ -16,6 +16,8 @@ set(PROBE_KNOT ON CACHE BOOL "Enable support for Knot probe interface as input d
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+enable_testing()
 
 ## Find required libraries
 find_package(Threads REQUIRED)
@@ -67,10 +69,8 @@ endif()
 
 if (PROBE_PARQUET)
     find_package(Arrow REQUIRED)
-    # ARROW-12175: https://issues.apache.org/jira/browse/ARROW-12175
-    get_filename_component(MY_ARROW_DIR ${Arrow_CONFIG} DIRECTORY)
-    find_package(Parquet REQUIRED HINTS ${MY_ARROW_DIR})
-    target_link_libraries(DNSProbe INTERFACE arrow_shared parquet_shared)
+    find_package(Parquet REQUIRED)
+    target_link_libraries(DNSProbe INTERFACE Arrow::Arrow Parquet::Parquet)
     target_compile_definitions(DNSProbe INTERFACE PROBE_PARQUET)
     file(GLOB PARQUET_HEADERS CONFIGURE_DEPENDS src/export/parquet/*.h)
     file(GLOB PARQUET_SOURCES CONFIGURE_DEPENDS src/export/parquet/*.cpp)
@@ -141,9 +141,10 @@ if (AF_PACKET_BACKEND)
     configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.sh ${CMAKE_BINARY_DIR}/dp-af @ONLY)
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dns-probe@.service.in ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-af DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/dns-probe.yml DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af)
-    install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
-    target_compile_definitions(dns-probe-af PUBLIC PROBE_CONFIG="${CMAKE_INSTALL_DIR}/${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-af/dns-probe.yml")
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/dns-probe.yml DESTINATION /etc/dns-probe-af)
+    install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-af@.service DESTINATION /lib/systemd/system)
+    target_compile_definitions(dns-probe-af PUBLIC PROBE_CONFIG="${CMAKE_INSTALL_DIR}/etc/dns-probe-af/dns-probe.yml")
+    add_test(NAME AF_Test COMMAND ${CMAKE_SOURCE_DIR}/tests/run_tests.py -p ${CMAKE_BINARY_DIR}/dns-probe-af)
 endif ()
 
 # Settings for DPDK version
@@ -156,15 +157,20 @@ if (DPDK_BACKEND)
     set(DPDK_FILES ${DPDK_HEADERS} ${DPDK_SOURCES} ${PROBE_HEADERS} ${PROBE_SOURCES}
         ${PARQUET_HEADERS} ${PARQUET_SOURCES} ${CDNS_HEADERS} ${CDNS_SOURCES} ${DNSTAP_HEADERS} ${DNSTAP_SOURCES} ${KNOT_HEADERS} ${KNOT_SOURCES})
     add_executable(dns-probe-dpdk src/application/ddp.cpp ${DPDK_FILES})
-    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe DPDK::DPDK)
+    target_link_libraries(dns-probe-dpdk PUBLIC DNSProbe ${DPDK_LIBRARIES})
+    target_include_directories(dns-probe-dpdk PUBLIC ${DPDK_INCLUDE_DIRS})
     target_compile_definitions(dns-probe-dpdk PUBLIC USE_DPDK)
 
     if (DPDK_LEGACY_MEM)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY_MEM)
     endif ()
 
-    if (libdpdk_VERSION VERSION_LESS "18.05")
+    if (DPDK_VERSION VERSION_LESS "18.05")
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_LEGACY)
+    endif()
+
+    if (DPDK_VERSION VERSION_GREATER "21.08")
+        target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_21_11)
     endif()
 
     install(TARGETS dns-probe-dpdk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
@@ -173,9 +179,9 @@ if (DPDK_BACKEND)
     configure_file(${CMAKE_SOURCE_DIR}/src/application/dp-runner.sh ${CMAKE_BINARY_DIR}/dp-dpdk @ONLY)
     install(PROGRAMS ${CMAKE_BINARY_DIR}/dp-dpdk DESTINATION ${CMAKE_INSTALL_BINDIR})
     configure_file(${CMAKE_SOURCE_DIR}/systemd/dns-probe@.service.in ${CMAKE_BINARY_DIR}/systemd/dns-probe-dpdk@.service)
-    install(FILES ${CMAKE_SOURCE_DIR}/data-model/dns-probe.yml DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk)
-    install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-dpdk@.service DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system)
-    target_compile_definitions(dns-probe-dpdk PUBLIC PROBE_CONFIG="${CMAKE_INSTALL_DIR}/${CMAKE_INSTALL_SYSCONFDIR}/dns-probe-dpdk/dns-probe.yml")
+    install(FILES ${CMAKE_SOURCE_DIR}/data-model/dns-probe.yml DESTINATION /etc/dns-probe-dpdk)
+    install(FILES ${CMAKE_BINARY_DIR}/systemd/dns-probe-dpdk@.service DESTINATION /lib/systemd/system)
+    target_compile_definitions(dns-probe-dpdk PUBLIC PROBE_CONFIG="${CMAKE_INSTALL_DIR}/etc/dns-probe-dpdk/dns-probe.yml")
 endif ()
 
 add_custom_target(uninstall COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/Uninstall.cmake")

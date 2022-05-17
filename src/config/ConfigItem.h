@@ -686,22 +686,31 @@ namespace DDP {
 }
 
 /**
- * Hash function for std::array.
- * Used for storing IPv6 addresses as std::array<uint32_t, 4> in std::unordered_set.
+ * Hash and comparison functions for struct in6_addr.
+ * Used for storing IPv6 addresses in std::unordered_set.
  */
 namespace std {
-    template<typename T, size_t N>
-    struct hash<array<T, N>>
+    template<>
+    struct hash<in6_addr>
     {
-        size_t operator()(const array<T, N>& a) const
+        size_t operator()(const in6_addr& a) const
         {
-            hash<T> hasher;
+            hash<uint32_t> hasher;
             size_t h = 0;
-            for (size_t i = 0; i < N; ++i)
+            const uint32_t* p = reinterpret_cast<const uint32_t*>(&a);
+            for (size_t i = 0; i < 4; ++i)
             {
-                h = h * 31 + hasher(a[i]);
+                h = h * 31 + hasher(p[i]);
             }
             return h;
+        }
+    };
+
+    template<>
+    struct equal_to<in6_addr>
+    {
+        bool operator() (const in6_addr& a1, const in6_addr& a2) const {
+            return std::memcmp(&a1, &a2, sizeof(in6_addr)) == 0;
         }
     };
 }
@@ -717,7 +726,7 @@ namespace DDP {
         /**
          * @brief Constructors
          */
-        ConfigItem(){};
+        ConfigItem() : m_value() {};
         ConfigItem(CList<IPv6_t> value) : m_value(value) {};
 
         /**
@@ -733,7 +742,7 @@ namespace DDP {
         void add_value(const boost::any& value) override
         {
             IPv6_t addr;
-            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), addr.data());
+            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), &addr);
             if (ret != 1)
                 throw std::invalid_argument("IPv6 list doesn't contain valid IPv6 address.");
             m_value.insert(addr);
@@ -746,7 +755,7 @@ namespace DDP {
         void delete_value(const boost::any& value) override
         {
             IPv6_t addr;
-            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), addr.data());
+            int ret = inet_pton(AF_INET6, boost::any_cast<std::string>(value).c_str(), &addr);
             if (ret != 1)
                 throw std::invalid_argument("IPv6 list doesnt' contain valid IPv6 address to delete.");
             m_value.erase(addr);
@@ -768,7 +777,7 @@ namespace DDP {
             bool first = true;
             for (auto& val : m_value) {
                 char buff[INET6_ADDRSTRLEN + 4];
-                auto* ret = inet_ntop(AF_INET6, val.data(), buff, INET6_ADDRSTRLEN + 4);
+                auto* ret = inet_ntop(AF_INET6, &val, buff, INET6_ADDRSTRLEN + 4);
                 if (!ret)
                     continue;
                 if (first) {

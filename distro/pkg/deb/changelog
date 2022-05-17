@@ -1,0 +1,6 @@
+dns-probe ({{ version }}-cznic.{{ release }}) UNRELEASED; urgency=medium
+
+  * Upstream package
+
+ -- Pavel Dolezal <pavel.dolezal@nic.cz>  {{ now }}
+

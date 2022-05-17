@@ -35,8 +35,10 @@ namespace DDP {
         active_tt_records += rhs.active_tt_records;
         exported_to_pcap += rhs.exported_to_pcap;
 
-        for (auto i = 0u; i < 4; i++) {
-            queries[i] += rhs.queries[i];
+        for (auto index = 0u; index < queries.size(); index++) {
+            for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                queries[index][i] += rhs.queries[index][i];
+            }
         }
 
         return *this;
@@ -50,11 +52,16 @@ namespace DDP {
         str << "        Exported records: " << exported_records << std::endl;
         str << "     Active transactions: " << active_tt_records << std::endl;
         str << "Exported packets to PCAP: " << exported_to_pcap << std::endl;
-        str << "            IPv4 Queries: " << queries[Q_IPV4] << std::endl;
-        str << "            IPv6 Queries: " << queries[Q_IPV6] << std::endl;
-        str << "             TCP Queries: " << queries[Q_TCP] << std::endl;
-        str << "             UDP Queries: " << queries[Q_UDP] << std::endl;
-        str << "                 Queries: " << queries[Q_IPV4] + queries[Q_IPV6] << std::endl;
+        for (auto i = 0u; i < queries.size(); i++) {
+            str << "            IPv4 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV4] << std::endl;
+            str << "            IPv6 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV6] << std::endl;
+            str << "          TCP/53 Queries[" << std::to_string(i) << "]: " << queries[i][Q_TCP] << std::endl;
+            str << "             UDP Queries[" << std::to_string(i) << "]: " << queries[i][Q_UDP] << std::endl;
+            str << "             DoT Queries[" << std::to_string(i) << "]: " << queries[i][Q_DOT] << std::endl;
+            str << "             DoH Queries[" << std::to_string(i) << "]: " << queries[i][Q_DOH] << std::endl;
+            str << "                 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV4] + queries[i][Q_IPV6] << std::endl;
+        }
+
         return str.str();
     }
 
@@ -75,7 +82,10 @@ namespace DDP {
         exported_records = 0;
         active_tt_records = 0;
         exported_to_pcap = 0;
-        queries.fill(0);
+
+        for (auto& item: queries) {
+            item.fill(0);
+        }
 
         for (auto& stat: container) {
             operator+=(stat);
@@ -86,13 +96,18 @@ namespace DDP {
     {
         auto time_window = static_cast<double>(get_timestamp() - m_qps_timestamp);
 
-        std::array<uint64_t, 4> qps_tmp;
+        std::vector<QueryStatsArray> qps_tmp(qps.size());
         if (time_window)
-            for (auto i = 0u; i < 4; i++) {
-                qps_tmp[i] = (queries[i] - m_old_aggregated_queries[i]) / time_window;
+            for (auto index = 0u; index < qps.size(); index++) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                    qps_tmp[index][i] = (queries[index][i] - m_old_aggregated_queries[index][i]) / time_window;
+                }
             }
-        else
-            qps_tmp.fill(0);
+        else {
+            for (auto& item: qps_tmp) {
+                item.fill(0);
+            }
+        }
 
         m_qps_timestamp = get_timestamp();
         std::copy(queries.begin(), queries.end(), m_old_aggregated_queries.begin());
@@ -107,16 +122,22 @@ namespace DDP {
     void AggregatedStatistics::get(const std::vector<Statistics>& container)
     {
         aggregate(container);
-        qps.fill(0);
+        for (auto& item: qps) {
+            item.fill(0);
+        }
         for (auto& avg : m_moving_avg) {
-            for (auto i = 0u; i < 4; i++) {
-                qps[i] += avg[i];
+            for (auto index = 0u; index < qps.size(); index++) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                    qps[index][i] += avg[index][i];
+                }
             }
         }
 
         if (m_moving_avg.size() > 1) {
-            for (auto i = 0u; i < 4; i++) {
-                qps[i] = qps[i] / m_moving_avg.size();
+            for (auto index = 0u; index < qps.size(); index++) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                    qps[index][i] = qps[index][i] / m_moving_avg.size();
+                }
             }
         }
     }

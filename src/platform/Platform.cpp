@@ -48,7 +48,11 @@ void DDP::init_platform(const DDP::Arguments& args, const Config& cfg)
     argv.emplace_back(conv.str());
 
     for(auto& interface: args.devices) {
+#ifdef DPDK_21_11
+        argv.emplace_back("-a");
+#else
         argv.emplace_back("-w");
+#endif
         argv.emplace_back(interface.pci_id.c_str());
     }
 

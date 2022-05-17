@@ -1,5 +1,6 @@
 variables:
   IMAGE_TAG: $CI_REGISTRY_IMAGE:latest
+  DEBIAN_FRONTEND: noninteractive
 
 stages:
   - build_docker
@@ -45,3 +46,16 @@ pages:
       - public
   only:
     - master
+
+obs:
+  stage: deploy
+  image: $IMAGE_TAG
+  before_script:
+    - apt update
+    - apt -y install build-essential devscripts debhelper osc python3-setuptools
+    - pip3 install apkg
+  script:
+    - scripts/prepare_obs.sh
+    - scripts/build_obs.sh
+  only:
+    - tags
