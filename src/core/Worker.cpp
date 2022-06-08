@@ -109,6 +109,11 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
                         m_stats.queries[index][Statistics::Q_IPV4]++;
                     }
                     m_stats.queries[0][Statistics::Q_IPV4]++;
+
+                    // Retrieved client address is in network byte order so we can mask by 0xFF
+                    // to get highest byte of IPv4 address.
+                    auto first_byte = reinterpret_cast<const uint32_t*>(record->client_address())[0] & 0xFF;
+                    m_stats.ipv4_src_entropy_cnts[first_byte]++;
                 }
                 else if(record->m_addr_family == DnsRecord::AddrFamily::IP6) {
                     if (is_detailed_stats()) {
@@ -279,6 +284,11 @@ DDP::WorkerRetCode DDP::Worker::process_knot_datagram(const Packet& dgram)
                     m_stats.queries[index][Statistics::Q_IPV4]++;
                 }
                 m_stats.queries[0][Statistics::Q_IPV4]++;
+
+                // Retrieved client address is in network byte order so we can mask by 0xFF
+                // to get highest byte of IPv4 address.
+                auto first_byte = reinterpret_cast<const uint32_t*>(record->client_address())[0] & 0xFF;
+                m_stats.ipv4_src_entropy_cnts[first_byte]++;
             }
             else if(record->m_addr_family == DnsRecord::AddrFamily::IP6) {
                 if (is_detailed_stats()) {

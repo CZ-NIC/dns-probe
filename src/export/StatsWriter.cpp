@@ -64,6 +64,11 @@ int64_t DDP::StatsWriter::write(AggregatedStatistics item)
         output << "\"exported-pcap-packets\":" << std::to_string(item.exported_to_pcap);
     }
 
+    if (fields[static_cast<uint32_t>(StatsField::IPV4_SOURCE_ENTROPY)]) {
+        if (comma) { output << ","; } else { comma = true; }
+        output << "\"ipv4-source-entropy\":" << std::to_string(item.ipv4_src_entropy);
+    }
+
     if (m_cfg.stats_per_ip.value() &&
         (m_cfg.ipv4_indices.size() > 0 || m_cfg.ipv6_indices.size() > 0)) {
         for (auto& i: m_cfg.ipv4_indices) {

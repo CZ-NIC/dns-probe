@@ -30,6 +30,7 @@
 #include <vector>
 #include <array>
 #include <list>
+#include <cstring>
 
 namespace DDP {
     /**
@@ -45,6 +46,7 @@ namespace DDP {
         constexpr static auto Q_DOH = 5u;
 
         constexpr static auto QUERY_STATS_SIZE = 6u;
+        constexpr static auto ENTROPY_ARRAY_SIZE = 256u;
 
         using QueryStatsArray = std::array<uint64_t, QUERY_STATS_SIZE>;
 
@@ -54,7 +56,9 @@ namespace DDP {
          * export_stats configuration and number of IPs in ipv4_allowlist and ipv6_allowlist.
          */
         Statistics(std::size_t size = 1) : packets(), transactions(), exported_records(),
-            active_tt_records(), exported_to_pcap(), queries(size, {0,0,0,0,0,0}) {}
+            active_tt_records(), exported_to_pcap(), ipv4_src_entropy_cnts(), queries(size, {0,0,0,0,0,0}) {
+                std::memset(ipv4_src_entropy_cnts, 0, sizeof(ipv4_src_entropy_cnts));
+        }
 
         /**
          * Copy constructor.
@@ -88,6 +92,7 @@ namespace DDP {
         uint64_t exported_records; //!< Number of exported records.
         uint64_t active_tt_records; //!< Number of active records in transaction table.
         uint64_t exported_to_pcap; //!< Number of packets exported to PCAP.
+        uint64_t ipv4_src_entropy_cnts[ENTROPY_ARRAY_SIZE]; //!< Number of queries for each source "A" class IP block
         std::vector<QueryStatsArray> queries; //!< Number of processed queries for IPv4, IPv6, UDP, TCP/53, DoT and DoH.
     };
 
@@ -103,8 +108,10 @@ namespace DDP {
          * export_stats configuration and number of IPs in ipv4_allowlist and ipv6_allowlist.
          */
         AggregatedStatistics(std::size_t size = 1) : Statistics(size), qps(size, {0,0,0,0,0,0}),
-            m_qps_timestamp(get_timestamp()), m_old_aggregated_queries(size, {0,0,0,0,0,0}),
-            m_moving_avg(), m_moving_avg_window(300) {}
+             ipv4_src_entropy(0.0), m_qps_timestamp(get_timestamp()),
+             m_old_aggregated_queries(size, {0,0,0,0,0,0}), m_moving_avg(), m_moving_avg_window(300) {
+                std::memset(m_old_ipv4_src_entropy_cnts, 0, sizeof(m_old_ipv4_src_entropy_cnts));
+        }
 
         /**
          * Copy constructor.
@@ -147,11 +154,13 @@ namespace DDP {
 
     public:
         std::vector<QueryStatsArray> qps; //!< Queries per second.
+        double ipv4_src_entropy; //!< Entropy for highest byte of source IPv4 addresses of queries.
 
     private:
         uint64_t m_qps_timestamp; //!< Last timestamp used for calculating qps.
-        std::vector<QueryStatsArray> m_old_aggregated_queries; //!< Last aggravated count of queries.
+        std::vector<QueryStatsArray> m_old_aggregated_queries; //!< Last aggregated count of queries.
         std::list<std::vector<QueryStatsArray>> m_moving_avg; //!< Last m_moving_avg_window values of avg qps for calculating moving average.
         uint32_t m_moving_avg_window; //!< Moving average window in seconds.
+        uint64_t m_old_ipv4_src_entropy_cnts[ENTROPY_ARRAY_SIZE]; //!< Last aggregated count of queries per highest byte of IPv4 client address.
     };
 }
