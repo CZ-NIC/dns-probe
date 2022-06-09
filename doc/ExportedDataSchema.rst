@@ -250,6 +250,8 @@ DNS Probe can export the following run-time statistics:
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | exported-pcap-packets       | UINT64    | Cumulative number of packets exported to PCAP since the start of probe                                          |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
+    | ipv4-source-entropy         | DOUBLE    | Entropy for highest byte of client IPv4 addresses for the last :ref:`stats-timeout` seconds                     |
+    +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries-ipv4                | UINT64    | Cumulative number of IPv4 DNS requests seen on wire since the start of probe                                    |
     +-----------------------------+-----------+-----------------------------------------------------------------------------------------------------------------+
     | queries-ipv6                | UINT64    | Cumulative number of IPv6 DNS requests seen on wire since the start of probe                                    |

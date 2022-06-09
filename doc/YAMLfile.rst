@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2022-05-17
+  # Last revision: 2022-06-08
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -271,6 +271,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
         - 'exported-records'
         - 'pending-transactions'
         - 'exported-pcap-packets'
+        - 'ipv4-source-entropy'
         - 'queries-ipv4'
         - 'queries-ipv6'
         - 'queries-tcp'
