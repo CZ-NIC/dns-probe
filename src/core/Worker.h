@@ -295,6 +295,12 @@ namespace DDP {
         void close_port(int pos);
 
         /**
+         * @brief Update run-time statistics' counters with given DNS record
+         * @param record New DNS record to include in the statistics
+         */
+        void update_stats(DnsRecord* record);
+
+        /**
          * @brief Check if detailed run-time statistics are being collected
          */
         bool is_detailed_stats() const {
