@@ -161,7 +161,8 @@ namespace DDP {
                     ipv4_src_entropy += (probability * std::log2(probability));
             }
 
-            ipv4_src_entropy = -1 * ipv4_src_entropy;
+            if (ipv4_src_entropy != 0.0)
+                ipv4_src_entropy = -1 * ipv4_src_entropy;
         }
 
         std::memcpy(m_old_ipv4_src_entropy_cnts, ipv4_src_entropy_cnts, sizeof(ipv4_src_entropy_cnts));
