@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <list>
+#include <cmath>
 
 #include "Statistics.h"
 
@@ -34,6 +35,10 @@ namespace DDP {
         exported_records += rhs.exported_records;
         active_tt_records += rhs.active_tt_records;
         exported_to_pcap += rhs.exported_to_pcap;
+
+        for (auto index = 0u; index < ENTROPY_ARRAY_SIZE; index++) {
+            ipv4_src_entropy_cnts[index] += rhs.ipv4_src_entropy_cnts[index];
+        }
 
         for (auto index = 0u; index < queries.size(); index++) {
             for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
@@ -82,6 +87,7 @@ namespace DDP {
         exported_records = 0;
         active_tt_records = 0;
         exported_to_pcap = 0;
+        std::memset(ipv4_src_entropy_cnts, 0, sizeof(ipv4_src_entropy_cnts));
 
         for (auto& item: queries) {
             item.fill(0);
@@ -140,5 +146,25 @@ namespace DDP {
                 }
             }
         }
+
+        ipv4_src_entropy = 0.0;
+        uint64_t all_count = 0;
+
+        for (auto index = 0u; index < ENTROPY_ARRAY_SIZE; index++) {
+            all_count += (ipv4_src_entropy_cnts[index] - m_old_ipv4_src_entropy_cnts[index]);
+        }
+
+        if (all_count > 0) {
+            for (auto index = 0u; index < ENTROPY_ARRAY_SIZE; index++) {
+                double probability = (ipv4_src_entropy_cnts[index] - m_old_ipv4_src_entropy_cnts[index]) / static_cast<double>(all_count);
+                if (probability > 0.0)
+                    ipv4_src_entropy += (probability * std::log2(probability));
+            }
+
+            if (ipv4_src_entropy != 0.0)
+                ipv4_src_entropy = -1 * ipv4_src_entropy;
+        }
+
+        std::memcpy(m_old_ipv4_src_entropy_cnts, ipv4_src_entropy_cnts, sizeof(ipv4_src_entropy_cnts));
     }
 }

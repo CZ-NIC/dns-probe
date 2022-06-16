@@ -47,7 +47,7 @@ namespace DDP {
         return bitmask;
     }
 
-    static constexpr uint8_t StatsBits = 20; //!< Number of possible statistics to export
+    static constexpr uint8_t StatsBits = 21; //!< Number of possible statistics to export
     static constexpr uint64_t get_stats_bitmask() {
         uint64_t bitmask = 0;
         for (unsigned i = 0; i < StatsBits; i++) {
@@ -151,6 +151,7 @@ namespace DDP {
         EXPORTED_RECORDS,
         PENDING_TRANSACTIONS,
         EXPORTED_PCAP_PACKETS,
+        IPV4_SOURCE_ENTROPY,
         QUERIES_IPV4,
         QUERIES_IPV6,
         QUERIES_TCP,
@@ -174,6 +175,7 @@ namespace DDP {
         {"exported-records",            static_cast<uint32_t>(StatsField::EXPORTED_RECORDS)},
         {"pending-transactions",        static_cast<uint32_t>(StatsField::PENDING_TRANSACTIONS)},
         {"exported-pcap-packets",       static_cast<uint32_t>(StatsField::EXPORTED_PCAP_PACKETS)},
+        {"ipv4-source-entropy",         static_cast<uint32_t>(StatsField::IPV4_SOURCE_ENTROPY)},
         {"queries-ipv4",                static_cast<uint32_t>(StatsField::QUERIES_IPV4)},
         {"queries-ipv6",                static_cast<uint32_t>(StatsField::QUERIES_IPV6)},
         {"queries-tcp",                 static_cast<uint32_t>(StatsField::QUERIES_TCP)},

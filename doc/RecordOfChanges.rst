@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **1.1.0**
+     - **1.0**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
+     - Add export of source IPv4 entropy to run-time statistics
    * - **1.0.0**
      - **1.0**
      - :doc:`Installation <Installation>`
