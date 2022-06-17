@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project("DNS Probe" VERSION 1.1.0)
+project("DNS Probe" VERSION 1.1.1)
 
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
