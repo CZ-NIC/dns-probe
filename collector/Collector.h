@@ -74,20 +74,7 @@ namespace DDP {
         /**
          * @brief Destructor gracefuly closes SSL connection.
          */
-        ~ConnectionHandler() {
-            if (m_ssl) {
-                SSL_shutdown(m_ssl);
-                SSL_free(m_ssl);
-            }
-
-            if (m_fd >= 0)
-                ::close(m_fd);
-
-            struct stat buffer;
-            if (stat((m_file_name + ".part").c_str(), &buffer) == 0) {
-                std::remove((m_file_name + ".part").c_str());
-            }
-        }
+        ~ConnectionHandler() { close_connection(); }
 
         /**
          * @brief Main connection loop. Polls socket for new data and writes it to output file.
@@ -101,6 +88,11 @@ namespace DDP {
          * @throw std::runtime_error
          */
         void read_data();
+
+        /**
+         * @brief Shutdown connection and cleanup after yourself
+         */
+        void close_connection();
 
         int m_fd;
         SSL_CTX* m_ctx;
