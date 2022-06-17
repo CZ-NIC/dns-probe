@@ -45,13 +45,16 @@ DDP::ConnectionHandler::ConnectionHandler(int conn, SSL_CTX* ctx, std::string& f
         throw std::runtime_error("Couldn't create TLS object!");
 
     int ret = SSL_set_fd(m_ssl, conn);
-    if (ret != 1)
+    if (ret != 1) {
+        close_connection();
         throw std::runtime_error("Couldn't pair socket with TLS object");
+    }
 
     ret = SSL_accept(m_ssl);
     if (ret != 1) {
         int err = SSL_get_error(m_ssl, ret);
-        throw std::runtime_error("Couldn't establish TLS connection! SSL error code: " + err);
+        close_connection();
+        throw std::runtime_error("Couldn't establish TLS connection! SSL error code: " + std::to_string(err));
     }
 }
 
@@ -120,6 +123,22 @@ void DDP::ConnectionHandler::read_data()
         else {
             m_out.write(reinterpret_cast<char*>(buf), ret);
         }
+    }
+}
+
+void DDP::ConnectionHandler::close_connection()
+{
+    if (m_ssl) {
+        SSL_shutdown(m_ssl);
+        SSL_free(m_ssl);
+    }
+
+    if (m_fd >= 0)
+        ::close(m_fd);
+
+    struct stat buffer;
+    if (stat((m_file_name + ".part").c_str(), &buffer) == 0) {
+        std::remove((m_file_name + ".part").c_str());
     }
 }
 
