@@ -85,7 +85,7 @@ void DDP::ConnectionHandler::run()
         }
         else if (ret == 0) {}
         else
-            throw std::runtime_error("File descriptor error: " + errno);
+            throw std::runtime_error("File descriptor error: " + std::to_string(errno));
     }
 }
 
@@ -118,7 +118,7 @@ void DDP::ConnectionHandler::read_data()
             if (err == SSL_ERROR_ZERO_RETURN)
                 m_state = ConnectionStates::FINISHED;
             else
-                throw std::runtime_error("Error reading data! SSL error: " + err);
+                throw std::runtime_error("Error reading data! SSL error: " + std::to_string(err));
         }
         else {
             m_out.write(reinterpret_cast<char*>(buf), ret);
