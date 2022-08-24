@@ -197,6 +197,10 @@ DDP::Collector::Collector(CConfig& cfg) : m_cfg(cfg)
         if (m_fd < 0)
             throw std::runtime_error("Couldn't open socket!");
 
+        int off = 0;
+        if (setsockopt(m_fd, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&off), sizeof(off)) < 0)
+            throw std::runtime_error("Couldn't set IP socket options!");
+
         sa6.sin6_family = AF_INET6;
         sa6.sin6_addr = in6addr_any;
         sa6.sin6_port = htons(m_cfg.port);
