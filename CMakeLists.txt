@@ -70,6 +70,11 @@ endif()
 if (PROBE_PARQUET)
     find_package(Arrow REQUIRED)
     find_package(Parquet REQUIRED)
+
+    if (${arrow_VERSION} VERSION_GREATER "9.0.0")
+        set(CMAKE_CXX_STANDARD 17)
+    endif()
+
     target_link_libraries(DNSProbe INTERFACE Arrow::Arrow Parquet::Parquet)
     target_compile_definitions(DNSProbe INTERFACE PROBE_PARQUET)
     file(GLOB PARQUET_HEADERS CONFIGURE_DEPENDS src/export/parquet/*.h)
