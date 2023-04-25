@@ -178,6 +178,10 @@ if (DPDK_BACKEND)
         target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_21_11)
     endif()
 
+    if (DPDK_VERSION VERSION_GREATER "22.07")
+        target_compile_definitions(dns-probe-dpdk PRIVATE DPDK_22_11)
+    endif()
+
     install(TARGETS dns-probe-dpdk RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
     set(BACKEND dpdk)
