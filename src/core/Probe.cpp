@@ -22,6 +22,7 @@
  */
 
 #include <iostream>
+#include <cstdint>
 #include <utility>
 #include <tuple>
 #include <getopt.h>
