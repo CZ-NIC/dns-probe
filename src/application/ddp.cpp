@@ -62,7 +62,7 @@ static bool check_module()
 {
     if (auto dir = opendir("/sys/module/")) {
         while (auto f = readdir(dir)) {
-            if (!f->d_name || f->d_name[0] == '.')
+            if (!f || f->d_name[0] == '.')
                 continue;
 
             if (std::strcmp("uio_pci_generic", f->d_name) == 0) {
@@ -160,7 +160,7 @@ static void bind_interfaces(DDP::Arguments& args)
     std::list<DDP::PciDevice> dev_list;
     if (auto dir = opendir("/sys/bus/pci/devices/")) {
         while (auto f = readdir(dir)) {
-            if (!f->d_name || f->d_name[0] == '.')
+            if (!f || f->d_name[0] == '.')
                 continue;
 
             DDP::PciDevice tmp;
@@ -189,7 +189,7 @@ static void bind_interfaces(DDP::Arguments& args)
 
             if (auto dir2 = opendir(("/sys/bus/pci/devices/" + std::string(f->d_name) + "/net").c_str())) {
                 while (auto g = readdir(dir2)) {
-                    if (!g->d_name || g->d_name[0] == '.')
+                    if (!g || g->d_name[0] == '.')
                         continue;
 
                     tmp.if_name.push_back(g->d_name);
