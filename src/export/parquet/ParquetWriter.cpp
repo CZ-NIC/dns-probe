@@ -48,7 +48,9 @@ int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)
     else
         PARQUET_THROW_NOT_OK(parquet::arrow::WriteTable(*item, arrow::default_memory_pool(), outfile, item->num_rows()));
 
-    outfile->Close();
+    auto ret = outfile->Close();
+    if (!ret.ok())
+        throw std::runtime_error("Arrow: " + ret.ToString());
 
     chmod(full_name.c_str(), 0666);
     if (m_cfg.export_location.value() == ExportLocation::LOCAL) {
