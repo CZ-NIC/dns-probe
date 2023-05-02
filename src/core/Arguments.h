@@ -27,6 +27,7 @@
 #define PROBE_CONFIG ""
 #endif
 
+#include <cstdint>
 #include <string>
 #include <list>
 

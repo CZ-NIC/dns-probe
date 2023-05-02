@@ -25,6 +25,7 @@
 
 #include <exception>
 #include <cstring>
+#include <cstdint>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <maxminddb.h>
