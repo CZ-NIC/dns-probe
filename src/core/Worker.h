@@ -301,11 +301,17 @@ namespace DDP {
         void update_stats(DnsRecord* record);
 
         /**
-         * @brief Check if detailed run-time statistics are being collected
+         * @brief Check if detailed run-time statistics for IPv4 are being collected
          */
-        bool is_detailed_stats() const {
-            return m_cfg.stats_per_ip.value() &&
-                (m_cfg.ipv4_indices.size() > 0 || m_cfg.ipv6_indices.size() > 0);
+        bool is_detailed_stats_ipv4() const {
+            return m_cfg.stats_per_ip.value() && m_cfg.ipv4_indices.size() > 0;
+        }
+
+        /**
+         * @brief Check if detailed run-time statistics for IPv6 are being collected
+         */
+        bool is_detailed_stats_ipv6() const {
+            return m_cfg.stats_per_ip.value() && m_cfg.ipv6_indices.size() > 0;
         }
 
     private:
