@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **1.1.2**
+     - **1.0**
+     - :doc:`Installation <Installation>`
+     - Update list of supported Linux distributions
    * - **1.1.0**
      - **1.0**
      - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
