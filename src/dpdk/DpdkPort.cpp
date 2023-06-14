@@ -46,7 +46,9 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
 
     // Port configuration
     rte_eth_conf port_conf{};
+#ifndef DPDK_22_11
     port_conf.rxmode.split_hdr_size = 0;
+#endif
 
 #ifndef DPDK_LEGACY
     port_conf.rxmode.offloads = 0;
@@ -60,24 +62,36 @@ DDP::DPDKPort::DPDKPort(uint16_t port, uint16_t num_queues, rte_mempool_t& mbuf_
     rte_eth_dev_info info{};
     rte_eth_dev_info_get(port, &info);
     info.default_rxconf.rx_drop_en = 1;
+
+#ifndef DPDK_22_11
     if ((strcmp(info.driver_name, "net_pcap") != 0 && strcmp(info.driver_name, "Pcap PMD") != 0) &&
         ((info.flow_type_rss_offloads & (ETH_RSS_UDP | ETH_RSS_TCP)) != (ETH_RSS_UDP | ETH_RSS_TCP)))
         throw std::runtime_error("Minimal required RSS hash calculation level not supported by NIC");
 
     port_conf.rxmode.mq_mode = ETH_MQ_RX_RSS;
+#else
+    if ((strcmp(info.driver_name, "net_pcap") != 0 && strcmp(info.driver_name, "Pcap PMD") != 0) &&
+        ((info.flow_type_rss_offloads & (RTE_ETH_RSS_UDP | RTE_ETH_RSS_TCP)) != (RTE_ETH_RSS_UDP | RTE_ETH_RSS_TCP)))
+        throw std::runtime_error("Minimal required RSS hash calculation level not supported by NIC");
+
+    port_conf.rxmode.mq_mode = RTE_ETH_MQ_RX_RSS;
+#endif
     port_conf.rx_adv_conf.rss_conf.rss_key = rss_hash_key;
     port_conf.rx_adv_conf.rss_conf.rss_hf = info.flow_type_rss_offloads;
 
 #ifndef DPDK_LEGACY
-    if (info.rx_offload_capa & DEV_RX_OFFLOAD_CHECKSUM)
-        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_CHECKSUM;
-
 #ifdef DPDK_21_11
-    if (info.rx_offload_capa & DEV_RX_OFFLOAD_VLAN_STRIP)
-        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_VLAN_STRIP;
+    if (info.rx_offload_capa & RTE_ETH_RX_OFFLOAD_CHECKSUM)
+        port_conf.rxmode.offloads |= RTE_ETH_RX_OFFLOAD_CHECKSUM;
+
+    if (info.rx_offload_capa & RTE_ETH_RX_OFFLOAD_VLAN_STRIP)
+        port_conf.rxmode.offloads |= RTE_ETH_RX_OFFLOAD_VLAN_STRIP;
 
     port_conf.rxmode.mtu = info.max_mtu;
 #else
+    if (info.rx_offload_capa & DEV_RX_OFFLOAD_CHECKSUM)
+        port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_CHECKSUM;
+
     if (info.rx_offload_capa & DEV_RX_OFFLOAD_JUMBO_FRAME)
         port_conf.rxmode.offloads |= DEV_RX_OFFLOAD_JUMBO_FRAME;
 
@@ -184,7 +198,11 @@ std::string DDP::DPDKPort::selected_link_status()
         if (print_flag) {
             if (link.link_status) {
                 status << "Port " << m_port << "link is up. Speed " << link.link_speed << "Mbps - "
+#ifndef DPDK_22_11
                         << (link.link_duplex == ETH_LINK_FULL_DUPLEX ? "full-duplex" : "half-duplex") << '.'
+#else
+                        << (link.link_duplex == RTE_ETH_LINK_FULL_DUPLEX ? "full-duplex" : "half-duplex") << '.'
+#endif
                         << std::endl;
             }
             else {
@@ -195,7 +213,11 @@ std::string DDP::DPDKPort::selected_link_status()
         }
 
         /* clear port_up flag if link down */
+#ifndef DPDK_22_11
         if (link.link_status == ETH_LINK_DOWN) {
+#else
+        if (link.link_status == RTE_ETH_LINK_DOWN) {
+#endif
             port_up = false;
             break;
         }

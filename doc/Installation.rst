@@ -6,8 +6,8 @@ DNS Probe can be used on Linux with kernel version at least
 3.11. It also requires the system to support C++14 standard.
 Installation packages are available from `OBS (openSUSE Build Service)
 <https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe>`_.
-The following distributions are currently supported: Debian 11, 10 and 9;
-Ubuntu 22.04, 20.04, 18.04; Fedora 36, 35, Rawhide; EPEL 8 and Arch.
+The following distributions are currently supported: Debian 12, 11, 10 and 9;
+Ubuntu 22.04, 20.04, 18.04; Fedora 38, 37, 36, Rawhide; EPEL 8 and Arch.
 
 The OBS repository also contains packages with several dependencies
 that are not provided by the distribution's standard

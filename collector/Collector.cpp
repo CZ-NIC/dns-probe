@@ -85,7 +85,7 @@ void DDP::ConnectionHandler::run()
         }
         else if (ret == 0) {}
         else
-            throw std::runtime_error("File descriptor error: " + errno);
+            throw std::runtime_error("File descriptor error: " + std::to_string(errno));
     }
 }
 
@@ -118,7 +118,7 @@ void DDP::ConnectionHandler::read_data()
             if (err == SSL_ERROR_ZERO_RETURN)
                 m_state = ConnectionStates::FINISHED;
             else
-                throw std::runtime_error("Error reading data! SSL error: " + err);
+                throw std::runtime_error("Error reading data! SSL error: " + std::to_string(err));
         }
         else {
             m_out.write(reinterpret_cast<char*>(buf), ret);
@@ -196,6 +196,10 @@ DDP::Collector::Collector(CConfig& cfg) : m_cfg(cfg)
         m_fd = socket(AF_INET6, SOCK_STREAM, 0);
         if (m_fd < 0)
             throw std::runtime_error("Couldn't open socket!");
+
+        int off = 0;
+        if (setsockopt(m_fd, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char*>(&off), sizeof(off)) < 0)
+            throw std::runtime_error("Couldn't set IP socket options!");
 
         sa6.sin6_family = AF_INET6;
         sa6.sin6_addr = in6addr_any;

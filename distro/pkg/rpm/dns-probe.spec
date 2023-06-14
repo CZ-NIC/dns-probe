@@ -14,8 +14,6 @@ BuildRequires: boost-devel
 BuildRequires: python3-sphinx
 BuildRequires: openssl-devel
 BuildRequires: libpcap-devel
-BuildRequires: arrow-devel
-BuildRequires: parquet-devel
 BuildRequires: cryptopant-devel
 BuildRequires: yaml-cpp-devel
 BuildRequires: fstrm-devel
@@ -25,6 +23,14 @@ BuildRequires: libmaxminddb-devel
 BuildRequires: knot-devel
 BuildRequires: libcdns-devel
 BuildRequires: dpdk-devel
+
+%if 0%{?fedora} > 35
+BuildRequires: libarrow-devel
+BuildRequires: parquet-libs-devel
+%else
+BuildRequires: arrow-devel
+BuildRequires: parquet-devel
+%endif
 
 %description
 High-speed DNS monitoring probe with export to Parquet or C-DNS
