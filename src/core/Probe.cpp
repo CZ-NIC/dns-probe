@@ -201,6 +201,7 @@ void DDP::Probe::load_config(Arguments& args)
     try {
         // Init configuration
         ConfigFile::load_configuration(m_cfg, args.conf_file, args.instance_name);
+        m_cfg.instance.add_value(args.instance_name);
 
         if (args.raw_pcap)
             m_cfg.raw_pcap.add_value(args.raw_pcap);

@@ -21,6 +21,9 @@
  *  the two.
  */
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include "CdnsWriter.h"
 
 void DDP::set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset<CdnsBits> fields)
@@ -98,7 +101,7 @@ void DDP::set_cdns_hints(uint32_t& qr_hints, uint32_t& qr_sig_hints, std::bitset
         qr_hints |= CDNS::QueryResponseHintsMask::response_size;
 }
 
-DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id,
+DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id, TlsCtxIndex::TRAFFIC,
                                                                 cfg.file_compression.value() ? ".gz" : ""),
                                                                 m_writer(nullptr), m_bytes_written(0),
                                                                 m_blocks_written(0)
@@ -118,6 +121,35 @@ DDP::CdnsWriter::CdnsWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, 
         m_writer = std::make_unique<CDNS::CdnsExporter>(fp, m_filename, CDNS::CborOutputCompression::NO_COMPRESSION);
 
     m_filename += m_sufix;
+    load_unsent_files_list();
+}
+
+DDP::CdnsWriter::~CdnsWriter()
+{
+    m_writer = nullptr;
+
+    try {
+        struct stat buffer;
+        if (m_bytes_written == 0 && stat(m_filename.c_str(), &buffer) == 0)
+            remove(m_filename.c_str());
+        else {
+            chmod(m_filename.c_str(), 0666);
+            if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
+                if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str())) {
+                    m_threads.emplace_back(std::async(std::launch::async, send_file,
+                                                        TlsCtxIndex::TRAFFIC, m_cfg.export_ip.value(),
+                                                        m_cfg.export_port.value(), m_filename,
+                                                        ".part", DEFAULT_TRIES));
+                    m_unsent_files.insert(m_filename);
+                }
+            }
+        }
+
+        cleanup();
+    }
+    catch (std::exception& e) {
+        Logger("Writer").warning() << "Destructor error: " << e.what();
+    }
 }
 
 void DDP::CdnsWriter::rotate_output()
@@ -128,17 +160,21 @@ void DDP::CdnsWriter::rotate_output()
     m_filename += m_sufix;
 
     struct stat buffer;
-    if (m_bytes_written == 0 && stat(rotated.c_str(), &buffer) == 0)
+    if (m_bytes_written == 0 && stat(rotated.c_str(), &buffer) == 0) {
         remove(rotated.c_str());
+        if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+            check_file_transfer();
+    }
     else {
         chmod(rotated.c_str(), 0666);
         if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
             if (std::rename(rotated.c_str(), (rotated + ".part").c_str()))
                 throw std::runtime_error("Couldn't rename the output file!");
 
-            check_file_transfer(TlsCtxIndex::TRAFFIC);
-            m_threads.emplace_back(std::async(std::launch::async, send_file, TlsCtxIndex::TRAFFIC,
+            check_file_transfer();
+            m_threads.emplace_back(std::async(std::launch::async, send_file, m_type,
                 m_cfg.export_ip.value(), m_cfg.export_port.value(), rotated, ".part", DEFAULT_TRIES));
+            m_unsent_files.insert(rotated);
         }
     }
 

@@ -43,14 +43,12 @@ namespace DDP {
          * @param cfg Configuration of the output
          * @param process_id Process ID used for generating names of the output files
          */
-        explicit ParquetWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id),
-                                                                   m_compress(cfg.file_compression.value()) {}
-
-        ~ParquetWriter() {
-            for (auto&& th : m_threads) {
-                th.wait();
-            }
+        explicit ParquetWriter(Config& cfg, uint32_t process_id) : BaseWriter(cfg, process_id, TlsCtxIndex::TRAFFIC),
+                                                                   m_compress(cfg.file_compression.value()) {
+            load_unsent_files_list();
         }
+
+        ~ParquetWriter() { cleanup(); }
 
         /**
          * @brief Write Arrow table to output
@@ -75,9 +73,12 @@ namespace DDP {
 
         /**
          * @brief Close current output and open a new one.
-         * Does nothing because Parquet creates a new output for each arrow Table anyway.
+         * Checks if there are any unsent files and tries to resend them.
          */
-        void rotate_output() override {}
+        void rotate_output() override {
+            if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+                check_file_transfer();
+        }
 
         private:
         bool m_compress;

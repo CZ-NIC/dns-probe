@@ -54,32 +54,7 @@ namespace DDP {
         /**
          * @brief Delete C-DNS writer object and exported file if it's empty
          */
-        ~CdnsWriter() {
-            m_writer = nullptr;
-
-            try {
-                struct stat buffer;
-                if (m_bytes_written == 0 && stat(m_filename.c_str(), &buffer) == 0)
-                    remove(m_filename.c_str());
-                else {
-                    chmod(m_filename.c_str(), 0666);
-                    if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
-                        if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str()))
-                            m_threads.emplace_back(std::async(std::launch::async, send_file,
-                                                              TlsCtxIndex::TRAFFIC, m_cfg.export_ip.value(),
-                                                              m_cfg.export_port.value(), m_filename,
-                                                              ".part", DEFAULT_TRIES));
-                    }
-                }
-            }
-            catch (std::exception& e) {
-                Logger("Writer").warning() << "Destructor error: " << e.what();
-            }
-
-            for (auto&& th : m_threads) {
-                th.wait();
-            }
-        }
+        ~CdnsWriter();
 
         /**
          * @brief Write given item with buffered DNS records to output

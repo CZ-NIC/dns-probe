@@ -301,6 +301,9 @@ void DDP::Worker::rotate_output()
             m_pcap_all.rotate_output();
 
         m_parser.rotate_invalid();
+
+        // Rotate leftovers writer in case there are unsent files from previous probe process
+        m_writer->rotate_output();
     }
     catch(std::exception& e) {
         Logger("Export").warning() << "Output rotation on worker " << m_process_id << "failed: " << e.what();
