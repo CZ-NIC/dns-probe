@@ -22,6 +22,7 @@
  */
 
 #include <cstdio>
+#include <fstream>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -36,6 +37,12 @@ namespace DDP {
     std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
         std::string sufix, uint8_t tries)
     {
+        struct stat buffer;
+        if (stat((filename + sufix).c_str(), &buffer) != 0) {
+            Logger("Writer").debug() << "Couldn't send output file! Filename doesn't exist: " << (filename + sufix);
+            return filename;
+        }
+
         auto pos = filename.find_last_of('/');
 
         for (int i = 0; i < tries; i++) {
@@ -64,7 +71,7 @@ namespace DDP {
 
                 ifs.close();
                 std::remove((filename + sufix).c_str());
-                return "";
+                return filename;
             }
             catch (std::exception& e) {}
         }
@@ -72,21 +79,22 @@ namespace DDP {
         Logger("Writer").warning() << "Couldn't send output file to remote server!";
         if (std::rename((filename + sufix).c_str(), filename.c_str()))
             Logger("Writer").warning() << "Couldn't rename the output file!";
-        return filename;
+        return "";
     }
 
     std::unordered_set<std::string> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
         std::unordered_set<std::string> flist)
     {
-        for (auto it = flist.begin(); it != flist.end(); ) {
-            auto ret = send_file(type, ip, port, *it, "", 1);
-            if (ret.empty())
-                it = flist.erase(it);
-            else
-                ++it;
+        std::unordered_set<std::string> success;
+
+        for (auto& f : flist) {
+            auto ret = send_file(type, ip, port, f, "", 1);
+
+            if (!ret.empty())
+                success.insert(ret);
         }
 
-        return flist;
+        return success;
     }
 
     void TlsCtx::init(TlsCtxIndex type, std::string ca_cert)
@@ -228,8 +236,10 @@ namespace DDP {
                + m_id + inv + full_sufix;
     }
 
-    void BaseWriter::check_file_transfer(TlsCtxIndex type)
+    void BaseWriter::check_file_transfer()
     {
+        // check for finished sending threads
+        // if thread finished unsuccessfully, add file to unsent files list that will be tried again later
         if (!m_threads.empty()) {
             m_threads.erase(std::remove_if(m_threads.begin(), m_threads.end(),
                 [this](auto& x) {
@@ -239,7 +249,7 @@ namespace DDP {
                 if (ret) {
                     auto result = x.get();
                     if (!result.empty())
-                        m_unsent_files.insert(result);
+                        m_unsent_files.erase(result);
                 }
                 return ret;
             }), m_threads.end());
@@ -247,35 +257,93 @@ namespace DDP {
 
         if (m_files_thread.valid() &&
             (m_files_thread.wait_for(std::chrono::seconds(0)) == std::future_status::ready)) {
-            auto failed = m_files_thread.get();
-            for (auto&& file : failed) {
-                m_unsent_files.insert(file);
+            auto success = m_files_thread.get();
+            for (auto&& file : success) {
+                m_unsent_files.erase(file);
             }
 
             if (!m_unsent_files.empty()) {
-                if (type == TlsCtxIndex::TRAFFIC) {
-                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.export_ip.value(),
+                if (m_type == TlsCtxIndex::TRAFFIC) {
+                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
                         m_cfg.export_port.value(), m_unsent_files);
                 }
                 else {
-                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.stats_ip.value(),
+                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
                         m_cfg.stats_port.value(), m_unsent_files);
                 }
-                m_unsent_files.clear();
             }
         }
         else if (!m_files_thread.valid()) {
             if (!m_unsent_files.empty()) {
-                if (type == TlsCtxIndex::TRAFFIC) {
-                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.export_ip.value(),
+                if (m_type == TlsCtxIndex::TRAFFIC) {
+                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
                         m_cfg.export_port.value(), m_unsent_files);
                 }
                 else {
-                    m_files_thread = std::async(std::launch::async, send_files, type, m_cfg.stats_ip.value(),
+                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
                         m_cfg.stats_port.value(), m_unsent_files);
                 }
-                m_unsent_files.clear();
             }
         }
+
+        save_unsent_files_list();
+    }
+
+    void BaseWriter::load_unsent_files_list()
+    {
+        std::ifstream unsent_list(unsent_filename());
+        if (unsent_list.fail())
+            return;
+
+        std::string line;
+        while (std::getline(unsent_list, line)) {
+            m_unsent_files.insert(line);
+        }
+        unsent_list.close();
+
+        if (m_type == TlsCtxIndex::TRAFFIC) {
+            m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
+                m_cfg.export_port.value(), m_unsent_files);
+        }
+        else {
+            m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
+                m_cfg.stats_port.value(), m_unsent_files);
+        }
+    }
+
+    void BaseWriter::save_unsent_files_list()
+    {
+        std::ofstream unsent_list(unsent_filename());
+
+        for (auto& file : m_unsent_files) {
+            unsent_list << file << std::endl;
+        }
+
+        unsent_list.close();
+    }
+
+    void BaseWriter::cleanup()
+    {
+        for (auto&& th : m_threads) {
+            th.wait();
+            auto ret = th.get();
+            if (!ret.empty())
+                m_unsent_files.erase(ret);
+        }
+
+        if (m_files_thread.valid()) {
+            m_files_thread.wait();
+            auto ret = m_files_thread.get();
+            for (auto&& f : ret) {
+                m_unsent_files.erase(f);
+            }
+        }
+
+        save_unsent_files_list();
+
+        struct stat buffer;
+        std::string file = unsent_filename();
+        if (stat(file.c_str(), &buffer) == 0 && buffer.st_size == 0)
+            remove(file.c_str());
     }
 }

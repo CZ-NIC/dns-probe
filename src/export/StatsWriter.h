@@ -43,13 +43,11 @@ namespace DDP {
          * @throw std::runtime_error
          */
         StatsWriter(Config& cfg, uint32_t process_id = 0)
-            : BaseWriter(cfg, process_id, ".json") {}
-
-        ~StatsWriter() {
-            for (auto&& th : m_threads) {
-                th.wait();
-            }
+            : BaseWriter(cfg, process_id, TlsCtxIndex::STATISTICS, ".json") {
+            load_unsent_files_list();
         }
+
+        ~StatsWriter() { cleanup(); }
 
         /**
          * @brief Write given item with run-time statistics to JSON output
@@ -77,9 +75,12 @@ namespace DDP {
         std::string filename();
 
         /**
-         * @brief Unused BaseWriter virtual method
+         * @brief Checks if there are any unsent files and tries to resend them
          */
-        void rotate_output() {}
+        void rotate_output() {
+            if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+                check_file_transfer();
+        }
 
     private:
         /**

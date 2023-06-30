@@ -86,6 +86,7 @@ namespace DDP {
                    stats_ca_cert(),
                    moving_avg_window(300),
                    stats_fields(get_stats_bitmask()),
+                   instance("default"),
                    ipv4_indices(),
                    ipv6_indices() {}
 
@@ -166,6 +167,7 @@ namespace DDP {
         ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
         ConfigBitfield<StatsBits> stats_fields; //!< Indicates which statistics should be exported
 
+        ConfigItem<std::string> instance; //!< Name of running dns-probe instance. "Default" by default.
         std::unordered_map<IPv4_t, uint16_t> ipv4_indices; //!< Indices to run-time statistics vector for IPv4 addresses in ipv4_allowlist
         std::unordered_map<IPv6_t, uint16_t> ipv6_indices; //!< Indices to run-time statistics vector for IPv6 addresses in ipv6_allowlist
     };

@@ -109,9 +109,10 @@ int64_t DDP::StatsWriter::write(AggregatedStatistics item)
             throw std::runtime_error("Couldn't rename the output statistics file!");
     }
     else {
-        check_file_transfer(TlsCtxIndex::STATISTICS);
-        m_threads.emplace_back(std::async(std::launch::async, send_file, TlsCtxIndex::STATISTICS,
+        check_file_transfer();
+        m_threads.emplace_back(std::async(std::launch::async, send_file, m_type,
             m_cfg.stats_ip.value(), m_cfg.stats_port.value(), m_filename, ".part", DEFAULT_TRIES));
+        m_unsent_files.insert(m_filename);
     }
 
     return res < 0 ? 0 : res;

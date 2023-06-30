@@ -44,7 +44,7 @@ namespace DDP {
          * @param process_id Process identifier, used in generation of PCAP file's name
          */
         explicit PcapWriter(Config& cfg, bool invalid, uint32_t process_id) :
-                BaseWriter(cfg, process_id),
+                BaseWriter(cfg, process_id, TlsCtxIndex::TRAFFIC),
                 m_invalid(invalid),
                 m_raw_pcap(cfg.raw_pcap.value()),
                 m_out(nullptr),

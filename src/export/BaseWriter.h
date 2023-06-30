@@ -181,13 +181,14 @@ namespace DDP {
          * @brief Construct a new BaseWriter object
          * @param cfg Configuration of the output
          * @param process_id Process ID used for generating names of the output files
+         * @param type Type of data this writer will write (traffic or statistics)
          * @param sufix Sufix of the generated names for export files
          */
-        explicit BaseWriter(Config& cfg, uint32_t process_id, std::string sufix = "") :
+        explicit BaseWriter(Config& cfg, uint32_t process_id, TlsCtxIndex type, std::string sufix = "") :
             m_cfg(cfg),
             m_id(".p" + std::to_string(process_id)),
             m_sufix(sufix),
-            m_filename_counter(0),
+            m_type(type),
             m_filename(),
             m_threads(),
             m_unsent_files(),
@@ -228,12 +229,34 @@ namespace DDP {
          * @brief Collects all finished transfer threads a checks for transfer success.
          * Spawns thread to resend all files from failed transfers if such thread doesn't already exist.
          */
-        void check_file_transfer(TlsCtxIndex type);
+        void check_file_transfer();
+
+        /**
+         * @brief Try to load file with names of unsent files at the start of probe process
+         * @param type Determine if files with run-time stats or traffic data should be loaded
+         */
+        void load_unsent_files_list();
+
+        /**
+         * @brief Save list of currently unsent files to a file on disk.
+         */
+        void save_unsent_files_list();
+
+        /**
+         * @brief Clean up all sending threads and save unsent files list to a file if it's not empty
+         */
+        void cleanup();
+
+        std::string unsent_filename() {
+            std::string file_type = m_type == TlsCtxIndex::TRAFFIC ? ".traffic" : ".stats";
+            return m_cfg.target_directory.value() + "/dns-probe-" + m_cfg.instance.value() + m_id + file_type
+                + ".unsent";
+        }
 
         Config m_cfg;
         std::string m_id;
         std::string m_sufix;
-        uint8_t m_filename_counter;
+        TlsCtxIndex m_type;
         std::string m_filename;
         std::vector<std::future<std::string>> m_threads;
         std::unordered_set<std::string> m_unsent_files;
