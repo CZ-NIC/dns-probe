@@ -397,7 +397,7 @@ ipv4-allowlist
 :data node: ``<instance-id>/ipv4-allowlist``
 :default: empty
 
-List of allowed IPv4 addresses to process traffic from.
+List of allowed IPv4 addresses and prefixes to process traffic from.
 
 By default all IPv4 addressess are allowed.
 
@@ -407,7 +407,7 @@ ipv4-denylist
 :data node: ``<instance-id>/ipv4-denylist``
 :default: empty
 
-List of IPv4 addresses from which to NOT process traffic.
+List of IPv4 addresses and prefixes from which to NOT process traffic.
 
 By default all IPv4 addresses are allowed.
 
@@ -421,7 +421,7 @@ ipv6-allowlist
 :data node: ``<instance-id>/ipv6-allowlist``
 :default: empty
 
-List of allowed IPv6 addresses to process traffic from.
+List of allowed IPv6 addresses and prefixes to process traffic from.
 
 By default all IPv6 addresses are allowed.
 
@@ -431,7 +431,7 @@ ipv6-denylist
 :data node: ``<instance-id>/ipv6-denylist``
 :default: empty
 
-List of IPv6 addresses from which to NOT process traffic.
+List of IPv6 addresses and prefixes from which to NOT process traffic.
 
 By default all IPv6 addresses are allowed.
 

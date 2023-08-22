@@ -53,19 +53,19 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
     # This parameter is used for selecting CPU cores on which the application will be running.
     coremask: 0x7
 
-    # List of allowed IPv4 addreses to process traffic from.
+    # List of allowed IPv4 addreses and prefixes to process traffic from.
     # By default all IPv4 addresses are allowed.
     ipv4-allowlist: []
 
-    # List of IPv4 addresses from which to NOT process traffic.
+    # List of IPv4 addresses and prefixes from which to NOT process traffic.
     # By default all IPv4 addresses are allowed.
     ipv4-denylist: []
 
-    # List of allowed IPv6 addresses to process traffic from.
+    # List of allowed IPv6 addresses and prefixes to process traffic from.
     # By default all IPv6 addresses are allowed.
     ipv6-allowlist: []
 
-    # List of IPv6 addresses from which to NOT process traffic.
+    # List of IPv6 addresses and prefixes from which to NOT process traffic.
     # By default all IPv6 addresses are allowed.
     ipv6-denylist: []
 
@@ -306,7 +306,12 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
   # test1:
   #   interface-list:
   #     - 'lo'
+  #   ipv4-allowlist:
+  #     - '192.168.1.1'
+  #     - '192.168.2.0/24'
   #
   # test2:
   #   interface-list:
   #     - 'enp0'
+  #   ipv6-denylist:
+  #     - '2001:db8:abcd:0012::0/64'
