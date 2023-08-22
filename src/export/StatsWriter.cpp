@@ -70,28 +70,28 @@ int64_t DDP::StatsWriter::write(AggregatedStatistics item)
     }
 
     if (m_cfg.stats_per_ip.value() &&
-        (m_cfg.ipv4_indices.size() > 0 || m_cfg.ipv6_indices.size() > 0)) {
-        for (auto& i: m_cfg.ipv4_indices) {
+        (m_cfg.ipv4_allowlist.value().size() > 0 || m_cfg.ipv6_allowlist.value().size() > 0)) {
+        for (auto& i: item.queries_ipv4) {
             char buff[INET_ADDRSTRLEN + 4];
             auto* ret = inet_ntop(AF_INET, &i.first, buff, INET_ADDRSTRLEN + 4);
             if (!ret)
                 continue;
             auto cb = [&output, buff](){ output << "\"[" << buff << "]"; };
-            write_queries_stats(output, comma, cb, item.queries[i.second], item.qps[i.second]);
+            write_queries_stats(output, comma, cb, item.queries_ipv4[i.first], item.ipv4_qps[i.first]);
         }
 
-        for (auto& i: m_cfg.ipv6_indices) {
+        for (auto& i: item.queries_ipv6) {
             char buff[INET6_ADDRSTRLEN + 4];
             auto* ret = inet_ntop(AF_INET6, &i.first, buff, INET6_ADDRSTRLEN + 4);
             if (!ret)
                 continue;
             auto cb = [&output, buff](){ output << "\"[" << buff << "]"; };
-            write_queries_stats(output, comma, cb, item.queries[i.second], item.qps[i.second]);
+            write_queries_stats(output, comma, cb, item.queries_ipv6[i.first], item.ipv6_qps[i.first]);
         }
     }
 
     auto cb = [&output](){ output << "\""; };
-    write_queries_stats(output, comma, cb, item.queries[0], item.qps[0]);
+    write_queries_stats(output, comma, cb, item.queries, item.qps);
 
     if (fields[static_cast<uint32_t>(StatsField::UNIX_TIMESTAMP)]) {
         if (comma) { output << ","; } else { comma = true; }

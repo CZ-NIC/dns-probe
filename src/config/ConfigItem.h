@@ -685,36 +685,6 @@ namespace DDP {
     };
 }
 
-/**
- * Hash and comparison functions for struct in6_addr.
- * Used for storing IPv6 addresses in std::unordered_set.
- */
-namespace std {
-    template<>
-    struct hash<in6_addr>
-    {
-        size_t operator()(const in6_addr& a) const
-        {
-            hash<uint32_t> hasher;
-            size_t h = 0;
-            const uint32_t* p = reinterpret_cast<const uint32_t*>(&a);
-            for (size_t i = 0; i < 4; ++i)
-            {
-                h = h * 31 + hasher(p[i]);
-            }
-            return h;
-        }
-    };
-
-    template<>
-    struct equal_to<in6_addr>
-    {
-        bool operator() (const in6_addr& a1, const in6_addr& a2) const {
-            return std::memcmp(&a1, &a2, sizeof(in6_addr)) == 0;
-        }
-    };
-}
-
 namespace DDP {
     /**
      * Specialized implementation for DDP::CList<ipv6_t> as config item.
@@ -791,6 +761,238 @@ namespace DDP {
         }
     protected:
         CList<IPv6_t> m_value{}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::CList<ipv4_prefix_t> as config item.
+     */
+    template<>
+    class ConfigItem<CList<IPv4_prefix_t>>: public ConfigItemBase
+    {
+    public:
+        /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(CList<IPv4_prefix_t> value) : m_value(value) {};
+
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        CList<IPv4_prefix_t> value() const { return m_value; }
+
+        /**
+         * Save value from configuration file.
+         * @param value Value from configuration file.
+         */
+        void add_value(const boost::any& value) override
+        {
+            m_value.insert(parse_ipv4(boost::any_cast<std::string>(value)));
+        }
+
+        /**
+         * Delete value from list.
+         * @param value Value from configuration file to delete.
+         */
+        void delete_value(const boost::any& value) override
+        {
+            m_value.erase(parse_ipv4(boost::any_cast<std::string>(value)));
+        }
+
+        /**
+         * Implicit conversion to CList<ipv4_prefix_t>
+         * @return Save value.
+         */
+        operator CList<IPv4_prefix_t>() const { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            std::stringstream str;
+            bool first = true;
+            for (auto& val : m_value) {
+                char buff[INET_ADDRSTRLEN + 4];
+                auto* ret = inet_ntop(AF_INET, &(val.ip), buff, INET_ADDRSTRLEN + 4);
+                if (!ret)
+                    continue;
+
+                auto mask = val.mask;
+                uint8_t prefix = 0;
+                // Brian Kernighan's algorithm to count set bits. The number of loops is equal
+                // to bits set in integer.
+                while (mask) {
+                    mask &= (mask - 1);
+                    prefix++;
+                }
+
+                if (first) {
+                    str << buff << "/" << std::to_string(prefix);
+                    first = false;
+                }
+                else
+                    str << ", " << buff << "/" << std::to_string(prefix);
+            }
+            return str.str();
+        }
+    protected:
+        IPv4_prefix_t parse_ipv4(const std::string& str) {
+            IPv4_prefix_t addr;
+
+            auto pos = str.find_last_of('/');
+            if (pos == std::string::npos) {
+                // full IP address
+                int ret = inet_pton(AF_INET, str.c_str(), &(addr.ip));
+                if (ret != 1)
+                    throw std::invalid_argument("Invalid IPv4 address in IPv4 list..");
+
+                std::memset(&(addr.mask), UINT8_MAX, sizeof(addr.mask));
+            }
+            else {
+                // subnet with mask
+                int ret = inet_pton(AF_INET, str.substr(0, pos).c_str(), &(addr.ip));
+                if (ret != 1)
+                    throw std::invalid_argument("Invalid IPv4 address in IPv4 list.");
+
+                auto mask = std::stoul(str.substr(pos + 1));
+                if (mask > 32)
+                    throw std::invalid_argument("IPv4 address with invalid mask in IPv4 list.");
+
+                addr.mask = 0;
+                for (unsigned i = 0; i < mask; i++) {
+                    addr.mask |= (1 << i);
+                }
+
+                // mask the IP subnet so we don't have to do it for every comparison with packet IP
+                addr.ip &= addr.mask;
+            }
+
+            return addr;
+        }
+
+        CList<IPv4_prefix_t> m_value{}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::CList<ipv6_prefix_t> as config item.
+     */
+    template<>
+    class ConfigItem<CList<IPv6_prefix_t>>: public ConfigItemBase
+    {
+    public:
+        /**
+         * @brief Constructors
+         */
+        ConfigItem() : m_value() {};
+        ConfigItem(CList<IPv6_prefix_t> value) : m_value(value) {};
+
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        CList<IPv6_prefix_t> value() const { return m_value; }
+
+        /**
+         * Save value from configuration file.
+         * @param value Value from configuration file.
+         */
+        void add_value(const boost::any& value) override
+        {
+            m_value.insert(parse_ipv6(boost::any_cast<std::string>(value)));
+        }
+
+        /**
+         * Delete value from list.
+         * @param value Value from configuration file to delete.
+         */
+        void delete_value(const boost::any& value) override
+        {
+            m_value.erase(parse_ipv6(boost::any_cast<std::string>(value)));
+        }
+
+        /**
+         * Implicit conversion to CList<ipv6_prefix_t>
+         * @return Save value.
+         */
+        operator CList<IPv6_prefix_t>() const { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            std::stringstream str;
+            bool first = true;
+            for (auto& val : m_value) {
+                char buff[INET6_ADDRSTRLEN + 4];
+                auto* ret = inet_ntop(AF_INET6, &(val.ip), buff, INET6_ADDRSTRLEN + 4);
+                if (!ret)
+                    continue;
+
+                uint8_t prefix = 0;
+                for (unsigned i = 0; i < 4; i++) {
+                    uint32_t chunk = val.ip.s6_addr32[i];
+                    // Brian Kernighan's algorithm to count set bits. The number of loops is equal
+                    // to bits set in integer.
+                    while (chunk) {
+                        chunk &= (chunk - 1);
+                        prefix++;
+                    }
+                }
+
+                if (first) {
+                    str << buff << "/" << std::to_string(prefix);
+                    first = false;
+                }
+                else
+                    str << ", " << buff << "/" << std::to_string(prefix);
+            }
+            return str.str();
+        }
+    protected:
+        IPv6_prefix_t parse_ipv6(const std::string& str) {
+            IPv6_prefix_t addr;
+
+            auto pos = str.find_last_of('/');
+            if (pos == std::string::npos) {
+                // full IP address
+                int ret = inet_pton(AF_INET6, str.c_str(), &(addr.ip));
+                if (ret != 1)
+                    throw std::invalid_argument("Invalid IPv6 address in IPv6 list.");
+
+                std::memset(&(addr.mask), UINT8_MAX, sizeof(addr.mask));
+            }
+            else {
+                // subnet with mask
+                int ret = inet_pton(AF_INET6, str.substr(0, pos).c_str(), &(addr.ip));
+                if (ret != 1)
+                    throw std::invalid_argument("Invalid IPv6 address in IPv6 list.");
+
+                auto mask = std::stoul(str.substr(pos + 1));
+                if (mask > 128)
+                    throw std::invalid_argument("IPv6 address with invalid mask in IPv6 list.");
+
+                std::memset(&(addr.mask), 0, sizeof(addr.mask));
+                for (uint8_t i = 0; i < sizeof(addr.mask.s6_addr); i++) {
+                    addr.mask.s6_addr[i] = static_cast<uint8_t>(~0) << (8 - (mask > 8 ? 8 : mask));
+                    mask = mask >= 8 ? mask - 8 : 0;
+                }
+
+                // mask the IP subnet so we don't have to do it for every comparision with packet IP
+                addr.ip.s6_addr32[0] &= addr.mask.s6_addr32[0];
+                addr.ip.s6_addr32[1] &= addr.mask.s6_addr32[1];
+                addr.ip.s6_addr32[2] &= addr.mask.s6_addr32[2];
+                addr.ip.s6_addr32[3] &= addr.mask.s6_addr32[3];
+            }
+
+            return addr;
+        }
+
+        CList<IPv6_prefix_t> m_value{}; //!< Saved value.
     };
 
     /**

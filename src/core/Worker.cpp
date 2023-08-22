@@ -328,20 +328,16 @@ void DDP::Worker::close_port(int pos)
 
 void DDP::Worker::update_stats(DnsRecord* record)
 {
-    auto index = 0;
     bool detailed = false;
+    IPv4_prefix_t ipv4 = {reinterpret_cast<const uint32_t*>(record->server_address())[0], UINT32_MAX};
+    IPv6_prefix_t ipv6 = {*record->server_address(), {{ .__u6_addr32 = {UINT32_MAX,UINT32_MAX,UINT32_MAX,UINT32_MAX}}}};
 
     if(record->m_addr_family == DnsRecord::AddrFamily::IP4) {
         if (is_detailed_stats_ipv4()) {
             detailed = true;
-            auto it = m_cfg.ipv4_indices.find(reinterpret_cast<const uint32_t*>(record->server_address())[0]);
-            if (it == m_cfg.ipv4_indices.end())
-                index = m_cfg.ipv4_indices[reinterpret_cast<const uint32_t*>(record->client_address())[0]];
-            else
-                index = it->second;
-            m_stats.queries[index][Statistics::Q_IPV4]++;
+            m_stats.queries_ipv4[ipv4][Statistics::Q_IPV4]++;
         }
-        m_stats.queries[0][Statistics::Q_IPV4]++;
+        m_stats.queries[Statistics::Q_IPV4]++;
 
         // Retrieved client address is in network byte order so we can mask by 0xFF
         // to get highest byte of IPv4 address.
@@ -351,38 +347,38 @@ void DDP::Worker::update_stats(DnsRecord* record)
     else if(record->m_addr_family == DnsRecord::AddrFamily::IP6) {
         if (is_detailed_stats_ipv6()) {
             detailed = true;
-            auto it = m_cfg.ipv6_indices.find(*record->server_address());
-            if (it == m_cfg.ipv6_indices.end())
-                index = m_cfg.ipv6_indices[*record->client_address()];
-            else
-                index = it->second;
-            m_stats.queries[index][Statistics::Q_IPV6]++;
+            m_stats.queries_ipv6[ipv6][Statistics::Q_IPV6]++;
         }
-        m_stats.queries[0][Statistics::Q_IPV6]++;
+        m_stats.queries[Statistics::Q_IPV6]++;
     }
+
+    auto type = 0u;
 
     if(record->m_proto == DnsRecord::Proto::TCP) {
         if (record->server_port() == DnsParser::DOT_PORT) {
-            if (detailed)
-                m_stats.queries[index][Statistics::Q_DOT]++;
-            m_stats.queries[0][Statistics::Q_DOT]++;
+            type = Statistics::Q_DOT;
         }
         else if (record->server_port() == DnsParser::DOH_PORT) {
-            if (detailed)
-                m_stats.queries[index][Statistics::Q_DOH]++;
-            m_stats.queries[0][Statistics::Q_DOH]++;
+            type = Statistics::Q_DOH;
         }
         else {
-            if (detailed)
-                m_stats.queries[index][Statistics::Q_TCP]++;
-            m_stats.queries[0][Statistics::Q_TCP]++;
+            type = Statistics::Q_TCP;
         }
     }
     else if(record->m_proto == DnsRecord::Proto::UDP) {
-        if (detailed)
-            m_stats.queries[index][Statistics::Q_UDP]++;
-        m_stats.queries[0][Statistics::Q_UDP]++;
+        type = Statistics::Q_UDP;
     }
+    else {
+        return;
+    }
+
+    if (detailed) {
+        if (record->m_addr_family == DnsRecord::AddrFamily::IP4)
+            m_stats.queries_ipv4[ipv4][type]++;
+        else if (record->m_addr_family == DnsRecord::AddrFamily::IP6)
+            m_stats.queries_ipv6[ipv6][type]++;
+    }
+    m_stats.queries[type]++;
 }
 
 void DDP::Worker::PortPollAble::ready_read() {

@@ -42,8 +42,6 @@ void DDP::ConfigFile::load_configuration(Config& cfg, std::string conf_file, std
 
         if (instance != "default" && config[instance])
             load_instance(cfg, config[instance]);
-
-        cfg.generate_ip_indices();
     }
     catch (std::exception& e) {
         Logger("YAML").warning() << "Couldn't load configuration file " << conf_file

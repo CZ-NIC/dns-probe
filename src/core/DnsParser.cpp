@@ -1077,8 +1077,8 @@ bool DDP::DnsParser::block_ipv4s(const uint8_t* src, const uint8_t* dst)
     if (!m_ipv4_allowlist.empty()) {
         bool deny = true;
         for (auto& ipv4 : m_ipv4_allowlist) {
-            if ((std::memcmp(src, &ipv4, IPV4_ADDRLEN) == 0) ||
-                (std::memcmp(dst, &ipv4, IPV4_ADDRLEN) == 0)) {
+            if (ipv4.is_in_subnet(*reinterpret_cast<const IPv4_t*>(src)) ||
+                ipv4.is_in_subnet(*reinterpret_cast<const IPv4_t*>(dst))) {
                 deny = false;
                 break;
             }
@@ -1089,8 +1089,8 @@ bool DDP::DnsParser::block_ipv4s(const uint8_t* src, const uint8_t* dst)
     }
     else if (!m_ipv4_denylist.empty() && m_ipv4_allowlist.empty()) {
         for (auto& ipv4 : m_ipv4_denylist) {
-            if ((std::memcmp(src, &ipv4, IPV4_ADDRLEN) == 0) ||
-                (std::memcmp(dst, &ipv4, IPV4_ADDRLEN) == 0)) {
+            if (ipv4.is_in_subnet(*reinterpret_cast<const IPv4_t*>(src)) ||
+                ipv4.is_in_subnet(*reinterpret_cast<const IPv4_t*>(dst))) {
                 return true;
             }
         }
@@ -1104,8 +1104,8 @@ bool DDP::DnsParser::block_ipv6s(const uint8_t* src, const uint8_t* dst)
     if (!m_ipv6_allowlist.empty()) {
         bool deny = true;
         for (auto& ipv6 : m_ipv6_allowlist) {
-            if ((std::memcmp(src, &ipv6, IPV6_ADDRLEN) == 0) ||
-                (std::memcmp(dst, &ipv6, IPV6_ADDRLEN) == 0)) {
+            if (ipv6.is_in_subnet(*reinterpret_cast<const IPv6_t*>(src)) ||
+                ipv6.is_in_subnet(*reinterpret_cast<const IPv6_t*>(dst))) {
                 deny = false;
                 break;
             }
@@ -1116,8 +1116,8 @@ bool DDP::DnsParser::block_ipv6s(const uint8_t* src, const uint8_t* dst)
     }
     else if (!m_ipv6_denylist.empty() && m_ipv6_allowlist.empty()) {
         for (auto& ipv6 : m_ipv6_denylist) {
-            if ((std::memcmp(src, &ipv6, IPV6_ADDRLEN) == 0) ||
-                (std::memcmp(dst, &ipv6, IPV6_ADDRLEN) == 0)) {
+            if (ipv6.is_in_subnet(*reinterpret_cast<const IPv6_t*>(src)) ||
+                ipv6.is_in_subnet(*reinterpret_cast<const IPv6_t*>(dst))) {
                 return true;
             }
         }
