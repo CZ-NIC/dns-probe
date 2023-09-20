@@ -15,6 +15,11 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **1.*.***
+     - **1.0**
+     - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Add options to configure backup remote storage
    * - **1.1.2**
      - **1.0**
      - :doc:`Installation <Installation>`

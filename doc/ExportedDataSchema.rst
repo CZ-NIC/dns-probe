@@ -32,7 +32,10 @@ Export to remote location
 
 If :ref:`location` option is set to ``remote`` DNS Probe will attempt to transfer the exported data to a remote
 server specified by :ref:`remote-ip-address` and :ref:`remote-port` options via encrypted TLS connection with
-remote server's authentication.
+remote server's authentication. In case of connection issues with remote server there's also a possibility to
+configure backup remote server with options :ref:`backup-remote-ip-address` and :ref:`backup-remote-port`.
+DNS Probe will attempt to send exported data to this backup remote server only if connection to primary remote
+server fails.
 
 The transfer uses a simple application layer protocol shown below:
 
@@ -224,7 +227,10 @@ Export to remote location
 
 If :ref:`stats-location` is set to `remote` DNS Probe will attempt to transfer the exported statistics
 to a remote server specified by :ref:`stats-remote-ip` and :ref:`stats-remote-port` options
-via encrypted TLS connection with remote server's authentication.
+via encrypted TLS connection with remote server's authentication. In case of connection issues with remote
+server there's also a possibility to configure backup remote server with options :ref:`backup-stats-remote-ip`
+and :ref:`backup-stats-remote-port`. DNS Probe will attempt to send exported statistics to this backup remote
+server only if connection to primary remote server fails.
 
 The transfer uses the same simple application protocol used for traffic data transfer that was
 shown in chapter :ref:`export-to-remote-location`.

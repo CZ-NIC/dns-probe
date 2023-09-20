@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2022-06-08
+  # Last revision: 2023-09-20
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -90,6 +90,12 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
       # Transport protocol port number for remote export of DNS records.
       remote-port: 6378
+
+      # Backup IP address for remote export of DNS records
+      backup-remote-ip-address: ''
+
+      # Backup transport protocol port number for remote export of DNS records.
+      backup-remote-port: 6378
 
       # Path (including file's name) to the CA certificate against which the remote server's
       # certificate will be authenticated during TLS handshake.
@@ -252,6 +258,12 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
       # Transport protocol port number for remote export of run-time statistics.
       remote-port: 6379
+
+      # Backup IP address for remote export of run-time statistics.
+      backup-remote-ip: ''
+
+      # Backup transport protocol port number for remote export of run-time statistics.
+      backup-remote-port: 6379
 
       # Path (including file's name) to the CA certificate against which the remote server's
       # certificate will be authenticated during TLS handshake.
