@@ -34,8 +34,8 @@
 #include "utils/Logger.h"
 
 namespace DDP {
-    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
-        std::string sufix, uint8_t tries)
+    std::string send_file_attempt(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
+        std::string sufix, uint8_t tries, bool fail_rename)
     {
         struct stat buffer;
         if (stat((filename + sufix).c_str(), &buffer) != 0) {
@@ -77,18 +77,32 @@ namespace DDP {
         }
 
         Logger("Writer").warning() << "Couldn't send output file to remote server!";
-        if (std::rename((filename + sufix).c_str(), filename.c_str()))
-            Logger("Writer").warning() << "Couldn't rename the output file!";
+        if (fail_rename) {
+            if (std::rename((filename + sufix).c_str(), filename.c_str()))
+                Logger("Writer").warning() << "Couldn't rename the output file!";
+        }
         return "";
     }
 
+    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string bck_ip,
+        uint16_t bck_port, std::string filename, std::string sufix, uint8_t tries)
+    {
+        std::string ret = send_file_attempt(type, ip, port, filename, sufix, tries, bck_ip.empty());
+
+        if (ret.empty() && !bck_ip.empty()) {
+            ret = send_file_attempt(type, bck_ip, bck_port, filename, sufix, tries, true);
+        }
+
+        return ret;
+    }
+
     std::unordered_set<std::string> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
-        std::unordered_set<std::string> flist)
+        std::string bck_ip, uint16_t bck_port, std::unordered_set<std::string> flist)
     {
         std::unordered_set<std::string> success;
 
         for (auto& f : flist) {
-            auto ret = send_file(type, ip, port, f, "", 1);
+            auto ret = send_file(type, ip, port, bck_ip, bck_port, f, "", 1);
 
             if (!ret.empty())
                 success.insert(ret);
@@ -265,11 +279,13 @@ namespace DDP {
             if (!m_unsent_files.empty()) {
                 if (m_type == TlsCtxIndex::TRAFFIC) {
                     m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
-                        m_cfg.export_port.value(), m_unsent_files);
+                        m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
+                        m_cfg.backup_export_port.value(), m_unsent_files);
                 }
                 else {
                     m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
-                        m_cfg.stats_port.value(), m_unsent_files);
+                        m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(),
+                        m_cfg.backup_stats_port.value(), m_unsent_files);
                 }
             }
         }
@@ -277,11 +293,13 @@ namespace DDP {
             if (!m_unsent_files.empty()) {
                 if (m_type == TlsCtxIndex::TRAFFIC) {
                     m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
-                        m_cfg.export_port.value(), m_unsent_files);
+                        m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
+                        m_cfg.backup_export_port.value(), m_unsent_files);
                 }
                 else {
                     m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
-                        m_cfg.stats_port.value(), m_unsent_files);
+                        m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(),
+                        m_cfg.backup_stats_port.value(), m_unsent_files);
                 }
             }
         }
@@ -303,11 +321,13 @@ namespace DDP {
 
         if (m_type == TlsCtxIndex::TRAFFIC) {
             m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
-                m_cfg.export_port.value(), m_unsent_files);
+                m_cfg.export_port.value(), m_cfg.backup_export_ip.value(), m_cfg.backup_export_port.value(),
+                m_unsent_files);
         }
         else {
             m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
-                m_cfg.stats_port.value(), m_unsent_files);
+                m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(), m_cfg.backup_stats_port.value(),
+                m_unsent_files);
         }
     }
 

@@ -55,13 +55,15 @@ namespace DDP {
      * so correct TLS context is chosen.
      * @param ip IP address of remote server
      * @param port Transport protocol port of remote server
+     * @param bck_ip IP address of backup remote server
+     * @param bck_port Transport protocol port of backup remote server
      * @param filename Name of the file to send WITHOUT the ".part" sufix
      * @param sufix Sufix of the file to send (usually ".part" sufix)
      * @param tries How many times should the file transfer be attempted before giving up
      * @return Empty string on successful transfer, or filename parameter if transfer fails
      */
-    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
-        std::string sufix, uint8_t tries);
+    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string bck_ip,
+        uint16_t bck_port, std::string filename, std::string sufix, uint8_t tries);
 
     /**
      * @brief Send files given in flist to remote server via TLS connection
@@ -69,11 +71,13 @@ namespace DDP {
      * so correct TLS context is chosen.
      * @param ip IP address of remote server
      * @param port Transport protocol port of remote server
+     * @param bck_ip IP address of backup remote server
+     * @param bck_port Transport protocol port of backup remote server
      * @param flist List of files to send
      * @return List of files that failed to transfer to remote server
      */
     std::unordered_set<std::string> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
-        std::unordered_set<std::string> flist);
+        std::string bck_ip, uint16_t bck_port, std::unordered_set<std::string> flist);
 
     /**
      * @brief Singleton RAII wrapper around SSL_CTX structure from OpenSSL library

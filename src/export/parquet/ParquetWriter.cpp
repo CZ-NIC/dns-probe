@@ -61,7 +61,8 @@ int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)
     else {
         check_file_transfer();
         m_threads.emplace_back(std::async(std::launch::async, send_file, m_type,
-            m_cfg.export_ip.value(), m_cfg.export_port.value(), m_filename, ".part", DEFAULT_TRIES));
+            m_cfg.export_ip.value(), m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
+            m_cfg.backup_export_port.value(), m_filename, ".part", DEFAULT_TRIES));
         m_unsent_files.insert(m_filename);
     }
 

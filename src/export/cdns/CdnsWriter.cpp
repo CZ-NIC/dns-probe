@@ -138,8 +138,9 @@ DDP::CdnsWriter::~CdnsWriter()
                 if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str())) {
                     m_threads.emplace_back(std::async(std::launch::async, send_file,
                                                         TlsCtxIndex::TRAFFIC, m_cfg.export_ip.value(),
-                                                        m_cfg.export_port.value(), m_filename,
-                                                        ".part", DEFAULT_TRIES));
+                                                        m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
+                                                        m_cfg.backup_export_port.value(), m_filename, ".part",
+                                                        DEFAULT_TRIES));
                     m_unsent_files.insert(m_filename);
                 }
             }
@@ -173,7 +174,8 @@ void DDP::CdnsWriter::rotate_output()
 
             check_file_transfer();
             m_threads.emplace_back(std::async(std::launch::async, send_file, m_type,
-                m_cfg.export_ip.value(), m_cfg.export_port.value(), rotated, ".part", DEFAULT_TRIES));
+                m_cfg.export_ip.value(), m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
+                m_cfg.backup_export_port.value(), rotated, ".part", DEFAULT_TRIES));
             m_unsent_files.insert(rotated);
         }
     }

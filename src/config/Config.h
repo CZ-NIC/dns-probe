@@ -73,6 +73,8 @@ namespace DDP {
                    export_ip("127.0.0.1"),
                    export_port(6378),
                    export_ca_cert(),
+                   backup_export_ip(""),
+                   backup_export_port(6378),
                    anonymize_ip(false),
                    ip_encryption(IpEncryption::AES),
                    ip_enc_key("key.cryptopant"),
@@ -84,6 +86,8 @@ namespace DDP {
                    stats_ip("127.0.0.1"),
                    stats_port(6379),
                    stats_ca_cert(),
+                   backup_stats_ip(""),
+                   backup_stats_port(6379),
                    moving_avg_window(300),
                    stats_fields(get_stats_bitmask()),
                    instance("default"),
@@ -151,6 +155,8 @@ namespace DDP {
         ConfigItem<std::string> export_ip; //!< IP address for remote export of DNS records
         ConfigItem<uint16_t> export_port; //!< Transport protocol port for remote export of DNS records
         ConfigItem<std::string> export_ca_cert; //!< CA certificate for authentication of remote server's certificate
+        ConfigItem<std::string> backup_export_ip; //!< Backup IP address for remote export of DNS records
+        ConfigItem<uint16_t> backup_export_port; //!< Backup transport protocol port for remote export of DNS records
 
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
@@ -164,6 +170,8 @@ namespace DDP {
         ConfigItem<std::string> stats_ip; //!< IP address for remote export of run-time statistics
         ConfigItem<uint16_t> stats_port; //!< Transport protocol port for remote export of run-time statistics
         ConfigItem<std::string> stats_ca_cert; //!< CA certificate for authentication of remote server's certificate
+        ConfigItem<std::string> backup_stats_ip; //!< Backup IP address for remote export of run-time statistics
+        ConfigItem<uint16_t> backup_stats_port; //!< Backup transport protocol port for remote export of run-time statistics
         ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
         ConfigBitfield<StatsBits> stats_fields; //!< Indicates which statistics should be exported
 
