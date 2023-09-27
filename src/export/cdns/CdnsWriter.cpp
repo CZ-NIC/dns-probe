@@ -141,7 +141,7 @@ DDP::CdnsWriter::~CdnsWriter()
                                                         m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
                                                         m_cfg.backup_export_port.value(), m_filename, ".part",
                                                         DEFAULT_TRIES));
-                    m_unsent_files.insert(m_filename);
+                    m_sending_files.insert(m_filename);
                 }
             }
         }
@@ -176,7 +176,7 @@ void DDP::CdnsWriter::rotate_output()
             m_threads.emplace_back(std::async(std::launch::async, send_file, m_type,
                 m_cfg.export_ip.value(), m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
                 m_cfg.backup_export_port.value(), rotated, ".part", DEFAULT_TRIES));
-            m_unsent_files.insert(rotated);
+            m_sending_files.insert(rotated);
         }
     }
 

@@ -34,13 +34,13 @@
 #include "utils/Logger.h"
 
 namespace DDP {
-    std::string send_file_attempt(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
+    FileCtx send_file_attempt(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
         std::string sufix, uint8_t tries, bool fail_rename)
     {
         struct stat buffer;
         if (stat((filename + sufix).c_str(), &buffer) != 0) {
             Logger("Writer").debug() << "Couldn't send output file! Filename doesn't exist: " << (filename + sufix);
-            return filename;
+            return FileCtx{filename, true};
         }
 
         auto pos = filename.find_last_of('/');
@@ -71,7 +71,7 @@ namespace DDP {
 
                 ifs.close();
                 std::remove((filename + sufix).c_str());
-                return filename;
+                return FileCtx{filename, true};
             }
             catch (std::exception& e) {}
         }
@@ -81,34 +81,31 @@ namespace DDP {
             if (std::rename((filename + sufix).c_str(), filename.c_str()))
                 Logger("Writer").warning() << "Couldn't rename the output file!";
         }
-        return "";
+        return FileCtx{filename, false};
     }
 
-    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string bck_ip,
+    FileCtx send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string bck_ip,
         uint16_t bck_port, std::string filename, std::string sufix, uint8_t tries)
     {
-        std::string ret = send_file_attempt(type, ip, port, filename, sufix, tries, bck_ip.empty());
+        auto ret = send_file_attempt(type, ip, port, filename, sufix, tries, bck_ip.empty());
 
-        if (ret.empty() && !bck_ip.empty()) {
+        if (!ret.sent && !bck_ip.empty()) {
             ret = send_file_attempt(type, bck_ip, bck_port, filename, sufix, tries, true);
         }
 
         return ret;
     }
 
-    std::unordered_set<std::string> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
+    std::unordered_set<FileCtx> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
         std::string bck_ip, uint16_t bck_port, std::unordered_set<std::string> flist)
     {
-        std::unordered_set<std::string> success;
+        std::unordered_set<FileCtx> processed;
 
         for (auto& f : flist) {
-            auto ret = send_file(type, ip, port, bck_ip, bck_port, f, "", 1);
-
-            if (!ret.empty())
-                success.insert(ret);
+            processed.insert(send_file(type, ip, port, bck_ip, bck_port, f, "", 1));
         }
 
-        return success;
+        return processed;
     }
 
     void TlsCtx::init(TlsCtxIndex type, std::string ca_cert)
@@ -262,8 +259,9 @@ namespace DDP {
                 bool ret = x.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
                 if (ret) {
                     auto result = x.get();
-                    if (!result.empty())
-                        m_unsent_files.erase(result);
+                    m_sending_files.erase(result.name);
+                    if (!result.sent)
+                        m_unsent_files.insert(result.name);
                 }
                 return ret;
             }), m_threads.end());
@@ -271,9 +269,10 @@ namespace DDP {
 
         if (m_files_thread.valid() &&
             (m_files_thread.wait_for(std::chrono::seconds(0)) == std::future_status::ready)) {
-            auto success = m_files_thread.get();
-            for (auto&& file : success) {
-                m_unsent_files.erase(file);
+            auto files = m_files_thread.get();
+            for (auto&& file : files) {
+                if (file.sent)
+                    m_unsent_files.erase(file.name);
             }
 
             if (!m_unsent_files.empty()) {
@@ -339,6 +338,10 @@ namespace DDP {
             unsent_list << file << std::endl;
         }
 
+        for (auto& file : m_sending_files) {
+            unsent_list << file << std::endl;
+        }
+
         unsent_list.close();
     }
 
@@ -347,15 +350,16 @@ namespace DDP {
         for (auto&& th : m_threads) {
             th.wait();
             auto ret = th.get();
-            if (!ret.empty())
-                m_unsent_files.erase(ret);
+            if (ret.sent)
+                m_sending_files.erase(ret.name);
         }
 
         if (m_files_thread.valid()) {
             m_files_thread.wait();
             auto ret = m_files_thread.get();
             for (auto&& f : ret) {
-                m_unsent_files.erase(f);
+                if (f.sent)
+                    m_unsent_files.erase(f.name);
             }
         }
 

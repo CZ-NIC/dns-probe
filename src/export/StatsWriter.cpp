@@ -113,7 +113,7 @@ int64_t DDP::StatsWriter::write(AggregatedStatistics item)
         m_threads.emplace_back(std::async(std::launch::async, send_file, m_type,
             m_cfg.stats_ip.value(), m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(),
             m_cfg.backup_stats_port.value(), m_filename, ".part", DEFAULT_TRIES));
-        m_unsent_files.insert(m_filename);
+        m_sending_files.insert(m_filename);
     }
 
     return res < 0 ? 0 : res;
