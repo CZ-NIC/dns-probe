@@ -42,8 +42,6 @@ void DDP::ConfigFile::load_configuration(Config& cfg, std::string conf_file, std
 
         if (instance != "default" && config[instance])
             load_instance(cfg, config[instance]);
-
-        cfg.generate_ip_indices();
     }
     catch (std::exception& e) {
         Logger("YAML").warning() << "Couldn't load configuration file " << conf_file
@@ -130,8 +128,14 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["export"]["remote-ip-address"] && node["export"]["remote-ip-address"].IsScalar())
         cfg.export_ip.add_value(node["export"]["remote-ip-address"].as<std::string>());
 
+    if (node["export"]["backup-remote-ip-address"] && node["export"]["backup-remote-ip-address"].IsScalar())
+        cfg.backup_export_ip.add_value(node["export"]["backup-remote-ip-address"].as<std::string>());
+
     if (node["export"]["remote-port"] && node["export"]["remote-port"].IsScalar())
         cfg.export_port.add_value(node["export"]["remote-port"].as<uint16_t>());
+
+    if (node["export"]["backup-remote-port"] && node["export"]["backup-remote-port"].IsScalar())
+        cfg.backup_export_port.add_value(node["export"]["backup-remote-port"].as<uint16_t>());
 
     if (node["export"]["remote-ca-cert"] && node["export"]["remote-ca-cert"].IsScalar())
         cfg.export_ca_cert.add_value(node["export"]["remote-ca-cert"].as<std::string>());
@@ -228,8 +232,14 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["statistics"]["remote-ip"] && node["statistics"]["remote-ip"].IsScalar())
         cfg.stats_ip.add_value(node["statistics"]["remote-ip"].as<std::string>());
 
+    if (node["statistics"]["backup-remote-ip"] && node["statistics"]["backup-remote-ip"].IsScalar())
+        cfg.backup_stats_ip.add_value(node["statistics"]["backup-remote-ip"].as<std::string>());
+
     if (node["statistics"]["remote-port"] && node["statistics"]["remote-port"].IsScalar())
         cfg.stats_port.add_value(node["statistics"]["remote-port"].as<uint16_t>());
+
+    if (node["statistics"]["backup-remote-port"] && node["statistics"]["backup-remote-port"].IsScalar())
+        cfg.backup_stats_port.add_value(node["statistics"]["backup-remote-port"].as<uint16_t>());
 
     if (node["statistics"]["remote-ca-cert"] && node["statistics"]["remote-ca-cert"].IsScalar())
         cfg.stats_ca_cert.add_value(node["statistics"]["remote-ca-cert"].as<std::string>());

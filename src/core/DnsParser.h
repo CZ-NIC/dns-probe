@@ -368,10 +368,10 @@ namespace DDP {
         PcapWriter m_pcap_inv;
         const Packet* m_processed_packet;
         std::unordered_set<uint16_t> m_dns_ports;
-        std::unordered_set<IPv4_t> m_ipv4_allowlist;
-        std::unordered_set<IPv4_t> m_ipv4_denylist;
-        std::unordered_set<IPv6_t> m_ipv6_allowlist;
-        std::unordered_set<IPv6_t> m_ipv6_denylist;
+        std::unordered_set<IPv4_prefix_t> m_ipv4_allowlist;
+        std::unordered_set<IPv4_prefix_t> m_ipv4_denylist;
+        std::unordered_set<IPv6_prefix_t> m_ipv6_allowlist;
+        std::unordered_set<IPv6_prefix_t> m_ipv6_denylist;
         Statistics& m_stats;
 
         /**

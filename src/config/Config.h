@@ -73,6 +73,8 @@ namespace DDP {
                    export_ip("127.0.0.1"),
                    export_port(6378),
                    export_ca_cert(),
+                   backup_export_ip(""),
+                   backup_export_port(6378),
                    anonymize_ip(false),
                    ip_encryption(IpEncryption::AES),
                    ip_enc_key("key.cryptopant"),
@@ -84,31 +86,11 @@ namespace DDP {
                    stats_ip("127.0.0.1"),
                    stats_port(6379),
                    stats_ca_cert(),
+                   backup_stats_ip(""),
+                   backup_stats_port(6379),
                    moving_avg_window(300),
                    stats_fields(get_stats_bitmask()),
-                   instance("default"),
-                   ipv4_indices(),
-                   ipv6_indices() {}
-
-        /**
-         * @brief Generate and save indices to run-time statistics vector for IP addresses in
-         * ipv4_allowlist and ipv6_allowlist.
-         */
-        void generate_ip_indices() {
-            uint16_t index = 1;
-
-            if (ipv4_allowlist.value().size() > 0) {
-                for (auto& ipv4 : ipv4_allowlist.value()) {
-                    ipv4_indices[ipv4] = index++;
-                }
-            }
-
-            if (ipv6_allowlist.value().size() > 0) {
-                for (auto& ipv6 : ipv6_allowlist.value()) {
-                    ipv6_indices[ipv6] = index++;
-                }
-            }
-        }
+                   instance("default") {}
 
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
@@ -120,10 +102,10 @@ namespace DDP {
         ConfigItem<std::string> log_file; //!< Log file for storing probe's logs
         ConfigItem<ThreadManager::MaskType> coremask; //!< Coremask used fo selecting cores where application will be running.
         ConfigItem<CList<Port_t>> dns_ports; //!< TCP/UDP port list used for identifying DNS traffic
-        ConfigItem<CList<IPv4_t>> ipv4_allowlist; //!< List of allowed IPv4 addresses to process traffic from
-        ConfigItem<CList<IPv4_t>> ipv4_denylist; //!< List of IPv4 addresses from which to NOT process traffic
-        ConfigItem<CList<IPv6_t>> ipv6_allowlist; //!< List of allowed IPv6 addresses to process traffic from
-        ConfigItem<CList<IPv6_t>> ipv6_denylist; //!< List of IPv6 addresses from which to NOT process traffic
+        ConfigItem<CList<IPv4_prefix_t>> ipv4_allowlist; //!< List of allowed IPv4 addresses to process traffic from
+        ConfigItem<CList<IPv4_prefix_t>> ipv4_denylist; //!< List of IPv4 addresses from which to NOT process traffic
+        ConfigItem<CList<IPv6_prefix_t>> ipv6_allowlist; //!< List of allowed IPv6 addresses to process traffic from
+        ConfigItem<CList<IPv6_prefix_t>> ipv6_denylist; //!< List of IPv6 addresses from which to NOT process traffic
 
         ConfigItem<uint32_t> tt_size; //!< Number of items in the transaction table
         ConfigItem<uint64_t> tt_timeout; //!< Timeout for orphaned items transaction table in milliseconds
@@ -151,6 +133,8 @@ namespace DDP {
         ConfigItem<std::string> export_ip; //!< IP address for remote export of DNS records
         ConfigItem<uint16_t> export_port; //!< Transport protocol port for remote export of DNS records
         ConfigItem<std::string> export_ca_cert; //!< CA certificate for authentication of remote server's certificate
+        ConfigItem<std::string> backup_export_ip; //!< Backup IP address for remote export of DNS records
+        ConfigItem<uint16_t> backup_export_port; //!< Backup transport protocol port for remote export of DNS records
 
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
@@ -164,11 +148,11 @@ namespace DDP {
         ConfigItem<std::string> stats_ip; //!< IP address for remote export of run-time statistics
         ConfigItem<uint16_t> stats_port; //!< Transport protocol port for remote export of run-time statistics
         ConfigItem<std::string> stats_ca_cert; //!< CA certificate for authentication of remote server's certificate
+        ConfigItem<std::string> backup_stats_ip; //!< Backup IP address for remote export of run-time statistics
+        ConfigItem<uint16_t> backup_stats_port; //!< Backup transport protocol port for remote export of run-time statistics
         ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
         ConfigBitfield<StatsBits> stats_fields; //!< Indicates which statistics should be exported
 
         ConfigItem<std::string> instance; //!< Name of running dns-probe instance. "Default" by default.
-        std::unordered_map<IPv4_t, uint16_t> ipv4_indices; //!< Indices to run-time statistics vector for IPv4 addresses in ipv4_allowlist
-        std::unordered_map<IPv6_t, uint16_t> ipv6_indices; //!< Indices to run-time statistics vector for IPv6 addresses in ipv6_allowlist
     };
 }

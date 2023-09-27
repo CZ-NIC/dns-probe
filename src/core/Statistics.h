@@ -31,6 +31,9 @@
 #include <array>
 #include <list>
 #include <cstring>
+#include <unordered_map>
+
+#include "config/ConfigTypes.h"
 
 namespace DDP {
     /**
@@ -49,14 +52,15 @@ namespace DDP {
         constexpr static auto ENTROPY_ARRAY_SIZE = 256u;
 
         using QueryStatsArray = std::array<uint64_t, QUERY_STATS_SIZE>;
+        using Ipv4StatsMap = std::unordered_map<IPv4_prefix_t, QueryStatsArray>;
+        using Ipv6StatsMap = std::unordered_map<IPv6_prefix_t, QueryStatsArray>;
 
         /**
          * Constructor
-         * @param size Number of distinct query statistics instances to track. Depends on value of
-         * export_stats configuration and number of IPs in ipv4_allowlist and ipv6_allowlist.
          */
-        Statistics(std::size_t size = 1) : packets(), transactions(), exported_records(),
-            active_tt_records(), exported_to_pcap(), ipv4_src_entropy_cnts(), queries(size, {0,0,0,0,0,0}) {
+        Statistics() : packets(), transactions(), exported_records(),
+            active_tt_records(), exported_to_pcap(), ipv4_src_entropy_cnts(), queries({0,0,0,0,0,0}),
+            queries_ipv4(), queries_ipv6() {
                 std::memset(ipv4_src_entropy_cnts, 0, sizeof(ipv4_src_entropy_cnts));
         }
 
@@ -93,7 +97,9 @@ namespace DDP {
         uint64_t active_tt_records; //!< Number of active records in transaction table.
         uint64_t exported_to_pcap; //!< Number of packets exported to PCAP.
         uint64_t ipv4_src_entropy_cnts[ENTROPY_ARRAY_SIZE]; //!< Number of queries for each source "A" class IP block
-        std::vector<QueryStatsArray> queries; //!< Number of processed queries for IPv4, IPv6, UDP, TCP/53, DoT and DoH.
+        QueryStatsArray queries; //!< Number of processed queries for IPv4, IPv6, UDP, TCP/53, DoT and DoH.
+        Ipv4StatsMap queries_ipv4; //!< Number of processed queries for given IPv4 address for IPv4, IPv6, UDP, TCP/53, DoT and DoH.
+        Ipv6StatsMap queries_ipv6; //!< Number of processed queries for given IPv6 address for IPv4, IPv6, UDP, TCP/53, DoT and DoH.
     };
 
     /**
@@ -104,12 +110,11 @@ namespace DDP {
     public:
         /**
          * Constructor.
-         * @param size Number of distinct query statistics instances to track. Depends on value of
-         * export_stats configuration and number of IPs in ipv4_allowlist and ipv6_allowlist.
          */
-        AggregatedStatistics(std::size_t size = 1) : Statistics(size), qps(size, {0,0,0,0,0,0}),
-             ipv4_src_entropy(0.0), m_qps_timestamp(get_timestamp()),
-             m_old_aggregated_queries(size, {0,0,0,0,0,0}), m_moving_avg(), m_moving_avg_window(300) {
+        AggregatedStatistics() : Statistics(), qps({0,0,0,0,0,0}), ipv4_qps(), ipv6_qps(),
+             ipv4_src_entropy(0.0), m_qps_timestamp(get_timestamp()), m_old_aggregated_queries({0,0,0,0,0,0}),
+             m_old_ipv4_aggregated_queries(), m_old_ipv6_aggregated_queries(), m_moving_avg(),
+             m_ipv4_moving_avg(), m_ipv6_moving_avg(), m_moving_avg_window(300) {
                 std::memset(m_old_ipv4_src_entropy_cnts, 0, sizeof(m_old_ipv4_src_entropy_cnts));
         }
 
@@ -153,13 +158,19 @@ namespace DDP {
         static uint64_t get_timestamp(); //!< Provides timestamp in seconds.
 
     public:
-        std::vector<QueryStatsArray> qps; //!< Queries per second.
+        QueryStatsArray qps; //!< Queries per second.
+        Ipv4StatsMap ipv4_qps; //!< Queries per second for individual IPv4 addresses.
+        Ipv6StatsMap ipv6_qps; //!< Queries per second for individual IPv6 addresses.
         double ipv4_src_entropy; //!< Entropy for highest byte of source IPv4 addresses of queries.
 
     private:
         uint64_t m_qps_timestamp; //!< Last timestamp used for calculating qps.
-        std::vector<QueryStatsArray> m_old_aggregated_queries; //!< Last aggregated count of queries.
-        std::list<std::vector<QueryStatsArray>> m_moving_avg; //!< Last m_moving_avg_window values of avg qps for calculating moving average.
+        QueryStatsArray m_old_aggregated_queries; //!< Last aggregated count of queries.
+        Ipv4StatsMap m_old_ipv4_aggregated_queries; //!< Last aggregated count of queries for individual IPv4 addresses.
+        Ipv6StatsMap m_old_ipv6_aggregated_queries; //!< Last aggregated count of queries for individual IPv6 addresses.
+        std::list<QueryStatsArray> m_moving_avg; //!< Last m_moving_avg_window values of avg qps for calculating moving average.
+        std::list<Ipv4StatsMap> m_ipv4_moving_avg; //!< Last m_moving_avg_window values of avg qps of individual IPv4 addresses for calculating moving average.
+        std::list<Ipv6StatsMap> m_ipv6_moving_avg; //!< Last m_moving_avg_window values of avg qps of individual IPv6 addresses for calculating moving average.
         uint32_t m_moving_avg_window; //!< Moving average window in seconds.
         uint64_t m_old_ipv4_src_entropy_cnts[ENTROPY_ARRAY_SIZE]; //!< Last aggregated count of queries per highest byte of IPv4 client address.
     };

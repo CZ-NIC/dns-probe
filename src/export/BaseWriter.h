@@ -50,18 +50,50 @@ namespace DDP {
     };
 
     /**
+     * @brief Context of exported files that were attempted to be sent to remote location.
+     */
+    struct FileCtx {
+        bool operator==(const FileCtx& fctx) const {
+            return name == fctx.name && sent == fctx.sent;
+        }
+
+        std::string name; //!< Name of the file.
+        bool sent; //!< TRUE if file was successfully sent to remote location, FALSE otherwise.
+    };
+}
+
+/**
+ * Hash function for DDP::FileCtx.
+ * Used for storing context of sent files in std::unordered_set.
+ */
+namespace std {
+    template<>
+    struct hash<DDP::FileCtx>
+    {
+        size_t operator()(const DDP::FileCtx& fctx) const
+        {
+            return hash<string>()(fctx.name) ^ hash<bool>()(fctx.sent);
+        }
+    };
+}
+
+namespace DDP {
+
+    /**
      * @brief Send local file to remote server via TLS connection
      * @param type Determines what data (traffic or statistics) will be transferred,
      * so correct TLS context is chosen.
      * @param ip IP address of remote server
      * @param port Transport protocol port of remote server
+     * @param bck_ip IP address of backup remote server
+     * @param bck_port Transport protocol port of backup remote server
      * @param filename Name of the file to send WITHOUT the ".part" sufix
      * @param sufix Sufix of the file to send (usually ".part" sufix)
      * @param tries How many times should the file transfer be attempted before giving up
-     * @return Empty string on successful transfer, or filename parameter if transfer fails
+     * @return File context struct with info if file transfer was successful or not
      */
-    std::string send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
-        std::string sufix, uint8_t tries);
+    FileCtx send_file(TlsCtxIndex type, std::string ip, uint16_t port, std::string bck_ip,
+        uint16_t bck_port, std::string filename, std::string sufix, uint8_t tries);
 
     /**
      * @brief Send files given in flist to remote server via TLS connection
@@ -69,11 +101,13 @@ namespace DDP {
      * so correct TLS context is chosen.
      * @param ip IP address of remote server
      * @param port Transport protocol port of remote server
+     * @param bck_ip IP address of backup remote server
+     * @param bck_port Transport protocol port of backup remote server
      * @param flist List of files to send
-     * @return List of files that failed to transfer to remote server
+     * @return List of file context structs with info if file transfers were successful or not
      */
-    std::unordered_set<std::string> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
-        std::unordered_set<std::string> flist);
+    std::unordered_set<FileCtx> send_files(TlsCtxIndex type, std::string ip, uint16_t port,
+        std::string bck_ip, uint16_t bck_port, std::unordered_set<std::string> flist);
 
     /**
      * @brief Singleton RAII wrapper around SSL_CTX structure from OpenSSL library
@@ -191,6 +225,7 @@ namespace DDP {
             m_type(type),
             m_filename(),
             m_threads(),
+            m_sending_files(),
             m_unsent_files(),
             m_files_thread() {}
 
@@ -258,8 +293,9 @@ namespace DDP {
         std::string m_sufix;
         TlsCtxIndex m_type;
         std::string m_filename;
-        std::vector<std::future<std::string>> m_threads;
-        std::unordered_set<std::string> m_unsent_files;
-        std::future<std::unordered_set<std::string>> m_files_thread; //!< Thread for sending list of files that failed initial transfer
+        std::vector<std::future<FileCtx>> m_threads; //!< List of threads for initial transfer attempt of individual exported files
+        std::unordered_set<std::string> m_sending_files; //!< List of files that are currently attempting to be sent for the first time
+        std::unordered_set<std::string> m_unsent_files; //!< List of files that previously failed transfer to remote location
+        std::future<std::unordered_set<FileCtx>> m_files_thread; //!< Thread for sending list of files that failed initial transfer
     };
 }

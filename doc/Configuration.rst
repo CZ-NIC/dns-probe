@@ -29,6 +29,8 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       +--rw dns-ports?* <uint16>
       +--rw export
       |  +--rw asn-maxmind-db? <string>
+      |  +--rw backup-remote-ip-address? <string>
+      |  +--rw backup-remote-port? <uint16>
       |  +--rw cdns-blocks-per-file? <uint64>
       |  +--rw cdns-fields?* <string>
       |  +--rw cdns-records-per-block? <uint64>
@@ -60,6 +62,8 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       +--rw pcap-list?* <string>
       +--rw raw-pcap? <boolean>
       +--rw statistics
+      |  +-- backup-remote-ip? <string>
+      |  +-- backup_remote-port? <uint16>
       |  +-- export-dir? <string>
       |  +-- export-stats? <boolean>
       |  +-- location? <enumeration>
@@ -129,6 +133,48 @@ asn-maxmind-db
 :default: empty
 
 Path to Maxmind ASN database. If this option is set to a valid database file, the ``asn`` implementation field in exported Parquets or C-DNS will be filled with Autonomous System Number (ASN) based on client's IP address.
+
+.. _backup-remote-ip-address:
+
+backup-remote-ip-address
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/backup-remote-ip-address``
+:default: empty
+
+Backup IP address for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
+
+.. _backup-stats-remote-ip:
+
+backup-remote-ip
+^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/backup-remote-ip``
+:default: empty
+
+Backup IP address for remote export of run-time statistics. Will be used if :ref:`stats-location` is set to ``remote``
+and :ref:`export-stats` is set to **true**.
+
+.. _backup-remote-port:
+
+backup-remote-port
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/backup-remote-port``
+:default: 6378
+
+Backup tranport protocol port number for remote export of the DNS records. Will be used if :ref:`location` is set to ``remote``.
+
+.. _backup-stats-remote-port:
+
+backup-remote-port
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/backup-remote-port``
+:default: 6379
+
+Backup transport protocol port number for remote export of run-time statistics. Will be used if :ref:`stats-location`
+is set to ``remote`` and :ref:`export-stats` is set to **true**.
 
 .. _cdns-blocks-per-file:
 
@@ -351,7 +397,7 @@ ipv4-allowlist
 :data node: ``<instance-id>/ipv4-allowlist``
 :default: empty
 
-List of allowed IPv4 addresses to process traffic from.
+List of allowed IPv4 addresses and prefixes to process traffic from.
 
 By default all IPv4 addressess are allowed.
 
@@ -361,7 +407,7 @@ ipv4-denylist
 :data node: ``<instance-id>/ipv4-denylist``
 :default: empty
 
-List of IPv4 addresses from which to NOT process traffic.
+List of IPv4 addresses and prefixes from which to NOT process traffic.
 
 By default all IPv4 addresses are allowed.
 
@@ -375,7 +421,7 @@ ipv6-allowlist
 :data node: ``<instance-id>/ipv6-allowlist``
 :default: empty
 
-List of allowed IPv6 addresses to process traffic from.
+List of allowed IPv6 addresses and prefixes to process traffic from.
 
 By default all IPv6 addresses are allowed.
 
@@ -385,7 +431,7 @@ ipv6-denylist
 :data node: ``<instance-id>/ipv6-denylist``
 :default: empty
 
-List of IPv6 addresses from which to NOT process traffic.
+List of IPv6 addresses and prefixes from which to NOT process traffic.
 
 By default all IPv6 addresses are allowed.
 

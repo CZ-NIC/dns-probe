@@ -25,6 +25,8 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
+#include <cstring>
 #include <string>
 #include <array>
 #include <unordered_set>
@@ -38,6 +40,107 @@ namespace DDP {
     using IPv4_t = uint32_t;
     using IPv6_t = in6_addr;
 
+    /**
+     * @brief Structure representing IPv4 prefix
+     */
+    struct IPv4_prefix_t {
+        /**
+         * @brief Check if given IPv4 address is inside this prefix
+         * @param addr IPv4 address to check
+         * @return true if IPv4 address is inside prefix, false otherwise
+         */
+        bool is_in_subnet(const IPv4_t& addr) const {
+            return (addr & mask) == ip;
+        }
+
+        IPv4_t ip;
+        IPv4_t mask;
+    };
+
+    /**
+     * @brief Structure representing IPv6 prefix
+     */
+    struct IPv6_prefix_t {
+        /**
+         * @brief Check if given IPv6 address is inside this prefix
+         * @param addr IPv6 address to check
+         * @return true if IPv6 address is inside prefix, false otherwise
+         */
+        bool is_in_subnet(const IPv6_t& addr) const {
+            return (addr.s6_addr32[0] & mask.s6_addr32[0]) == ip.s6_addr32[0] &&
+                (addr.s6_addr32[1] & mask.s6_addr32[1]) == ip.s6_addr32[1] &&
+                (addr.s6_addr32[2] & mask.s6_addr32[2]) == ip.s6_addr32[2] &&
+                (addr.s6_addr32[3] & mask.s6_addr32[3]) == ip.s6_addr32[3];
+        }
+
+        IPv6_t ip;
+        IPv6_t mask;
+    };
+}
+
+/**
+ * Hash and comparison functions for struct in6_addr.
+ * Used for storing IPv6 addresses in std::unordered_set.
+ */
+namespace std {
+    template<>
+    struct hash<in6_addr>
+    {
+        size_t operator()(const in6_addr& a) const
+        {
+            hash<uint32_t> hasher;
+            size_t h = 0;
+            const uint32_t* p = reinterpret_cast<const uint32_t*>(&a);
+            for (size_t i = 0; i < 4; ++i)
+            {
+                h = h * 31 + hasher(p[i]);
+            }
+            return h;
+        }
+    };
+
+    template<>
+    struct equal_to<in6_addr>
+    {
+        bool operator() (const in6_addr& a1, const in6_addr& a2) const {
+            return std::memcmp(&a1, &a2, sizeof(in6_addr)) == 0;
+        }
+    };
+
+    template<>
+    struct hash<DDP::IPv4_prefix_t>
+    {
+        size_t operator()(const DDP::IPv4_prefix_t& a) const {
+            return std::hash<DDP::IPv4_t>()(a.ip) ^ std::hash<DDP::IPv4_t>()(a.mask);
+        }
+    };
+
+    template<>
+    struct equal_to<DDP::IPv4_prefix_t>
+    {
+        bool operator() (const DDP::IPv4_prefix_t& a1, const DDP::IPv4_prefix_t& a2) const {
+            return a1.ip == a2.ip && a1.mask == a2.mask;
+        }
+    };
+
+    template<>
+    struct hash<DDP::IPv6_prefix_t>
+    {
+        size_t operator()(const DDP::IPv6_prefix_t& a) const {
+            return std::hash<in6_addr>()(a.ip) ^ std::hash<in6_addr>()(a.mask);
+        }
+    };
+
+    template<>
+    struct equal_to<DDP::IPv6_prefix_t>
+    {
+        bool operator() (const DDP::IPv6_prefix_t& a1, const DDP::IPv6_prefix_t& a2) const {
+            return equal_to<in6_addr>()(a1.ip, a2.ip) && equal_to<in6_addr>()(a1.mask, a2.mask);
+        }
+    };
+}
+
+namespace DDP {
     static constexpr uint8_t CdnsBits = 26; //!< Number of C-DNS fields options
     static constexpr uint64_t get_cdns_bitmask() {
         uint64_t bitmask = 0;

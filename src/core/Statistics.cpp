@@ -36,13 +36,27 @@ namespace DDP {
         active_tt_records += rhs.active_tt_records;
         exported_to_pcap += rhs.exported_to_pcap;
 
+        // Entropy
         for (auto index = 0u; index < ENTROPY_ARRAY_SIZE; index++) {
             ipv4_src_entropy_cnts[index] += rhs.ipv4_src_entropy_cnts[index];
         }
 
-        for (auto index = 0u; index < queries.size(); index++) {
+        // Overall stats
+        for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+            queries[i] += rhs.queries[i];
+        }
+
+        // IPv4 stats
+        for (auto& ipv4 : rhs.queries_ipv4) {
             for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
-                queries[index][i] += rhs.queries[index][i];
+                queries_ipv4[ipv4.first][i] += ipv4.second[i];
+            }
+        }
+
+        // IPv6 stats
+        for (auto& ipv6 : rhs.queries_ipv6) {
+            for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                queries_ipv6[ipv6.first][i] += ipv6.second[i];
             }
         }
 
@@ -57,15 +71,13 @@ namespace DDP {
         str << "        Exported records: " << exported_records << std::endl;
         str << "     Active transactions: " << active_tt_records << std::endl;
         str << "Exported packets to PCAP: " << exported_to_pcap << std::endl;
-        for (auto i = 0u; i < queries.size(); i++) {
-            str << "            IPv4 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV4] << std::endl;
-            str << "            IPv6 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV6] << std::endl;
-            str << "          TCP/53 Queries[" << std::to_string(i) << "]: " << queries[i][Q_TCP] << std::endl;
-            str << "             UDP Queries[" << std::to_string(i) << "]: " << queries[i][Q_UDP] << std::endl;
-            str << "             DoT Queries[" << std::to_string(i) << "]: " << queries[i][Q_DOT] << std::endl;
-            str << "             DoH Queries[" << std::to_string(i) << "]: " << queries[i][Q_DOH] << std::endl;
-            str << "                 Queries[" << std::to_string(i) << "]: " << queries[i][Q_IPV4] + queries[i][Q_IPV6] << std::endl;
-        }
+        str << "            IPv4 Queries: " << queries[Q_IPV4] << std::endl;
+        str << "            IPv6 Queries: " << queries[Q_IPV6] << std::endl;
+        str << "          TCP/53 Queries: " << queries[Q_TCP] << std::endl;
+        str << "             UDP Queries: " << queries[Q_UDP] << std::endl;
+        str << "             DoT Queries: " << queries[Q_DOT] << std::endl;
+        str << "             DoH Queries: " << queries[Q_DOH] << std::endl;
+        str << "                 Queries: " << queries[Q_IPV4] + queries[Q_IPV6] << std::endl;
 
         return str.str();
     }
@@ -89,9 +101,9 @@ namespace DDP {
         exported_to_pcap = 0;
         std::memset(ipv4_src_entropy_cnts, 0, sizeof(ipv4_src_entropy_cnts));
 
-        for (auto& item: queries) {
-            item.fill(0);
-        }
+        queries.fill(0);
+        queries_ipv4 = Ipv4StatsMap();
+        queries_ipv6 = Ipv6StatsMap();
 
         for (auto& stat: container) {
             operator+=(stat);
@@ -102,51 +114,115 @@ namespace DDP {
     {
         auto time_window = static_cast<double>(get_timestamp() - m_qps_timestamp);
 
-        std::vector<QueryStatsArray> qps_tmp(qps.size());
-        if (time_window)
-            for (auto index = 0u; index < qps.size(); index++) {
+        QueryStatsArray qps_tmp;
+        Ipv4StatsMap ipv4_qps_tmp;
+        Ipv6StatsMap ipv6_qps_tmp;
+        if (time_window) {
+            // Overall stats
+            for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                qps_tmp[i] = (queries[i] - m_old_aggregated_queries[i]) / time_window;
+            }
+
+            // IPv4 stats
+            for (auto& ipv4 : queries_ipv4) {
                 for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
-                    qps_tmp[index][i] = (queries[index][i] - m_old_aggregated_queries[index][i]) / time_window;
+                    ipv4_qps_tmp[ipv4.first][i] = (ipv4.second[i] - m_old_ipv4_aggregated_queries[ipv4.first][i])
+                        / time_window;
                 }
             }
-        else {
-            for (auto& item: qps_tmp) {
-                item.fill(0);
+
+            // IPv6 stats
+            for (auto& ipv6 : queries_ipv6) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                    ipv6_qps_tmp[ipv6.first][i] = (ipv6.second[i] - m_old_ipv6_aggregated_queries[ipv6.first][i])
+                        / time_window;
+                }
             }
+        }
+        else {
+            qps_tmp.fill(0);
         }
 
         m_qps_timestamp = get_timestamp();
-        std::copy(queries.begin(), queries.end(), m_old_aggregated_queries.begin());
+        m_old_aggregated_queries = queries;
+        m_old_ipv4_aggregated_queries = queries_ipv4;
+        m_old_ipv6_aggregated_queries = queries_ipv6;
 
+        // Overall stats
         while (m_moving_avg.size() >= m_moving_avg_window) {
             m_moving_avg.pop_front();
         }
 
+        // IPv4 stats
+        while (m_ipv4_moving_avg.size() > m_moving_avg_window) {
+            m_ipv4_moving_avg.pop_front();
+        }
+
+        // IPv6 stats
+        while (m_ipv6_moving_avg.size() > m_moving_avg_window) {
+            m_ipv6_moving_avg.pop_front();
+        }
+
         m_moving_avg.emplace_back(qps_tmp);
+        m_ipv4_moving_avg.emplace_back(ipv4_qps_tmp);
+        m_ipv6_moving_avg.emplace_back(ipv6_qps_tmp);
     }
 
     void AggregatedStatistics::get(const std::vector<Statistics>& container)
     {
         aggregate(container);
-        for (auto& item: qps) {
-            item.fill(0);
-        }
+        qps.fill(0);
+        ipv4_qps = Ipv4StatsMap();
+        ipv6_qps = Ipv6StatsMap();
+
+        // Overall stats
         for (auto& avg : m_moving_avg) {
-            for (auto index = 0u; index < qps.size(); index++) {
-                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
-                    qps[index][i] += avg[index][i];
-                }
+            for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                qps[i] += avg[i];
             }
         }
 
         if (m_moving_avg.size() > 1) {
-            for (auto index = 0u; index < qps.size(); index++) {
+            for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                qps[i] = qps[i] / m_moving_avg.size();
+            }
+        }
+
+        // IPv4 stats
+        for (auto& avg : m_ipv4_moving_avg) {
+            for (auto& ipv4 : avg) {
                 for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
-                    qps[index][i] = qps[index][i] / m_moving_avg.size();
+                    ipv4_qps[ipv4.first][i] += ipv4.second[i];
                 }
             }
         }
 
+        if (m_ipv4_moving_avg.size() > 1) {
+            for (auto& ipv4 : ipv4_qps) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                    ipv4.second[i] = ipv4.second[i] / m_ipv4_moving_avg.size();
+                }
+            }
+        }
+
+        // IPv6 stats
+        for (auto& avg : m_ipv6_moving_avg) {
+            for (auto& ipv6 : avg) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                    ipv6_qps[ipv6.first][i] += ipv6.second[i];
+                }
+            }
+        }
+
+        if (m_ipv6_moving_avg.size() > 1) {
+            for (auto& ipv6 : ipv6_qps) {
+                for (auto i = 0u; i < QUERY_STATS_SIZE; i++) {
+                    ipv6.second[i] = ipv6.second[i] / m_ipv6_moving_avg.size();
+                }
+            }
+        }
+
+        // Entropy
         ipv4_src_entropy = 0.0;
         uint64_t all_count = 0;
 
