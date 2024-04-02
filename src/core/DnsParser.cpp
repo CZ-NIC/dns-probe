@@ -50,10 +50,14 @@ DDP::DnsParser::DnsParser(Config& cfg, unsigned process_id, DDP::Mempool<DDP::Dn
         m_record_mempool(record_mempool),
         m_tcp_mempool(tcp_mempool),
         m_edns_mempool(EDNS_MEMPOOL_ITEM_SIZE, cfg.tt_size.value() / 10),
+        m_rr_mempool(sizeof(DnsRR), cfg.tt_size.value() / 10),
+        m_rdata_mempool(32, cfg.tt_size.value() / 10),
         m_tcp_table(cfg.tcp_ct_size, cfg.tcp_ct_timeout, false),
         m_msg_buffer(reinterpret_cast<uint8_t*>(Alloc::malloc(DNS_MSG_BUFFER_SIZE)), Alloc::free),
+        m_rdata_buffer(reinterpret_cast<uint8_t*>(Alloc::malloc(DNS_MSG_BUFFER_SIZE)), Alloc::free),
         m_raw_pcap(cfg.raw_pcap),
         m_export_invalid(cfg.pcap_export.value() == PcapExportCfg::INVALID),
+        m_export_resp_rr(cfg.cdns_export_resp_rr.value()),
         m_pcap_inv(cfg, true, process_id),
         m_processed_packet{nullptr},
         m_dns_ports(cfg.dns_ports),
@@ -65,6 +69,9 @@ DDP::DnsParser::DnsParser(Config& cfg, unsigned process_id, DDP::Mempool<DDP::Dn
 {
     if (!m_msg_buffer)
         throw DnsParserConstuctor("Message buffer allocation failed");
+
+    if (!m_rdata_buffer)
+        throw DnsParserConstuctor("Rdata buffer allocation failed");
 }
 
 void DDP::DnsParser::parse_dns_header(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
@@ -149,7 +156,8 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dns_question(const DDP::MemView<uint
     return question.offset(qname_len + 1 + DNS_QTYPE_QCLASS_SIZE);
 }
 
-void DDP::DnsParser::parse_edns(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord& record)
+void DDP::DnsParser::parse_rrs(const DDP::MemView<uint8_t>& pkt, const DDP::MemView<uint8_t>& pkt_start,
+    DDP::DnsRecord& record)
 {
     if (!pkt.count()) {
         return;
@@ -164,6 +172,7 @@ void DDP::DnsParser::parse_edns(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord
     }
 
     auto ptr = pkt.ptr();
+    auto pkt_start_ptr = pkt_start.ptr();
     auto pkt_end = pkt.ptr() + pkt.count();
 
     // Parse Question section
@@ -171,14 +180,14 @@ void DDP::DnsParser::parse_edns(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord
         for (int i = 0; i < (record.m_qdcount - 1); i++) {
             if (pkt_end - ptr < DNS_MIN_QUESTION_SIZE) {
                 put_back_record(record);
-                throw DnsParseException("Invalid RR record");
+                throw DnsParseException("Invalid Question RR record");
             }
 
-            ptr = parse_rr(ptr, pkt_end, record, DNSSectionType::QUESTION);
+            ptr = parse_rr(ptr, pkt_start_ptr, pkt_end, record, DNSSectionType::QUESTION);
 
             if (ptr == nullptr) {
                 put_back_record(record);
-                throw DnsParseException("Invalid RR record");
+                throw DnsParseException("Invalid Question RR record");
             }
         }
     }
@@ -187,19 +196,19 @@ void DDP::DnsParser::parse_edns(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord
     for (unsigned j = 0; j < record.m_ancount; j++) {
         if (pkt_end - ptr < DNS_MIN_RR_SIZE) {
             put_back_record(record);
-            throw DnsParseException("Invalid RR record");
+            throw DnsParseException("Invalid Answer RR record");
         }
 
         if (record.m_response && j + 1 == record.m_ancount) {
-            ptr = parse_rr(ptr, pkt_end, record, DNSSectionType::ANSWER);
+            ptr = parse_rr(ptr, pkt_start_ptr, pkt_end, record, DNSSectionType::ANSWER_LAST);
         }
         else {
-            ptr = parse_rr(ptr, pkt_end, record, DNSSectionType::OTHER);
+            ptr = parse_rr(ptr, pkt_start_ptr, pkt_end, record, DNSSectionType::ANSWER);
         }
 
         if (ptr == nullptr) {
             put_back_record(record);
-            throw DnsParseException("Invalid RR record");
+            throw DnsParseException("Invalid Answer RR record");
         }
     }
 
@@ -207,14 +216,14 @@ void DDP::DnsParser::parse_edns(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord
     for (int k = 0; k < record.m_nscount; k++) {
         if (pkt_end - ptr < DNS_MIN_RR_SIZE) {
             put_back_record(record);
-            throw DnsParseException("Invalid RR record");
+            throw DnsParseException("Invalid Authority RR record");
         }
 
-        ptr = parse_rr(ptr, pkt_end, record, DNSSectionType::OTHER);
+        ptr = parse_rr(ptr, pkt_start_ptr, pkt_end, record, DNSSectionType::AUTHORITY);
 
         if (ptr == nullptr) {
             put_back_record(record);
-            throw DnsParseException("Invalid RR record");
+            throw DnsParseException("Invalid Authority RR record");
         }
     }
 
@@ -222,22 +231,23 @@ void DDP::DnsParser::parse_edns(const DDP::MemView<uint8_t>& pkt, DDP::DnsRecord
     for (int l = 0; l < record.m_arcount; l++) {
         if (pkt_end - ptr < DNS_MIN_RR_SIZE) {
             put_back_record(record);
-            throw DnsParseException("Invalid RR record");
+            throw DnsParseException("Invalid Additional RR record");
         }
 
-        ptr = parse_rr(ptr, pkt_end, record, DNSSectionType::AR);
+        ptr = parse_rr(ptr, pkt_start_ptr, pkt_end, record, DNSSectionType::ADDITIONAL);
 
         if (ptr == nullptr) {
             put_back_record(record);
-            throw DnsParseException("Invalid RR record");
+            throw DnsParseException("Invalid Additional RR record");
         }
     }
 }
 
-const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_end, DDP::DnsRecord& record, DNSSectionType section)
+const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_start, const uint8_t* pkt_end,
+    DDP::DnsRecord& record, DNSSectionType section)
 {
     // Found OPT RR with EDNS information
-    if (section == DNSSectionType::AR && *ptr == '\0') {
+    if (section == DNSSectionType::ADDITIONAL && *ptr == '\0') {
         ptr += 1;
         uint16_t rr_type = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
         if (rr_type != DNS_EDNS_RR_TYPE) {
@@ -288,44 +298,279 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_e
     }
 
     // Parse non-OPT Resource Record
-    uint16_t dname_size = 0;
-    while (*ptr != '\0') {
-        uint8_t label_len = *ptr;
-        dname_size += label_len + 1;
-        if ((label_len & DNS_LABEL_PTR) == DNS_LABEL_PTR) {
-            ptr += 1;
-            break;
-        }
-        else if (label_len > DNS_MAX_LABEL_SIZE || dname_size > DNS_MAX_QNAME_SIZE || label_len >= pkt_end - ptr - 1) {
-            return nullptr;
-        }
-        else {
-            ptr += (label_len + 1);
-        }
-    }
+    int dsize;
+    DnsRR* rr;
+    uint16_t rdata_len, type;
 
-    if (section == DNSSectionType::QUESTION) {
-        ptr += (1 + DNS_QTYPE_QCLASS_SIZE);
+    if (record.m_response && m_export_resp_rr) {
+        switch (section) {
+            case DNSSectionType::QUESTION:
+                dsize = skip_dname(ptr, pkt_end);
+                if (dsize < 0)
+                    return nullptr;
+                ptr += (dsize + DNS_QTYPE_QCLASS_SIZE);
+                break;
+            case DNSSectionType::ANSWER:
+            case DNSSectionType::ANSWER_LAST:
+                rr = get_empty_rr();
+                if (!rr)
+                    return nullptr;
+                ptr = fill_rr(ptr, pkt_start, pkt_end, rr);
+                if (!ptr) {
+                    m_rr_mempool.free(rr);
+                    return nullptr;
+                }
+                if (section == DNSSectionType::ANSWER_LAST && rr->type == DNS_TYPE_SOA)
+                    record.m_last_soa = true;
+                record.m_resp_answer_rrs.emplace_back(rr);
+                break;
+            case DNSSectionType::ADDITIONAL:
+                rr = get_empty_rr();
+                if (!rr)
+                    return nullptr;
+
+                ptr = fill_rr(ptr, pkt_start, pkt_end, rr);
+                if (!ptr) {
+                    m_rr_mempool.free(rr);
+                    return nullptr;
+                }
+                record.m_resp_additional_rrs.emplace_back(rr);
+                break;
+            default:
+                dsize = skip_dname(ptr, pkt_end);
+                if (dsize < 0)
+                    return nullptr;
+                ptr += (dsize + DNS_RR_FIELDS_SKIP);
+                rdata_len = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
+                if (rdata_len > pkt_end - ptr - 2)
+                    return nullptr;
+                ptr += (2 + rdata_len);
+                break;
+        }
     }
     else {
-        if (section == DNSSectionType::ANSWER) {
-            ptr +=1;
-            uint16_t type = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
-            if (type == DNS_TYPE_SOA) {
+        dsize = skip_dname(ptr, pkt_end);
+        if (dsize < 0)
+            return nullptr;
+
+        if (section == DNSSectionType::ANSWER_LAST) {
+            ptr += dsize;
+            type = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
+            if (type == DNS_TYPE_SOA)
                 record.m_last_soa = true;
-            }
             ptr += DNS_RR_FIELDS_SKIP;
         }
         else {
-            ptr += (1 + DNS_RR_FIELDS_SKIP);
+            ptr += (dsize + DNS_RR_FIELDS_SKIP);
         }
-        uint16_t rdata_len = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
+
+        rdata_len = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
         if (rdata_len > pkt_end - ptr - 2)
             return nullptr;
         ptr += (2 + rdata_len);
     }
 
     return ptr;
+}
+
+int DDP::DnsParser::skip_dname(const uint8_t* pkt, const uint8_t* pkt_end)
+{
+    uint16_t dname_size = 0;
+
+    while (*pkt != '\0') {
+        uint8_t label = *pkt;
+        if ((label & DNS_LABEL_PTR) == DNS_LABEL_PTR) {
+            dname_size += 1;
+            break;
+        }
+
+        dname_size += label + 1;
+
+        if (label > DNS_MAX_LABEL_SIZE || dname_size > DNS_MAX_QNAME_SIZE || label >= pkt_end - pkt - 1) {
+            return -1;
+        }
+        else {
+            pkt += (label + 1);
+        }
+    }
+
+    return dname_size + 1;
+}
+
+int DDP::DnsParser::parse_dname(char* buffer, uint16_t& buf_len, const uint8_t* pkt,
+    const uint8_t* pkt_start, const uint8_t* pkt_end)
+{
+    uint16_t dname_size = 0;
+    uint16_t skip_size = 0;
+    bool compressed = false;
+    const uint8_t* ptr_offset;
+    uint16_t offset;
+
+    while (*pkt != '\0') {
+        uint8_t label = *pkt;
+
+        switch (label & DNS_LABEL_PTR) {
+            case DNS_LABEL_PTR:
+                offset = (label & 0x3f) << 8;
+                offset |= *(pkt + 1);
+                ptr_offset = pkt_start + offset;
+
+                // compression pointer must point backwards in packet to prevent loops
+                if (ptr_offset >= pkt)
+                    return -1;
+
+                pkt = ptr_offset;
+                if (!compressed) {
+                    skip_size++;
+                    compressed = true;
+                }
+                break;
+            case 0:
+                if (label > DNS_MAX_LABEL_SIZE || dname_size + label + 1 > buf_len ||
+                    label > pkt_end - pkt - 1) {
+                    return -1;
+                }
+
+                std::memcpy(buffer + dname_size, pkt, label + 1);
+
+                dname_size += label + 1;
+                if (!compressed)
+                    skip_size += label + 1;
+
+                pkt += (label + 1);
+                break;
+            default:
+                return -1;
+                break;
+        }
+    }
+
+    // add 1 byte for last '\0' label
+    buffer[dname_size] = '\0';
+    buf_len = dname_size + 1;
+    return skip_size + 1; // add 1 for last '\0' label / second pointer offset byte
+}
+
+const uint8_t* DDP::DnsParser::fill_rr(const uint8_t* ptr, const uint8_t* pkt_start, const uint8_t* pkt_end,
+    DnsRR* const rr)
+{
+    uint16_t buf_len = DNS_MAX_QNAME_SIZE;
+    auto dsize = parse_dname(rr->dname, buf_len, ptr, pkt_start, pkt_end);
+    ptr += dsize; // jump domain name
+    if (dsize < 0 || (pkt_end - ptr < DNS_MIN_RR_SIZE - 1))
+        return nullptr;
+
+    rr->type = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
+    ptr += 2; // jump type field
+    rr->class_ = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
+    ptr += 2; // jump class field
+    rr->ttl = ntohl(*reinterpret_cast<const uint32_t*>(ptr));
+    ptr += 4; // jump TTL field
+    rr->rdlength = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
+    ptr += 2; // jump rdlength field
+
+    if (rr->rdlength > pkt_end - ptr)
+        return nullptr;
+
+    if (rr->rdlength > 0) {
+        buf_len = DNS_MSG_BUFFER_SIZE;
+        auto offset = parse_rdata(reinterpret_cast<char*>(m_rdata_buffer.get()), buf_len, ptr,
+            rr->rdlength, pkt_start, pkt_end, rr->type);
+        if (offset < 0)
+            return nullptr;
+
+        rr->rdata = get_empty_rdata(buf_len); // allocate size of uncompressed rdata
+        if (!rr->rdata)
+            return nullptr;
+
+        std::memcpy(rr->rdata, m_rdata_buffer.get(), buf_len);
+        ptr += rr->rdlength;
+    }
+
+    return ptr;
+}
+
+int DDP::DnsParser::parse_rdata(char* buffer, uint16_t& buf_len, const uint8_t* rdata, uint16_t rdlength,
+    const uint8_t* pkt_start, const uint8_t* pkt_end, uint16_t type)
+{
+    uint16_t offset = 0;
+    uint16_t data_len = 0;
+    uint16_t curr_buf_len = buf_len;
+    int dsize;
+
+    switch (static_cast<DnsRrType>(type)) {
+        case DnsRrType::NS:
+        case DnsRrType::CNAME:
+        case DnsRrType::PTR:
+            dsize = parse_dname(buffer, curr_buf_len, rdata, pkt_start, pkt_end);
+            if (dsize < 0)
+                return -1;
+
+            offset += dsize;
+            data_len += curr_buf_len;
+            break;
+        case DnsRrType::MX:
+            if (rdlength < 3)
+                return -1;
+            std::memcpy(buffer, rdata, 2);
+            offset += 2;
+            data_len += 2;
+
+            curr_buf_len = buf_len - data_len;
+            dsize = parse_dname(buffer + data_len, curr_buf_len, rdata + offset, pkt_start, pkt_end);
+            if (dsize < 0)
+                return -1;
+
+            offset += dsize;
+            data_len += curr_buf_len;
+            break;
+        case DnsRrType::SOA:
+            dsize = parse_dname(buffer, curr_buf_len, rdata, pkt_start, pkt_end);
+            if (dsize < 0)
+                return -1;
+
+            offset += dsize;
+            data_len += curr_buf_len;
+
+            curr_buf_len = buf_len - data_len;
+            dsize = parse_dname(buffer + data_len, curr_buf_len, rdata + offset, pkt_start, pkt_end);
+            if (dsize < 0)
+                return -1;
+
+            offset += dsize;
+            data_len += curr_buf_len;
+            if (rdata + offset + 20 > pkt_end)
+                return -1;
+
+            std::memcpy(buffer + data_len, rdata + offset, 20);
+            offset += 20;
+            data_len += 20;
+            break;
+        case DnsRrType::SRV:
+            if (rdlength < 7)
+                return -1;
+            std::memcpy(buffer, rdata, 6);
+            offset += 6;
+            data_len += 6;
+            dsize = parse_dname(buffer + data_len, curr_buf_len, rdata + offset, pkt_start, pkt_end);
+            if (dsize < 0)
+                return -1;
+            offset += dsize;
+            data_len += curr_buf_len;
+            break;
+        default:
+            std::memcpy(buffer, rdata, rdlength);
+            offset += rdlength;
+            data_len += rdlength;
+            break;
+    }
+
+    if (rdata + offset > pkt_end)
+        return -1;
+
+    buf_len = data_len;
+
+    return offset;
 }
 
 #ifdef PROBE_DNSTAP
@@ -748,11 +993,11 @@ void DDP::DnsParser::parse_dns(DDP::MemView<uint8_t> pkt, DDP::DnsRecord& record
         record.m_dns_len = 0;
     }
 
-    pkt = pkt.offset(DNS_HEADER_SIZE);
+    auto dns_wire = pkt.offset(DNS_HEADER_SIZE);
 
     // Extract QUESTION section data
     if (record.m_qdcount != 0) {
-        pkt = parse_dns_question(pkt, record);
+        dns_wire = parse_dns_question(dns_wire, record);
     }
 
     // Check indexing of addresses and ports
@@ -765,12 +1010,22 @@ void DDP::DnsParser::parse_dns(DDP::MemView<uint8_t> pkt, DDP::DnsRecord& record
     }
 
     // Extract EDNS if enabled
-    parse_edns(pkt, record);
+    parse_rrs(dns_wire, pkt, record);
 }
 
 DDP::DnsRecord& DDP::DnsParser::get_empty()
 {
     return m_record_mempool.get();
+}
+
+DDP::DnsRR* DDP::DnsParser::get_empty_rr()
+{
+    return static_cast<DnsRR*>(m_rr_mempool.get(DNS_RR_STRUCT_SIZE));
+}
+
+uint8_t* DDP::DnsParser::get_empty_rdata(uint32_t size)
+{
+    return static_cast<uint8_t*>(m_rdata_mempool.get(size));
 }
 
 void DDP::DnsParser::parse_wire_packet(const Packet& packet, DnsRecord& record, std::vector<DnsRecord*>& records, bool& drop)
@@ -1022,6 +1277,34 @@ void DDP::DnsParser::put_back_record(DDP::DnsRecord& record)
         record.m_resp_ednsRdata = nullptr;
     }
 
+    if (!record.m_resp_answer_rrs.empty()) {
+        for (auto& rr : record.m_resp_answer_rrs) {
+            if (rr->rdata != nullptr) {
+                m_rdata_mempool.free(rr->rdata);
+                rr->rdata = nullptr;
+            }
+
+            m_rr_mempool.free(rr);
+            rr = nullptr;
+        }
+
+        record.m_resp_answer_rrs.clear();
+    }
+
+    if (!record.m_resp_additional_rrs.empty()) {
+        for (auto& rr : record.m_resp_additional_rrs) {
+            if (rr->rdata != nullptr) {
+                m_rdata_mempool.free(rr->rdata);
+                rr->rdata = nullptr;
+            }
+
+            m_rr_mempool.free(rr);
+            rr = nullptr;
+        }
+
+        record.m_resp_additional_rrs.clear();
+    }
+
     m_record_mempool.free(record);
 }
 
@@ -1050,6 +1333,9 @@ DDP::DnsRecord& DDP::DnsParser::merge_records(DDP::DnsRecord& request, DDP::DnsR
     request.m_resp_ednsRdata = response.m_resp_ednsRdata;
     response.m_resp_ednsRdata = nullptr;
     request.m_resp_ednsRdata_size = response.m_resp_ednsRdata_size;
+
+    request.m_resp_answer_rrs = std::move(response.m_resp_answer_rrs);
+    request.m_resp_additional_rrs = std::move(response.m_resp_additional_rrs);
 
     return request;
 }
