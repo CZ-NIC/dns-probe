@@ -80,7 +80,10 @@ export simply copies the Entrada schema shown in the table below. C-DNS
 format has its own schema defined in `RFC
 8616 <https://tools.ietf.org/html/rfc8618>`_. DNS Probe tries to fill
 this C-DNS schema with only the data needed for reconstructing the
-Entrada schema.
+Entrada schema. As of DNS Probe release *1.3.0* export to C-DNS also has
+an option to export full resource records from *Answer* and *Additional*
+sections of responses by enabling :ref:`cdns-export-response-rr`
+configuration option.
 
 .. table::
     :align: left
