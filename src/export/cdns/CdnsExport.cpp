@@ -25,7 +25,7 @@
 
 DDP::CdnsExport::CdnsExport(Config& cfg, MMDB_s& country_db, MMDB_s& asn_db)
     : BaseExport(cfg.anonymize_ip.value(), country_db, asn_db), m_fields(cfg.cdns_fields.value()),
-      m_parameters()
+      m_parameters(), m_export_resp_rr(cfg.cdns_export_resp_rr.value())
 {
     m_parameters.storage_parameters.max_block_items = cfg.cdns_records_per_block.value();
     set_cdns_hints(m_parameters.storage_parameters.storage_hints.query_response_hints,
@@ -200,19 +200,65 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
         qrs_filled = true;
     }
 
-    if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)] && record.m_resp_ednsRdata) {
+    if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ANSWER_SECTIONS)]
+        || m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)]) {
         CDNS::QueryResponseExtended qre;
-        std::vector<CDNS::index_t> list;
-        CDNS::RR edns;
-        CDNS::ClassType cltype;
-        cltype.type = 41;
-        cltype.class_ = record.m_ednsUDP;
-        edns.name_index = m_block->add_name_rdata(std::string("\0", 1));
-        edns.classtype_index = m_block->add_classtype(cltype);
-        edns.rdata_index = m_block->add_name_rdata(std::string(reinterpret_cast<char*>(record.m_resp_ednsRdata), record.m_resp_ednsRdata_size));
-        list.push_back(m_block->add_rr(edns));
-        qre.additional_index = m_block->add_rr_list(list);
-        qr.response_extended = qre;
+
+        if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ANSWER_SECTIONS)] && m_export_resp_rr
+            && record.m_resp_answer_rrs.size() > 0) {
+            std::vector<CDNS::index_t> answer_list;
+
+            for (DnsRR* rr : record.m_resp_answer_rrs) {
+                CDNS::RR answer;
+                CDNS::ClassType cltype;
+
+                cltype.type = rr->type;
+                cltype.class_ = rr->class_;
+                answer.name_index = m_block->add_name_rdata(std::string(rr->dname, strlen(rr->dname) + 1));
+                answer.classtype_index = m_block->add_classtype(cltype);
+                answer.ttl = rr->ttl;
+                answer.rdata_index = m_block->add_name_rdata(std::string(reinterpret_cast<char*>(rr->rdata), rr->rdlength));
+                answer_list.push_back(m_block->add_rr(answer));
+            }
+
+            qre.answer_index = m_block->add_rr_list(answer_list);
+        }
+
+        std::vector<CDNS::index_t> additional_list;
+
+        if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)]
+            && record.m_resp_ednsRdata) {
+            CDNS::RR edns;
+            CDNS::ClassType cltype;
+            cltype.type = 41;
+            cltype.class_ = record.m_ednsUDP;
+            edns.name_index = m_block->add_name_rdata(std::string("\0", 1));
+            edns.classtype_index = m_block->add_classtype(cltype);
+            edns.rdata_index = m_block->add_name_rdata(std::string(reinterpret_cast<char*>(record.m_resp_ednsRdata), record.m_resp_ednsRdata_size));
+            additional_list.push_back(m_block->add_rr(edns));
+        }
+
+        if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)] && m_export_resp_rr
+            && record.m_resp_additional_rrs.size() > 0) {
+            for (DnsRR* rr : record.m_resp_additional_rrs) {
+                CDNS::RR additional;
+                CDNS::ClassType cltype;
+
+                cltype.type = rr->type;
+                cltype.class_ = rr->class_;
+                additional.name_index = m_block->add_name_rdata(std::string(rr->dname, strlen(rr->dname) + 1));
+                additional.classtype_index = m_block->add_classtype(cltype);
+                additional.ttl = rr->ttl;
+                additional.rdata_index = m_block->add_name_rdata(std::string(reinterpret_cast<char*>(rr->rdata), rr->rdlength));
+                additional_list.push_back(m_block->add_rr(additional));
+            }
+        }
+
+        if (additional_list.size() > 0)
+            qre.additional_index = m_block->add_rr_list(additional_list);
+
+        if (qre.answer_index || qre.additional_index)
+            qr.response_extended = qre;
     }
 
     if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)])

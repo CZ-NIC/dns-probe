@@ -49,6 +49,21 @@ namespace DDP {
     static constexpr uint8_t DNS_QTYPE_AXFR = 252;
 
     /**
+     * @brief Stores data of one DNS Resource Record
+     */
+    struct DnsRR
+    {
+        char dname[QNAME_BUFFER_SIZE]; // wire format
+        uint16_t type;
+        uint16_t class_;
+        uint32_t ttl;
+        uint16_t rdlength;
+        uint8_t* rdata;
+    };
+
+    static constexpr uint32_t DNS_RR_STRUCT_SIZE = sizeof(DnsRR);
+
+    /**
      * @brief Stores parsed data of a DNS packet
      * (request or response)
      */
@@ -125,7 +140,9 @@ namespace DDP {
                       m_req_ednsRdata(nullptr),
                       m_req_ednsRdata_size(0),
                       m_resp_ednsRdata(nullptr),
-                      m_resp_ednsRdata_size(0)
+                      m_resp_ednsRdata_size(0),
+                      m_resp_answer_rrs(),
+                      m_resp_additional_rrs()
         {
         }
 
@@ -280,6 +297,10 @@ namespace DDP {
         uint64_t m_req_ednsRdata_size;
         uint8_t* m_resp_ednsRdata;
         uint64_t m_resp_ednsRdata_size;
+
+        // Optional list of response RRs from Answer and Additional sections
+        std::vector<DnsRR*> m_resp_answer_rrs;
+        std::vector<DnsRR*> m_resp_additional_rrs;
     };
 
 }
