@@ -32,6 +32,7 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       |  +--rw backup-remote-ip-address? <string>
       |  +--rw backup-remote-port? <uint16>
       |  +--rw cdns-blocks-per-file? <uint64>
+      |  +--rw cdns-export-response-rr? <boolean>
       |  +--rw cdns-fields?* <string>
       |  +--rw cdns-records-per-block? <uint64>
       |  +--rw country-maxmind-db? <string>
@@ -187,6 +188,18 @@ cdns-blocks-per-file
 This parameter takes effect only if ``cdns`` is set in :ref:`export-format`. It specifies the maximum number of C-DNS blocks written to one exported file (see `Section 7.3.2 <https://tools.ietf.org/html/rfc8618#section-7.3.2>`_ in [RFC8618]_). If this limit is reached, the export file is closed and a new one started.
 
 The default value of 0 means that there is no limit.
+
+.. _cdns-export-response-rr:
+
+cdns-export-response-rr
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/cdns-export-response-rr``
+:default: **false**
+
+If this flag is set to **true**, exported C-DNS files will contain full Answer and Additional RRs from responses in each record.
+
+**NOTE:** Won't work for traffic captured via Knot interface as this data doesn't contain full RRs.
 
 cdns-fields
 ^^^^^^^^^^^
