@@ -162,6 +162,9 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["export"]["cdns-blocks-per-file"] && node["export"]["cdns-blocks-per-file"].IsScalar())
         cfg.cdns_blocks_per_file.add_value(node["export"]["cdns-blocks-per-file"].as<uint64_t>());
 
+    if (node["export"]["cdns-export-response-rr"] && node["export"]["cdns-export-response-rr"].IsScalar())
+        cfg.cdns_export_resp_rr.add_value(node["export"]["cdns-export-response-rr"].as<bool>());
+
     if (node["export"]["parquet-records-per-file"] && node["export"]["parquet-records-per-file"].IsScalar())
         cfg.parquet_records.add_value(node["export"]["parquet-records-per-file"].as<uint64_t>());
 

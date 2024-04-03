@@ -141,24 +141,6 @@ namespace std {
 }
 
 namespace DDP {
-    static constexpr uint8_t CdnsBits = 26; //!< Number of C-DNS fields options
-    static constexpr uint64_t get_cdns_bitmask() {
-        uint64_t bitmask = 0;
-        for (unsigned i = 0; i < CdnsBits; i++) {
-            bitmask |= 1 << i;
-        }
-        return bitmask;
-    }
-
-    static constexpr uint8_t StatsBits = 21; //!< Number of possible statistics to export
-    static constexpr uint64_t get_stats_bitmask() {
-        uint64_t bitmask = 0;
-        for (unsigned i = 0; i < StatsBits; i++) {
-            bitmask |= 1 << i;
-        }
-        return bitmask;
-    }
-
     /**
      * Available values for PCAP export config.
      */
@@ -209,11 +191,14 @@ namespace DDP {
         QUERY_EDNS_VERSION,
         QUERY_EDNS_UDP_SIZE,
         QUERY_OPT_RDATA,
+        RESPONSE_ANSWER_SECTIONS,
         RESPONSE_ADDITIONAL_SECTIONS,
         RESPONSE_SIZE,
         ASN,
         COUNTRY_CODE,
-        ROUND_TRIP_TIME
+        ROUND_TRIP_TIME,
+
+        CDNS_FIELD_SIZE
     };
 
     static const std::unordered_map<std::string, uint32_t> CdnsFieldsMap = {
@@ -238,6 +223,7 @@ namespace DDP {
         {"query_edns_version",              static_cast<uint32_t>(CDNSField::QUERY_EDNS_VERSION)},
         {"query_edns_udp_size",             static_cast<uint32_t>(CDNSField::QUERY_EDNS_UDP_SIZE)},
         {"query_opt_data",                  static_cast<uint32_t>(CDNSField::QUERY_OPT_RDATA)},
+        {"response_answer_sections",        static_cast<uint32_t>(CDNSField::RESPONSE_ANSWER_SECTIONS)},
         {"response_additional_sections",    static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)},
         {"response_size",                   static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)},
         {"asn",                             static_cast<uint32_t>(CDNSField::ASN)},
@@ -269,7 +255,9 @@ namespace DDP {
         QUERIES_PER_SECOND_DOT,
         QUERIES_PER_SECOND_DOH,
         QUERIES_PER_SECOND,
-        UNIX_TIMESTAMP
+        UNIX_TIMESTAMP,
+
+        STATS_FIELD_SIZE
     };
 
     static const std::unordered_map<std::string, uint32_t> StatsFieldsMap = {
@@ -295,6 +283,24 @@ namespace DDP {
         {"queries-per-second",          static_cast<uint32_t>(StatsField::QUERIES_PER_SECOND)},
         {"unix-timestamp",              static_cast<uint32_t>(StatsField::UNIX_TIMESTAMP)},
     };
+
+    static constexpr auto CdnsBits = static_cast<uint32_t>(CDNSField::CDNS_FIELD_SIZE); //!< Number of C-DNS fields options
+    static constexpr uint64_t get_cdns_bitmask() {
+        uint64_t bitmask = 0;
+        for (unsigned i = 0; i < CdnsBits; i++) {
+            bitmask |= 1 << i;
+        }
+        return bitmask;
+    }
+
+    static constexpr auto StatsBits = static_cast<uint32_t>(StatsField::STATS_FIELD_SIZE); //!< Number of possible statistics to export
+    static constexpr uint64_t get_stats_bitmask() {
+        uint64_t bitmask = 0;
+        for (unsigned i = 0; i < StatsBits; i++) {
+            bitmask |= 1 << i;
+        }
+        return bitmask;
+    }
 
     /**
      * Encryption algorithm used for optional client IP anonymization

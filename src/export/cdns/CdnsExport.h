@@ -88,5 +88,6 @@ namespace DDP {
         std::shared_ptr<CDNS::CdnsBlock> m_block;
         std::bitset<CdnsBits> m_fields;
         CDNS::BlockParameters m_parameters;
+        bool m_export_resp_rr;
     };
 }
