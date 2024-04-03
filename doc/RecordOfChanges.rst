@@ -15,6 +15,11 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **1.*.***
+     - **1.0**
+     - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Add option to export full Answer and Additional RRs of responses to C-DNS files
    * - **1.2.0**
      - **1.0**
      - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,

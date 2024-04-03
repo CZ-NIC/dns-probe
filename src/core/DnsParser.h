@@ -128,8 +128,20 @@ namespace DDP {
         {
             QUESTION,
             ANSWER,
-            AR,
+            ANSWER_LAST,
+            AUTHORITY,
+            ADDITIONAL,
             OTHER,
+        };
+
+        enum class DnsRrType : uint16_t
+        {
+            NS = 2,
+            CNAME = 5,
+            SOA = 6,
+            PTR = 12,
+            MX = 15,
+            SRV = 33,
         };
 
         /**
@@ -358,22 +370,6 @@ namespace DDP {
         bool is_export_invalid() { return m_export_invalid; }
 
     private:
-        Mempool<DnsRecord>& m_record_mempool;
-        Mempool<DnsTcpConnection>& m_tcp_mempool;
-        DynamicMempool m_edns_mempool;
-        TransactionTable<DnsTcpConnection, TT_TIMEOUT_COUNT> m_tcp_table;
-        std::unique_ptr<uint8_t, std::function<void(void*)>> m_msg_buffer;
-        bool m_raw_pcap;
-        bool m_export_invalid;
-        PcapWriter m_pcap_inv;
-        const Packet* m_processed_packet;
-        std::unordered_set<uint16_t> m_dns_ports;
-        std::unordered_set<IPv4_prefix_t> m_ipv4_allowlist;
-        std::unordered_set<IPv4_prefix_t> m_ipv4_denylist;
-        std::unordered_set<IPv6_prefix_t> m_ipv6_allowlist;
-        std::unordered_set<IPv6_prefix_t> m_ipv6_denylist;
-        Statistics& m_stats;
-
         /**
          * @brief Check if given IPv4 addresses are allowed to be processed
          * @param src Pointer to source IPv4 address in network format
@@ -428,24 +424,103 @@ namespace DDP {
         MemView<uint8_t> parse_dns_question(const MemView<uint8_t>& question, DnsRecord& record);
 
         /**
-         * @brief Try to find OPT RR in DNS payload with EDNS information and parse it
+         * @brief Parse Resource Records for all sections of DNS packet
          * @param pkt Pointer into DNS payload where to start to search
+         * @param pkt_start Pointer to the first byte of DNS wire data
          * @param record DNS record to fill
          * @throw DnsParseException
          */
-        void parse_edns(const MemView<uint8_t>& pkt, DnsRecord& record);
+        void parse_rrs(const MemView<uint8_t>& pkt, const MemView<uint8_t>& pkt_start, DnsRecord& record);
 
         /**
-         * @brief Parse one Resource Record and if it's OPT RR with EDNS information fill DNS record
+         * @brief Parse one Resource Record and fill DNS record based on configuration options
          * @param ptr Pointer into DNS payload where to start parsing
-         * @param pkt_end Pointer to the firt byte after the end of packet data
+         * @param pkt_start Pointer to the first byte of DNS wire data
+         * @param pkt_end Pointer to the first byte after the end of packet data
          * @param record DNS record to fill
          * @param section Type of the DNS payload section being parsed
          * @throw DnsParseException From calling parse_edns_options()
          * @return Pointer to the end of the parsed section, nullptr on failure
          */
-        const uint8_t* parse_rr(const uint8_t* ptr, const uint8_t* pkt_end, DnsRecord& record, DNSSectionType section);
+        const uint8_t* parse_rr(const uint8_t* ptr, const uint8_t* pkt_start, const uint8_t* pkt_end,
+            DnsRecord& record, DNSSectionType section);
+
+        /**
+         * @brief Get empty DnsRR from mempool
+         * @return Empty DnsRR from mempool
+         */
+        DnsRR* get_empty_rr();
+
+        /**
+         * @brief Get empty memory block for rdata from mempool
+         * @param size Size of requested memory block
+         * @return Empty memory block from mempool
+         */
+        uint8_t* get_empty_rdata(uint32_t size);
+
+        /**
+         * @brief Parse through wire format domain name and return its byte length
+         * @param pkt Pointer to start of domain name (first label byte)
+         * @param pkt_end End of packet containing given domain name
+         * @return Byte length of parsed domain name (bytes to skip in packet), -1 if error
+         */
+        int skip_dname(const uint8_t* pkt, const uint8_t* pkt_end);
+
+        /**
+         * @brief Parse wire format domain name and store it uncompressed to buffer
+         * @param buffer Buffer to store uncompressed domain name
+         * @param buf_len Length of buffer for storing domain name, contains actual length of stored domain name after return
+         * @param pkt Pointer to start of domain name (first label byte)
+         * @param pkt_start Start of packet containing given domain name
+         * @param pkt_end End of package containing given domain name
+         * @return Byte length of parsed domain name (bytes to skip in packet), -1 if error
+         */
+        int parse_dname(char* buffer, uint16_t& buf_len, const uint8_t* pkt, const uint8_t* pkt_start,
+            const uint8_t* pkt_end);
+
+        /**
+         * @brief Parse RDATA of resource record (uncompress all domain names) and store it to given buffer
+         * @param buffer Buffer to store uncompressed RDATA
+         * @param buf_len Length of buffer for storing RDATA; contains actual length of stored RDATA after return
+         * @param rdata Pointer to start of RDATA
+         * @param rdlength Length of RDATA taken from RRs RDLENGTH field
+         * @param pkt_start Start of packet containing given RDATA
+         * @param pkt_end End of packet containing given RDATA
+         * @param type Type of RR containing given RDATA
+         * @return Byte length of parsed RDATA (bytes to skip in packet), -1 if error
+         */
+        int parse_rdata(char* buffer, uint16_t& buf_len, const uint8_t* rdata, uint16_t rdlength,
+            const uint8_t* pkt_start, const uint8_t* pkt_end, uint16_t type);
+
+        /**
+         * @brief Parse resource record and fill DnsRR structure
+         * @param ptr Pointer to start of resource record
+         * @param pkt_start Start of packet containing given RR
+         * @param pkt_end End of packet containing given RR
+         * @param rr Structure to fill with resource record data
+         * @return Pointer to the first byte after parsed RR (rest of DNS packet), nullptr if error
+         */
+        const uint8_t* fill_rr(const uint8_t* ptr, const uint8_t* pkt_start, const uint8_t* pkt_end,
+            DnsRR* const rr);
+
+        Mempool<DnsRecord>& m_record_mempool;
+        Mempool<DnsTcpConnection>& m_tcp_mempool;
+        DynamicMempool m_edns_mempool;
+        DynamicMempool m_rr_mempool;
+        DynamicMempool m_rdata_mempool;
+        TransactionTable<DnsTcpConnection, TT_TIMEOUT_COUNT> m_tcp_table;
+        std::unique_ptr<uint8_t, std::function<void(void*)>> m_msg_buffer;
+        std::unique_ptr<uint8_t, std::function<void(void*)>> m_rdata_buffer;
+        bool m_raw_pcap;
+        bool m_export_invalid;
+        bool m_export_resp_rr;
+        PcapWriter m_pcap_inv;
+        const Packet* m_processed_packet;
+        std::unordered_set<uint16_t> m_dns_ports;
+        std::unordered_set<IPv4_prefix_t> m_ipv4_allowlist;
+        std::unordered_set<IPv4_prefix_t> m_ipv4_denylist;
+        std::unordered_set<IPv6_prefix_t> m_ipv6_allowlist;
+        std::unordered_set<IPv6_prefix_t> m_ipv6_denylist;
+        Statistics& m_stats;
     };
 }
-
-

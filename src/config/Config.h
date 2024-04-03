@@ -69,6 +69,7 @@ namespace DDP {
                    cdns_fields(get_cdns_bitmask()),
                    cdns_records_per_block(10000),
                    cdns_blocks_per_file(0),
+                   cdns_export_resp_rr(false),
                    export_location(ExportLocation::LOCAL),
                    export_ip("127.0.0.1"),
                    export_port(6378),
@@ -128,6 +129,7 @@ namespace DDP {
         ConfigBitfield<CdnsBits> cdns_fields; //!< Fields which will be part of CDNS file
         ConfigItem<uint64_t> cdns_records_per_block; //!< Number of records in one block in CDNS file
         ConfigItem<uint64_t> cdns_blocks_per_file; //!< Number of blocks in CDNS file
+        ConfigItem<bool> cdns_export_resp_rr; //!< Export full answer and additional RRs of response
 
         ConfigItem<ExportLocation> export_location; //!< Location for the exported DNS records
         ConfigItem<std::string> export_ip; //!< IP address for remote export of DNS records
