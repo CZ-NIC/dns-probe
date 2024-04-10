@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project("DNS Probe" VERSION 1.3.1)
+project("DNS Probe" VERSION 1.3.2)
 
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
@@ -103,14 +103,14 @@ if (PROBE_DNSTAP)
 
     # https://github.com/protocolbuffers/protobuf/issues/12637#issuecomment-1871458639
     string(REGEX REPLACE "^[0-9]+\.([0-9]+\.[0-9]+)$" "\\1.0" proto_libver "${Protobuf_VERSION}")
-    if(proto_libver VERSION_GREATER "21")
+    if(proto_libver VERSION_LESS "22")
+        target_link_libraries(dnstap_proto PUBLIC ${PROTOBUF_LIBRARIES})
+        target_include_directories(dnstap_proto PUBLIC ${PROTOBUF_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
+    else()
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(protobuf REQUIRED IMPORTED_TARGET protobuf=${proto_libver})
         target_link_libraries(dnstap_proto PUBLIC PkgConfig::protobuf)
         target_include_directories(dnstap_proto PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
-    else()
-        target_link_libraries(dnstap_proto PUBLIC ${PROTOBUF_LIBRARIES})
-        target_include_directories(dnstap_proto PUBLIC ${PROTOBUF_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
     endif()
 
     target_link_libraries(DNSProbe INTERFACE dnstap_proto Fstrm::Fstrm)
