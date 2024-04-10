@@ -22,7 +22,7 @@ build() {
         -DBUILD_COLLECTOR=ON \
         -DBUILD_DOC=ON \
         ..
-    make all man
+    LC_ALL=${LC_ALL:="C.UTF-8"} make all man
 }
 
 package() {
