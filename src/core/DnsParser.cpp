@@ -251,13 +251,29 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_s
         ptr += 1;
         uint16_t rr_type = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
         if (rr_type != DNS_EDNS_RR_TYPE) {
-            ptr += 8;
-            uint16_t rdata_len = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
-            if (rdata_len > pkt_end - ptr - 2)
-                return nullptr;
+            if (record.m_response && m_export_resp_rr) {
+                ptr -= 1; // Return back before domain name so we can use fill_rr() method to parse record
+                DnsRR* rr = get_empty_rr() ;
+                if (!rr)
+                    return nullptr;
 
-            ptr += (2 + rdata_len);
-            return ptr;
+                ptr = fill_rr(ptr, pkt_start, pkt_end, rr);
+                if (!ptr) {
+                    m_rr_mempool.free(rr);
+                    return nullptr;
+                }
+                record.m_resp_additional_rrs.emplace_back(rr);
+                return ptr;
+            }
+            else {
+                ptr += DNS_RR_FIELDS_SKIP;
+                uint16_t rdata_len = ntohs(*reinterpret_cast<const uint16_t*>(ptr));
+                if (rdata_len > pkt_end - ptr - 2)
+                    return nullptr;
+
+                ptr += (2 + rdata_len);
+                return ptr;
+            }
         }
 
         ptr += 2;
