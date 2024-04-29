@@ -99,15 +99,25 @@ void DDP::ConnectionHandler::read_data()
     ERR_clear_error();
     if (m_state == ConnectionStates::FILE_LENGTH) {
         ret = SSL_read(m_ssl, buf, 1);
-        if (ret <= 0)
-            throw std::runtime_error("Couldn't read beginning of file!");
+        if (ret <= 0) {
+            int err = SSL_get_error(m_ssl, ret);
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+                return;
+            else
+                throw std::runtime_error("Couldn't read beginning of file! SSL error: " + std::to_string(err));
+        }
         m_file_length = buf[0];
         m_state = ConnectionStates::FILE_NAME;
     }
     else if (m_state == ConnectionStates::FILE_NAME) {
         ret = SSL_read(m_ssl, buf, m_file_length);
-        if (ret <= 0)
-            throw std::runtime_error("Couldn't read filename!");
+        if (ret <= 0) {
+            int err = SSL_get_error(m_ssl, ret);
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+                return;
+            else
+                throw std::runtime_error("Couldn't read filename! SSl error: " + std::to_string(err));
+        }
         m_file_name = m_file_path + "/" + std::string(reinterpret_cast<char*>(buf), m_file_length);
         m_out.open(m_file_name + ".part", std::ios::binary);
         if (m_out.fail())
@@ -120,6 +130,8 @@ void DDP::ConnectionHandler::read_data()
             int err = SSL_get_error(m_ssl, ret);
             if (err == SSL_ERROR_ZERO_RETURN)
                 m_state = ConnectionStates::FINISHED;
+            else if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+                return;
             else
                 throw std::runtime_error("Error reading data! SSL error: " + std::to_string(err));
         }
