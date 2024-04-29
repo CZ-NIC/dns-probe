@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include "BaseWriter.h"
 #include "utils/Logger.h"
@@ -76,7 +77,6 @@ namespace DDP {
             catch (std::exception& e) {}
         }
 
-        Logger("Writer").warning() << "Couldn't send output file to remote server!";
         if (fail_rename) {
             if (std::rename((filename + sufix).c_str(), filename.c_str()))
                 Logger("Writer").warning() << "Couldn't rename the output file!";
@@ -92,6 +92,9 @@ namespace DDP {
         if (!ret.sent && !bck_ip.empty()) {
             ret = send_file_attempt(type, bck_ip, bck_port, filename, sufix, tries, true);
         }
+
+        if (!ret.sent)
+            Logger("Writer").warning() << "Couldn't send output file to remote server!";
 
         return ret;
     }
@@ -169,6 +172,7 @@ namespace DDP {
         if (!m_ssl)
             return 0;
 
+        ERR_clear_error();
         int written = SSL_write(m_ssl, data, n_bytes);
         if (written <= 0) {
             int err = SSL_get_error(m_ssl, written);
@@ -217,6 +221,7 @@ namespace DDP {
         if (!ssl)
             throw std::runtime_error("Error creating TLS structure!");
 
+        ERR_clear_error();
         SSL_set_fd(ssl, m_fd);
         int err = SSL_connect(ssl);
         if (err <= 0) {

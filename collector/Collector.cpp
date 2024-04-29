@@ -31,6 +31,7 @@
 #include <netinet/in.h>
 #include <sys/stat.h>
 #include <poll.h>
+#include <openssl/err.h>
 
 #include "Collector.h"
 
@@ -50,6 +51,7 @@ DDP::ConnectionHandler::ConnectionHandler(int conn, SSL_CTX* ctx, std::string& f
         throw std::runtime_error("Couldn't pair socket with TLS object");
     }
 
+    ERR_clear_error();
     ret = SSL_accept(m_ssl);
     if (ret != 1) {
         int err = SSL_get_error(m_ssl, ret);
@@ -94,6 +96,7 @@ void DDP::ConnectionHandler::read_data()
     uint8_t buf[4096];
     int ret;
 
+    ERR_clear_error();
     if (m_state == ConnectionStates::FILE_LENGTH) {
         ret = SSL_read(m_ssl, buf, 1);
         if (ret <= 0)
