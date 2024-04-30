@@ -195,8 +195,10 @@ namespace DDP {
             if (m_fd < 0)
                 throw std::runtime_error("Couldn't open socket for remote export!");
 
-            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa4), sizeof(sa4)))
+            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa4), sizeof(sa4))) {
+                ::close(m_fd);
                 throw std::runtime_error("Error connecting to server for remote export!");
+            }
         }
         else {
             sockaddr_in6 sa6;
@@ -212,20 +214,25 @@ namespace DDP {
             if (m_fd < 0)
                 throw std::runtime_error("Couldn't open socket for remote export!");
 
-            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa6), sizeof(sa6)))
+            if (connect(m_fd, reinterpret_cast<sockaddr*>(&sa6), sizeof(sa6))) {
+                ::close(m_fd);
                 throw std::runtime_error("Error connecting to server for remote export!");
+            }
         }
 
         m_ctx = TlsCtx::getInstance().get(m_connection_type);
         SSL* ssl = SSL_new(m_ctx);
-        if (!ssl)
+        if (!ssl) {
+            ::close(m_fd);
             throw std::runtime_error("Error creating TLS structure!");
+        }
 
         ERR_clear_error();
         SSL_set_fd(ssl, m_fd);
         int err = SSL_connect(ssl);
         if (err <= 0) {
             SSL_free(ssl);
+            ::close(m_fd);
             throw std::runtime_error("Error creating TLS connection to server for remote export!");
         }
 
