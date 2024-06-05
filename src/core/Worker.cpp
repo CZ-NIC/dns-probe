@@ -306,7 +306,7 @@ void DDP::Worker::rotate_output()
         m_writer->rotate_output();
     }
     catch(std::exception& e) {
-        Logger("Export").warning() << "Output rotation on worker " << m_process_id << "failed: " << e.what();
+        Logger("Export").warning() << "Output rotation on worker " << m_process_id << " failed: " << e.what();
     }
 }
 

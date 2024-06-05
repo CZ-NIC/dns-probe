@@ -505,6 +505,7 @@ const uint8_t* DDP::DnsParser::fill_rr(const uint8_t* ptr, const uint8_t* pkt_st
 
         std::memcpy(rr->rdata, m_rdata_buffer.get(), buf_len);
         ptr += rr->rdlength;
+        rr->rdlength = buf_len;
     }
 
     return ptr;
