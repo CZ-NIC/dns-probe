@@ -286,6 +286,15 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
         else {
             PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(""));
         }
+
+        // EDNS other
+        auto find_other = req_edns_map.find(static_cast<uint16_t>(EDNSOptions::Other));
+        if (find_other != req_edns_map.end()) {
+            PARQUET_THROW_NOT_OK(EdnsOther.Append(boost::any_cast<std::string>(req_edns_map[static_cast<uint16_t>(EDNSOptions::Other)])));
+        }
+        else {
+            PARQUET_THROW_NOT_OK(EdnsOther.Append(""));
+        }
     }
     else {
         // EDNS DNSSEC DAU
@@ -296,6 +305,9 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
 
         // EDNS DNSSEC N3U
         PARQUET_THROW_NOT_OK(EdnsDnssecN3u.Append(""));
+
+        // EDNS other
+        PARQUET_THROW_NOT_OK(EdnsOther.Append(""));
     }
 
     if (record.m_resp_ednsRdata != nullptr) {
@@ -315,9 +327,6 @@ boost::any DDP::ParquetExport::buffer_record(DDP::DnsRecord& record)
 
     // EDNS client subnet
     PARQUET_THROW_NOT_OK(EdnsClientSubnet.Append(""));
-
-    // EDNS other
-    PARQUET_THROW_NOT_OK(EdnsOther.Append(""));
 
     // EDNS client subnet ASN
     PARQUET_THROW_NOT_OK(EdnsClientSubnetAsn.Append(""));
@@ -558,6 +567,7 @@ std::unordered_map<uint16_t, boost::any> DDP::ParquetExport::parse_edns_options(
 {
     std::unordered_map<uint16_t, boost::any> ret;
     uint16_t parsed = 0;
+    std::string other_options = "";
 
     while (parsed < size) {
         if (size - parsed < DNS_MIN_EDNS_OPTION_SIZE) {
@@ -597,9 +607,11 @@ std::unordered_map<uint16_t, boost::any> DDP::ParquetExport::parse_edns_options(
 
                 // TODO parse Client Subnet option
                 case static_cast<uint16_t>(EDNSOptions::ClientSubnet):
+                    add_edns_option_code_to_string(other_options, option);
                     break;
 
                 default:
+                    add_edns_option_code_to_string(other_options, option);
                     break;
             }
         }
@@ -607,6 +619,8 @@ std::unordered_map<uint16_t, boost::any> DDP::ParquetExport::parse_edns_options(
         parsed += opt_len;
         ptr += opt_len;
     }
+
+    ret[static_cast<uint16_t>(EDNSOptions::Other)] = std::move(other_options);
 
     return ret;
 }
@@ -640,6 +654,14 @@ std::string DDP::ParquetExport::parse_dnssec_list(const uint8_t* ptr, uint16_t o
     }
 
     return ret;
+}
+
+void DDP::ParquetExport::add_edns_option_code_to_string(std::string& option_string, uint16_t option_code)
+{
+    if (!option_string.empty())
+        option_string.append(",");
+
+    option_string.append(std::to_string(option_code));
 }
 
 char* DDP::ParquetExport::format_int(uint8_t value, char* buffer)
