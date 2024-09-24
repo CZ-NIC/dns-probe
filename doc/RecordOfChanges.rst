@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **1.*.***
+     - **1.0**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Fill "edns_other" field in Parquet export
    * - **1.3.0**
      - **1.0**
      - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,
