@@ -175,7 +175,7 @@ configuration option.
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
     | edns\_client\_subnet            | STRING    | query-opt-rdata-index                 | Always empty string in Parquet                              |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
-    | edns\_other                     | STRING    | query-opt-rdata-index                 | Always empty string in Parquet                              |
+    | edns\_other                     | STRING    | query-opt-rdata-index                 | Comma-separated list "1,3,5" of other EDNS option codes     |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
     | edns\_client\_subnet\_asn       | STRING    | query-opt-rdata-index                 | By IP list (Maxmind) (always empty string in Parquet)       |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
