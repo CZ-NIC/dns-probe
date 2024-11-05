@@ -17,6 +17,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Change description
    * - **1.*.***
      - **1.0**
+     - :doc:`Installation <Installation>`
+     - Update supported Linux distributions
+   * -
+     -
      - :doc:`Exported Data Schema <ExportedDataSchema>`
      - Fill "edns_other" field in Parquet export
    * - **1.3.0**
