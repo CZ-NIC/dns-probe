@@ -30,6 +30,10 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#ifdef PROBE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #include <rte_eal.h>
 #include <rte_ethdev.h>
 #include <rte_mbuf.h>
@@ -345,6 +349,10 @@ int main(int argc, char** argv)
         sigemptyset(&set);
         sigaddset(&set, SIGPIPE);
         pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+#ifdef PROBE_LIBSYSTEMD
+        sd_notify(0, "READY=1");
+#endif
 
         // Poll on configuration core
         try {

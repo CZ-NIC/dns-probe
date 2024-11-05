@@ -27,6 +27,11 @@
 #include <vector>
 #include <thread>
 #include <pthread.h>
+
+#ifdef PROBE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
+
 #include "core/Probe.h"
 #include "utils/Logger.h"
 #include "non-dpdk/PcapPort.h"
@@ -104,6 +109,10 @@ int main(int argc, char** argv)
         sigemptyset(&set);
         sigaddset(&set, SIGPIPE);
         pthread_sigmask(SIG_BLOCK, &set, NULL);
+
+#ifdef PROBE_LIBSYSTEMD
+        sd_notify(0, "READY=1");
+#endif
 
         // Poll on configuration core
         try {

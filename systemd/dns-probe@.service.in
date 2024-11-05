@@ -7,7 +7,7 @@ Description=Daemon for DNS probe
 After=network.target
 
 [Service]
-Type=simple
+Type=notify
 Restart=always
 ExecStart=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/dns-probe-@BACKEND@ -n %i
 
