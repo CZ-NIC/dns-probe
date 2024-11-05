@@ -18,6 +18,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
    * - **1.*.***
      - **1.0**
      - :doc:`Installation <Installation>`
+     - Add libsystemd as dependency
+   * -
+     -
+     - :doc:`Installation <Installation>`
      - Update supported Linux distributions
    * -
      -
