@@ -17,6 +17,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Change description
    * - **1.*.***
      - **1.0**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
+     - Add option to export full Authority RRs of responses to C-DNS files
+   * -
+     -
      - :doc:`Installation <Installation>`
      - Add libsystemd as dependency
    * -

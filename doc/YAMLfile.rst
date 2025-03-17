@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2024-04-02
+  # Last revision: 2025-03-17
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -133,6 +133,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
         - 'query_edns_udp_size'
         - 'query_opt_rdata'
         - 'response_answer_sections'
+        - 'response_authority_sections'
         - 'response_additional_sections'
         - 'response_size'
         - 'asn' # asn-maxmind-db configuration option also needs to be set
@@ -145,8 +146,8 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # Maximum number of C-DNS blocks in one exported C-DNS file.
       cdns-blocks-per-file: 0
 
-      # If this flag is set to true, exported C-DNS files will contain full Answer and Additional RRs
-      # from responses in each record.
+      # If this flag is set to true, exported C-DNS files will contain full Answer, Authority and
+      # Additional RRs from responses in each record.
       # NOTE: Won't work for traffic captured via Knot interface as this data doesn't contain full RRs.
       cdns-export-response-rr: false
 
