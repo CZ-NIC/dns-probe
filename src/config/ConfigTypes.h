@@ -155,7 +155,7 @@ namespace DDP {
      */
     enum class ExportFormat : uint8_t {
         PARQUET, //!< Parquet export format.
-        CDNS //!< CDMS export format.
+        CDNS //!< C-DNS export format.
     };
 
     /**
@@ -192,6 +192,7 @@ namespace DDP {
         QUERY_EDNS_UDP_SIZE,
         QUERY_OPT_RDATA,
         RESPONSE_ANSWER_SECTIONS,
+        RESPONSE_AUTHORITY_SECTIONS,
         RESPONSE_ADDITIONAL_SECTIONS,
         RESPONSE_SIZE,
         ASN,
@@ -224,6 +225,7 @@ namespace DDP {
         {"query_edns_udp_size",             static_cast<uint32_t>(CDNSField::QUERY_EDNS_UDP_SIZE)},
         {"query_opt_data",                  static_cast<uint32_t>(CDNSField::QUERY_OPT_RDATA)},
         {"response_answer_sections",        static_cast<uint32_t>(CDNSField::RESPONSE_ANSWER_SECTIONS)},
+        {"response_authority_sections",     static_cast<uint32_t>(CDNSField::RESPONSE_AUTHORITY_SECTIONS)},
         {"response_additional_sections",    static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)},
         {"response_size",                   static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)},
         {"asn",                             static_cast<uint32_t>(CDNSField::ASN)},

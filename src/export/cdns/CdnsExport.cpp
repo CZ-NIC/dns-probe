@@ -201,6 +201,7 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     }
 
     if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ANSWER_SECTIONS)]
+        || m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_AUTHORITY_SECTIONS)]
         || m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)]) {
         CDNS::QueryResponseExtended qre;
 
@@ -222,6 +223,26 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
             }
 
             qre.answer_index = m_block->add_rr_list(answer_list);
+        }
+
+        if (m_fields[static_cast<uint32_t>(CDNSField::RESPONSE_AUTHORITY_SECTIONS)] && m_export_resp_rr
+            && record.m_resp_authority_rrs.size() > 0) {
+            std::vector<CDNS::index_t> authority_list;
+
+            for (DnsRR* rr : record.m_resp_authority_rrs) {
+                CDNS::RR authority;
+                CDNS::ClassType cltype;
+
+                cltype.type = rr->type;
+                cltype.class_ = rr->class_;
+                authority.name_index = m_block->add_name_rdata(std::string(rr->dname, strlen(rr->dname) + 1));
+                authority.classtype_index = m_block->add_classtype(cltype);
+                authority.ttl = rr->ttl;
+                authority.rdata_index = m_block->add_name_rdata(std::string(reinterpret_cast<char*>(rr->rdata), rr->rdlength));
+                authority_list.push_back(m_block->add_rr(authority));
+            }
+
+            qre.authority_index = m_block->add_rr_list(authority_list);
         }
 
         std::vector<CDNS::index_t> additional_list;
@@ -257,7 +278,7 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
         if (additional_list.size() > 0)
             qre.additional_index = m_block->add_rr_list(additional_list);
 
-        if (qre.answer_index || qre.additional_index)
+        if (qre.answer_index || qre.authority_index || qre.additional_index)
             qr.response_extended = qre;
     }
 

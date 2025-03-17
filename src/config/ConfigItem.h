@@ -982,7 +982,7 @@ namespace DDP {
                     mask = mask >= 8 ? mask - 8 : 0;
                 }
 
-                // mask the IP subnet so we don't have to do it for every comparision with packet IP
+                // mask the IP subnet so we don't have to do it for every comparison with packet IP
                 addr.ip.s6_addr32[0] &= addr.mask.s6_addr32[0];
                 addr.ip.s6_addr32[1] &= addr.mask.s6_addr32[1];
                 addr.ip.s6_addr32[2] &= addr.mask.s6_addr32[2];
