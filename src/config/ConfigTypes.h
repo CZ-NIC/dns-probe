@@ -163,7 +163,8 @@ namespace DDP {
      */
     enum class ExportLocation : uint8_t {
         LOCAL, //!< Store exported data to local files
-        REMOTE //!< Send exported data directly to remote location
+        REMOTE, //!< Send exported data directly to remote location
+        KAFKA //!< Send exported data to Apache Kafka cluster
     };
 
     /**
@@ -313,5 +314,26 @@ namespace DDP {
         BLOWFISH = 0x02,
         AES = 0x03,
         SHA1 = 0x04
+    };
+
+    /**
+     * Kafka security protocols for export to Kafka cluster
+     */
+    enum class KafkaSecurityProtocol : uint8_t {
+        PLAINTEXT = 0,
+        SSL,
+        SASL_PLAINTEXT,
+        SASL_SSL,
+    };
+
+    /**
+     * Kafka SASL mechanisms for export to Kafka cluster
+     */
+    enum class KafkaSaslMechanism : uint8_t {
+        GSSAPI = 0,
+        PLAIN,
+        SCRAM_SHA_256,
+        SCRAM_SHA_512,
+        OAUTHBEARER
     };
 }

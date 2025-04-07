@@ -12,6 +12,7 @@ set(PROBE_PARQUET ON CACHE BOOL "Enable export to Parquet format with Apache Arr
 set(PROBE_CDNS ON CACHE BOOL "Enable export to C-DNS format with C-DNS library")
 set(PROBE_DNSTAP ON CACHE BOOL "Enable support for dnstap as input data format")
 set(PROBE_KNOT ON CACHE BOOL "Enable support for Knot probe interface as input data format")
+set(PROBE_KAFKA ON CACHE BOOL "Enable export of C-DNS/Parquet to Kafka")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 14)
@@ -90,6 +91,12 @@ if (PROBE_CDNS)
     target_compile_definitions(DNSProbe INTERFACE PROBE_CDNS)
     file(GLOB CDNS_HEADERS CONFIGURE_DEPENDS src/export/cdns/*.h)
     file(GLOB CDNS_SOURCES CONFIGURE_DEPENDS src/export/cdns/*.cpp)
+endif()
+
+if (PROBE_KAFKA)
+    find_package(RdKafka++ REQUIRED)
+    target_link_libraries(DNSProbe INTERFACE RdKafka++::RdKafka++)
+    target_compile_definitions(DNSProbe INTERFACE PROBE_KAFKA)
 endif()
 
 if (PROBE_CRYPTOPANT)

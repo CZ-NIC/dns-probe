@@ -31,10 +31,187 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#ifdef PROBE_KAFKA
+#include <librdkafka/rdkafkacpp.h>
+#endif
+
 #include "BaseWriter.h"
 #include "utils/Logger.h"
 
 namespace DDP {
+#ifdef PROBE_KAFKA
+    KafkaProducer::KafkaProducer(KafkaConfig& config) : m_config(config), m_sent(false)
+    {
+        m_conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+        if (!m_conf)
+            throw std::runtime_error("Couldn't create Kafka config!");
+
+        std::string err;
+        if  (m_conf->set("bootstrap.servers", m_config.brokers.value(), err) != RdKafka::Conf::CONF_OK) {
+            delete m_conf;
+            throw std::runtime_error("Couldn't set Kafka brokers: " + err);
+        }
+
+        if (!m_config.ca_location.value().empty()) {
+            if (m_conf->set("ssl.ca.location", m_config.ca_location.value(), err) != RdKafka::Conf::CONF_OK) {
+                delete m_conf;
+                throw std::runtime_error("Couldn't set CA location for Kafka: " + err);
+            }
+        }
+
+        if (m_conf->set("security.protocol", m_config.sec_protocol.string(), err) != RdKafka::Conf::CONF_OK) {
+            delete m_conf;
+            throw std::runtime_error("Couldn't set Kafka security protocol: " + err);
+        }
+
+        if (!m_config.cert_location.value().empty()) {
+            if (m_conf->set("ssl.certificate.location", m_config.cert_location.value(), err) != RdKafka::Conf::CONF_OK) {
+                delete m_conf;
+                throw std::runtime_error("Couldn't set client's public key for Kafka: " + err);
+            }
+        }
+
+        if (!m_config.key_location.value().empty()) {
+            if (m_conf->set("ssl.key.location", m_config.key_location.value(), err) != RdKafka::Conf::CONF_OK) {
+                delete m_conf;
+                throw std::runtime_error("Couldn't set client's private key for Kafka: " + err);
+            }
+        }
+
+        if (!m_config.key_passwd.value().empty()) {
+            if (m_conf->set("ssl.key.password", "", err) != RdKafka::Conf::CONF_OK) {
+                delete m_conf;
+                throw std::runtime_error("Couldn't set client's private key password for Kafka: " + err);
+            }
+        }
+
+        if (m_conf->set("sasl.mechanisms", m_config.sasl_mechanism.string(), err) != RdKafka::Conf::CONF_OK) {
+            delete m_conf;
+            throw std::runtime_error("Couldn't set Kafka SASL mechanisms: " + err);
+        }
+
+        if (!m_config.sasl_username.value().empty()) {
+            if (m_conf->set("sasl.username", m_config.sasl_username.value(), err) != RdKafka::Conf::CONF_OK) {
+                delete m_conf;
+                throw std::runtime_error("Couldn't set Kafka username: " + err);
+            }
+        }
+
+        if (!m_config.sasl_password.value().empty()) {
+            if (m_conf->set("sasl.password", m_config.sasl_password.value(), err) != RdKafka::Conf::CONF_OK) {
+                delete m_conf;
+                throw std::runtime_error("Couldn't set Kafka password: " + err);
+            }
+        }
+
+        if (m_conf->set("dr_cb", &m_delivery_cb, err) != RdKafka::Conf::CONF_OK) {
+            delete m_conf;
+            throw std::runtime_error("Couldn't set Kafka delivery callback: " + err);
+        }
+
+        m_producer = RdKafka::Producer::create(m_conf, err);
+        if (!m_producer) {
+            delete m_conf;
+            throw std::runtime_error("Couldn't create Kafka producer: " + err);
+        }
+
+        m_topic = RdKafka::Topic::create(m_producer, m_config.topic.value(), nullptr, err);
+        if (!m_topic) {
+            delete m_producer;
+            delete m_conf;
+            throw std::runtime_error("Couldn't create Kafka topic object: " + err);
+        }
+    }
+
+    KafkaProducer::~KafkaProducer()
+    {
+        m_producer->flush(10 * 1000); // wait max 10 seconds
+        delete m_topic;
+        delete m_producer;
+        delete m_conf;
+    }
+
+    FileCtx KafkaProducer::write(std::string&& message, std::string& filename)
+    {
+        std::string key = m_config.partition.value();
+        auto* key_ptr = key.empty() ? nullptr : &key;
+        auto err = m_producer->produce(m_topic, RdKafka::Topic::PARTITION_UA, RdKafka::Producer::RK_MSG_COPY,
+            const_cast<char*>(message.c_str()), message.size(), key_ptr, &m_sent);
+
+        if (err != RdKafka::ERR_NO_ERROR)
+            return FileCtx{filename, false};
+
+        m_producer->poll(-1);
+
+        if (m_sent) {
+            m_sent = false;
+            return FileCtx{filename, true};
+        }
+        else
+            return FileCtx{filename, false};
+    }
+
+    void KafkaProducer::DeliveryReportCb::dr_cb(RdKafka::Message& message)
+    {
+        bool* sent = reinterpret_cast<bool*>(message.msg_opaque());
+
+        if (message.err())
+            *sent = false;
+        else
+            *sent = true;
+    }
+
+    FileCtx send_file_to_kafka(KafkaConfig config, std::string filename, std::string sufix, bool fail_rename)
+    {
+        struct stat buffer;
+        if (stat((filename + sufix).c_str(), &buffer) != 0) {
+            Logger("Writer").debug() << "Couldn't send output file! Filename doesn't exist: " << (filename + sufix);
+            return FileCtx{filename, true};
+        }
+
+        FileCtx ret = FileCtx{filename, false};
+
+        try {
+            KafkaProducer producer = KafkaProducer(config);
+            std::ifstream ifs(filename + sufix, std::ifstream::binary);
+            if (ifs.fail())
+                throw std::runtime_error("Couldn't read file for transfer!");
+
+            std::ostringstream buff;
+            buff << ifs.rdbuf();
+            ret = producer.write(buff.str(), filename);
+            ifs.close();
+            std::remove((filename + sufix).c_str());
+
+            if (!ret.sent)
+                Logger("Writer").warning() << "Couldn't send output file to Kafka!";
+
+            return ret;
+        }
+        catch (std::exception& e) {
+            Logger("Writer").warning() << "Couldn't send output file to Kafka! " << e.what();
+        }
+
+        if (fail_rename) {
+            if (std::rename((filename + sufix).c_str(), filename.c_str()))
+                Logger("Writer").warning() << "Couldn't rename the output file!";
+        }
+
+        return ret;
+    }
+
+    std::unordered_set<FileCtx> send_files_to_kafka(KafkaConfig config, std::unordered_set<std::string> flist)
+    {
+        std::unordered_set<FileCtx> processed;
+
+        for (auto& f : flist) {
+            processed.insert(send_file_to_kafka(config, f, "", true));
+        }
+
+        return processed;
+    }
+#endif
+
     FileCtx send_file_attempt(TlsCtxIndex type, std::string ip, uint16_t port, std::string filename,
         std::string sufix, uint8_t tries, bool fail_rename)
     {
@@ -287,32 +464,12 @@ namespace DDP {
                     m_unsent_files.erase(file.name);
             }
 
-            if (!m_unsent_files.empty()) {
-                if (m_type == TlsCtxIndex::TRAFFIC) {
-                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
-                        m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
-                        m_cfg.backup_export_port.value(), m_unsent_files);
-                }
-                else {
-                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
-                        m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(),
-                        m_cfg.backup_stats_port.value(), m_unsent_files);
-                }
-            }
+            if (!m_unsent_files.empty())
+                send_unsent_files_list();
         }
         else if (!m_files_thread.valid()) {
-            if (!m_unsent_files.empty()) {
-                if (m_type == TlsCtxIndex::TRAFFIC) {
-                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
-                        m_cfg.export_port.value(), m_cfg.backup_export_ip.value(),
-                        m_cfg.backup_export_port.value(), m_unsent_files);
-                }
-                else {
-                    m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
-                        m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(),
-                        m_cfg.backup_stats_port.value(), m_unsent_files);
-                }
-            }
+            if (!m_unsent_files.empty())
+                send_unsent_files_list();
         }
 
         save_unsent_files_list();
@@ -330,16 +487,7 @@ namespace DDP {
         }
         unsent_list.close();
 
-        if (m_type == TlsCtxIndex::TRAFFIC) {
-            m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
-                m_cfg.export_port.value(), m_cfg.backup_export_ip.value(), m_cfg.backup_export_port.value(),
-                m_unsent_files);
-        }
-        else {
-            m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
-                m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(), m_cfg.backup_stats_port.value(),
-                m_unsent_files);
-        }
+        send_unsent_files_list();
     }
 
     void BaseWriter::save_unsent_files_list()
@@ -355,6 +503,36 @@ namespace DDP {
         }
 
         unsent_list.close();
+    }
+
+    void BaseWriter::send_unsent_files_list()
+    {
+        if (m_type == TlsCtxIndex::TRAFFIC) {
+            if (m_cfg.export_location.value() == ExportLocation::REMOTE) {
+                m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.export_ip.value(),
+                    m_cfg.export_port.value(), m_cfg.backup_export_ip.value(), m_cfg.backup_export_port.value(),
+                    m_unsent_files);
+            }
+#ifdef PROBE_KAFKA
+            else if (m_cfg.export_location.value() == ExportLocation::KAFKA) {
+                m_files_thread = std::async(std::launch::async, send_files_to_kafka, m_cfg.kafka_export,
+                m_unsent_files);
+            }
+#endif
+        }
+        else {
+            if (m_cfg.stats_location.value() == ExportLocation::REMOTE) {
+                m_files_thread = std::async(std::launch::async, send_files, m_type, m_cfg.stats_ip.value(),
+                    m_cfg.stats_port.value(), m_cfg.backup_stats_ip.value(), m_cfg.backup_stats_port.value(),
+                    m_unsent_files);
+            }
+#ifdef PROBE_KAFKA
+            else if (m_cfg.stats_location.value() == ExportLocation::KAFKA) {
+                m_files_thread = std::async(std::launch::async, send_files_to_kafka,
+                    m_cfg.stats_kafka_export, m_unsent_files);
+            }
+#endif
+        }
     }
 
     void BaseWriter::cleanup()

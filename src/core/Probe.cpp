@@ -308,6 +308,14 @@ void DDP::Probe::init(const Arguments& args)
             m_output_timer = &m_poll.emplace<Timer<decltype(sender)>>(sender);
         }
 
+#ifndef PROBE_KAFKA
+        if (m_cfg.export_location.value() == ExportLocation::KAFKA)
+            throw std::runtime_error("DNS Probe was built without Apache Kafka support! Use 'local' or 'remote' options for DNS export!");
+
+        if (m_cfg.stats_location.value() == ExportLocation::KAFKA)
+            throw std::runtime_error("DNS Probe was built without Apache Kafka support! Use 'local' or 'remote' options for stats export!");
+#endif
+
         m_stats_writer = std::make_unique<StatsWriter>(m_cfg);
         if (m_cfg.export_stats.value()) {
             auto export_cb = [this] {

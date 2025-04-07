@@ -33,6 +33,37 @@
 
 namespace DDP {
     /**
+     * Structure containing configuration for connecting to Kafka cluster
+     */
+    struct KafkaConfig
+    {
+        KafkaConfig() : brokers("127.0.0.1"),
+                        topic("dns-probe"),
+                        partition(""),
+                        ca_location(""),
+                        sec_protocol(KafkaSecurityProtocol::PLAINTEXT),
+                        cert_location(""),
+                        key_location(""),
+                        key_passwd(""),
+                        sasl_mechanism(KafkaSaslMechanism::PLAIN),
+                        sasl_username(""),
+                        sasl_password("") {}
+
+        ConfigItem<std::string> brokers; //!< Comma separated list of Kafka brokers (host or host:port)
+        ConfigItem<std::string> topic; //!< Kafka topic
+        ConfigItem<std::string> partition; //!< Kafka message key to assign messages to specific partition
+
+        ConfigItem<std::string> ca_location; //!< CA certificate for authentication of Kafka brokers's certificate
+        ConfigItem<KafkaSecurityProtocol> sec_protocol; //!< Protocol used to communicate with Kafka brokesrs
+        ConfigItem<std::string> cert_location; //!< Public key for authentication to Kafka cluster
+        ConfigItem<std::string> key_location; //!< Private key for authentication to Kafka cluster
+        ConfigItem<std::string> key_passwd; //!< Private key passphrase
+        ConfigItem<KafkaSaslMechanism> sasl_mechanism; //!< SASL mechanism to use for authentication to Kafka brokers
+        ConfigItem<std::string> sasl_username; //!< SASL username
+        ConfigItem<std::string> sasl_password; //!< SASL password
+    };
+
+    /**
      * Structure containing configuration of the application
      */
     struct Config
@@ -76,6 +107,7 @@ namespace DDP {
                    export_ca_cert(),
                    backup_export_ip(""),
                    backup_export_port(6378),
+                   kafka_export(),
                    anonymize_ip(false),
                    ip_encryption(IpEncryption::AES),
                    ip_enc_key("key.cryptopant"),
@@ -89,9 +121,10 @@ namespace DDP {
                    stats_ca_cert(),
                    backup_stats_ip(""),
                    backup_stats_port(6379),
+                   stats_kafka_export(),
                    moving_avg_window(300),
                    stats_fields(get_stats_bitmask()),
-                   instance("default") {}
+                   instance("default") { stats_kafka_export.topic = ConfigItem<std::string>("dns-probe-stats"); }
 
         ConfigItem<CList<std::string>> interface_list; //!< List of network interfaces to process traffic from
         ConfigItem<CList<std::string>> pcap_list; //!< List of PCAP files to process
@@ -137,6 +170,7 @@ namespace DDP {
         ConfigItem<std::string> export_ca_cert; //!< CA certificate for authentication of remote server's certificate
         ConfigItem<std::string> backup_export_ip; //!< Backup IP address for remote export of DNS records
         ConfigItem<uint16_t> backup_export_port; //!< Backup transport protocol port for remote export of DNS records
+        KafkaConfig kafka_export; //!< Kafka configuration for export of DNS records
 
         ConfigItem<bool> anonymize_ip; //!< Enable client IP anonymization in exported data
         ConfigItem<IpEncryption> ip_encryption; //!< Encryption algorithm for IP anonymization
@@ -152,6 +186,7 @@ namespace DDP {
         ConfigItem<std::string> stats_ca_cert; //!< CA certificate for authentication of remote server's certificate
         ConfigItem<std::string> backup_stats_ip; //!< Backup IP address for remote export of run-time statistics
         ConfigItem<uint16_t> backup_stats_port; //!< Backup transport protocol port for remote export of run-time statistics
+        KafkaConfig stats_kafka_export; //!< Kafka configuration for export of run-time statistics
         ConfigItem<uint16_t> moving_avg_window; //!< Time window for computing queries-per-second* statistics
         ConfigBitfield<StatsBits> stats_fields; //!< Indicates which statistics should be exported
 

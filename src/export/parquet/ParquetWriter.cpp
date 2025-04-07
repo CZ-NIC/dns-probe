@@ -58,6 +58,14 @@ int64_t DDP::ParquetWriter::write(std::shared_ptr<arrow::Table> item)
         if (std::rename(full_name.c_str(), m_filename.c_str()))
             throw std::runtime_error("Couldn't rename the output file!");
     }
+#ifdef PROBE_KAFKA
+    else if (m_cfg.export_location.value() == ExportLocation::KAFKA) {
+        check_file_transfer();
+        m_threads.emplace_back(std::async(std::launch::async, send_file_to_kafka, m_cfg.kafka_export, m_filename,
+            ".part", true));
+        m_sending_files.insert(m_filename);
+    }
+#endif
     else {
         check_file_transfer();
         m_threads.emplace_back(std::async(std::launch::async, send_file, m_type,

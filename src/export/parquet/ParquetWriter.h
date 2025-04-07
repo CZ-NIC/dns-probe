@@ -76,7 +76,8 @@ namespace DDP {
          * Checks if there are any unsent files and tries to resend them.
          */
         void rotate_output() override {
-            if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+            if (m_cfg.export_location.value() == ExportLocation::REMOTE ||
+                m_cfg.export_location.value() == ExportLocation::KAFKA)
                 check_file_transfer();
         }
 

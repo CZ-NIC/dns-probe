@@ -39,6 +39,7 @@ RUN apt-get update -yqq &&\
         libfstrm-dev \
         libmaxminddb-dev \
         libknot-dev \
+        librdkafka-dev \
         dpdk-dev \
         dns-probe-af \
         dns-probe-dpdk &&\
