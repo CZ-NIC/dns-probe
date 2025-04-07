@@ -102,6 +102,7 @@ distribution repositories:
 - libmaxminddb
 - libknot, version at least 3.0.6
 - libsystemd
+- librdkafka
 - DPDK (only for DPDK version)
 
 Optionally, to build this user documentation (``make doc``) or manual pages (``make man``)

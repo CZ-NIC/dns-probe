@@ -6,8 +6,8 @@ Storing exported data
 =====================
 
 DNS Probe supports storing the exported data either to local files or transferring them directly to a remote
-location via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_. This is determined
-by the :ref:`location` option in YAML configuration file.
+location via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_ or transferring them
+to an Apache Kafka cluster. This is determined by the :ref:`location` option in YAML configuration file.
 
 Local storage
 -------------
@@ -66,6 +66,17 @@ rotation, then the probe tries to transfer the finished file to remote server. I
 the local file is deleted. DNS Probe will initially attempt to transfer the file three times. If all three
 transfer attempts fail the local file is kept. DNS Probe keeps track of files that failed the transfer to
 remote server and periodically tries to resend them. The local files are kept until such transfer is successful.
+
+Export to Apache Kafka
+----------------------
+
+If :ref:`location` option is set to ``kafka`` DNS probe will attempt to transfer the exported data to an Apache Kafka
+cluster specified by broker IP addresses in :ref:`kafka-brokers`. The data will be written to Apache Kafka topic
+specified by :ref:`kafka-topic` option and optionally to specific topic partition by setting the messages' key in
+:ref:`kafka-partition` option.
+
+Secure authentication to Kafka cluster can be configured with additional ``kafka-*`` options. Check the ``export`` section in
+:doc:`Configuration <Configuration>` and :doc:`Default YAML file <YAMLfile>` pages for more information.
 
 
 Data schema
@@ -207,8 +218,9 @@ Storing exported run-time statistics
 ====================================
 
 DNS Probe supports periodically storing run-time statistics in JSON format to local files or transferring
-them directly to a remote location via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_.
-This is determined by the :ref:`stats-location` option in YAML configuration file.
+them directly to a remote location via secure network transfer using `TLS <https://tools.ietf.org/html/rfc8446>`_
+or transferring them to an Apache Kafka cluster. This is determined by the :ref:`stats-location` option in YAML
+configuration file.
 
 Local storage
 -------------
@@ -237,6 +249,17 @@ server only if connection to primary remote server fails.
 
 The transfer uses the same simple application protocol used for traffic data transfer that was
 shown in chapter :ref:`export-to-remote-location`.
+
+Export to Apache Kafka
+----------------------
+
+If :ref:`stats-location` option is set to ``kafka`` DNS probe will attempt to transfer the exported statistics to
+an Apache Kafka cluster specified by broker IP addresses in :ref:`stats-kafka-brokers`. The statistics will be
+written to Apache Kafka topic specified by :ref:`stats-kafka-topic` option and optionally to specific topic partition
+by setting the messages' key in :ref:`stats-kafka-partition` option.
+
+Secure authentication to Kafka cluster can be configured with additional ``kafka-*`` options. Check the ``statistics``
+section in :doc:`Configuration <Configuration>` and :doc:`Default YAML file <YAMLfile>` pages for more information.
 
 Exported statistics
 -------------------

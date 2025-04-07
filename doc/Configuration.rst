@@ -41,6 +41,17 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       |  +--rw file-compression? <boolean>
       |  +--rw file-name-prefix? <string>
       |  +--rw file-size-limit? <uint64>
+      |  +--rw kafka-brokers? <string>
+      |  +--rw kafka-ca-location? <string>
+      |  +--rw kafka-cert-location? <string>
+      |  +--rw kafka-key-location? <string>
+      |  +--rw kafka-key-password? <string>
+      |  +--rw kafka-partition? <string>
+      |  +--rw kafka-security-protocol? <enumeration>
+      |  +--rw kafka-sasl-mechanism? <enumeration>
+      |  +--rw kafka-sasl-password? <string>
+      |  +--rw kafka-sasl-username? <string>
+      |  +--rw kafka-topic? <string>
       |  +--rw location? <enumeration>
       |  +--rw parquet-records-per-file? <uint64>
       |  +--rw pcap-export? <enumeration>
@@ -63,18 +74,29 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       +--rw pcap-list?* <string>
       +--rw raw-pcap? <boolean>
       +--rw statistics
-      |  +-- backup-remote-ip? <string>
-      |  +-- backup_remote-port? <uint16>
-      |  +-- export-dir? <string>
-      |  +-- export-stats? <boolean>
-      |  +-- location? <enumeration>
-      |  +-- moving-avg-window? <uint16>
-      |  +-- remote-ca-cert? <string>
-      |  +-- remote-ip? <string>
-      |  +-- remote-port? <uint16>
-      |  +-- stats-fields?* <string>
-      |  +-- stats-per-ip <boolean>
-      |  +-- stats-timeout? <uint32>
+      |  +--rw backup-remote-ip? <string>
+      |  +--rw backup_remote-port? <uint16>
+      |  +--rw export-dir? <string>
+      |  +--rw export-stats? <boolean>
+      |  +--rw kafka-brokers? <string>
+      |  +--rw kafka-ca-location? <string>
+      |  +--rw kafka-cert-location? <string>
+      |  +--rw kafka-key-location? <string>
+      |  +--rw kafka-key-password? <string>
+      |  +--rw kafka-partition? <string>
+      |  +--rw kafka-security-protocol? <enumeration>
+      |  +--rw kafka-sasl-mechanism? <enumeration>
+      |  +--rw kafka-sasl-password? <string>
+      |  +--rw kafka-sasl-username? <string>
+      |  +--rw kafka-topic? <string>
+      |  +--rw location? <enumeration>
+      |  +--rw moving-avg-window? <uint16>
+      |  +--rw remote-ca-cert? <string>
+      |  +--rw remote-ip? <string>
+      |  +--rw remote-port? <uint16>
+      |  +--rw stats-fields?* <string>
+      |  +--rw stats-per-ip <boolean>
+      |  +--rw stats-timeout? <uint32>
       +--rw tcp-table
       |  +--rw concurrent-connections? <uint32>
       |  +--rw timeout? <uint64>
@@ -449,6 +471,224 @@ List of IPv6 addresses and prefixes from which to NOT process traffic.
 By default all IPv6 addresses are allowed.
 
 If :ref:`ipv6-allowlist` is not empty this configuration item doesn't have any effect.
+
+.. _kafka-brokers:
+
+kafka-brokers
+^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-brokers``
+:default: ``127.0.0.1``
+
+Comma separated list of Kafka brokers (host or host:port) to export DNS records to.
+Will be used if :ref:`location` is set to ``kafka``.
+
+.. _stats-kafka-brokers:
+
+kafka-brokers
+^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-brokers``
+:default: ``127.0.0.1``
+
+Comma separated list of Kafka brokers (host or host:port) to export run-time statistics to.
+Will be used if :ref:`stats-location` is set to ``kafka``.
+
+kafka-ca-location
+^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-ca-location``
+:default: empty
+
+File or directory path to CA certificates(s) for verifying Kafka broker's key.
+
+By default OpenSSL's default directory with CA certificates is used.
+
+kafka-ca-location
+^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-ca-location``
+:default: empty
+
+File or directory path to CA certificates(s) for verifying Kafka broker's key.
+
+By default OpenSSL's default directory with CA certificates is used.
+
+kafka-cert-location
+^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-cert-location``
+:default: empty
+
+Path (including file's name) to public key (PEM) used for authentication to Kafka cluster
+when :ref:`kafka-security-protocol` is set to ``ssl`` or ``sasl_ssl``.
+
+kafka-cert-location
+^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-cert-location``
+:default: empty
+
+Path (including file's name) to public key (PEM) used for authentication to Kafka cluster
+when :ref:`stats-kafka-security-protocol` is set to ``ssl`` or ``sasl_ssl``.
+
+.. _kafka-key-location:
+
+kafka-key-location
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-key-location``
+:default: empty
+
+Path (including file's name) to private key (PEM) used for authentication to Kafka cluster
+when :ref:`kafka-security-protocol` is set to ``ssl`` or ``sasl_ssl``.
+
+.. _stats-kafka-key-location:
+
+kafka-key-location
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-key-location``
+:default: empty
+
+Path (including file's name) to private key (PEM) used for authentication to Kafka cluster
+when :ref:`stats-kafka-security-protocol` is set to ``ssl`` or ``sasl_ssl``.
+
+kafka-key-password
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-key-password``
+:default: empty
+
+Private key passphrase for key set in :ref:`kafka-key-location`.
+
+kafka-key-password
+^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-key-password``
+:default: empty
+
+Private key passphrase for key set in :ref:`stats-kafka-key-location`.
+
+.. _kafka-partition:
+
+kafka-partition
+^^^^^^^^^^^^^^^
+
+:data-node: ``<instance-id>/export/kafka-partition``
+:default: empty
+
+Kafka message key that will be used to assign all messages (DNS records) to specific partition within Kafka topic.
+
+.. _stats-kafka-partition:
+
+kafka-partition
+^^^^^^^^^^^^^^^
+
+:data-node: ``<instance-id>/statistics/kafka-partition``
+:default: empty
+
+Kafka message key that will be used to assign all messages (run-time statistics) to specific partition within Kafka topic.
+
+.. _kafka-security-protocol:
+
+kafka-security-protocol
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-security-protocol``
+:default: ``plaintext``
+
+Security protocol used to communicate with Kafka brokers.
+
+Valid values are ``plaintext``, ``ssl``, ``sasl_plaintext`` and ``sasl_ssl``.
+
+.. _stats-kafka-security-protocol:
+
+kafka-security-protocol
+^^^^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-security-protocol``
+:default: ``plaintext``
+
+Security protocol used to communicate with Kafka brokers.
+
+Valid values are ``plaintext``, ``ssl``, ``sasl_plaintext`` and ``sasl_ssl``.
+
+.. _kafka-sasl-mechanism:
+
+kafka-sasl-mechanism
+^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instanceid>/export/kafka-sasl-mechanism``
+:default: ``plain``
+
+SASL mechanism to use for authentication to Kafka brokers.
+
+Valid values are ``plain``, ``scram-sha-256`` and ``scram-sha-512``.
+
+.. _stats-kafka-sasl-mechanism:
+
+kafka-sasl-mechanism
+^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instanceid>/statistics/kafka-sasl-mechanism``
+:default: ``plain``
+
+SASL mechanism to use for authentication to Kafka brokers.
+
+Valid values are ``plain``, ``scram-sha-256`` and ``scram-sha-512``.
+
+kafka-sasl-password
+^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-sasl-password``
+:default: empty
+
+Password for SASL authentication to Kafka brokers.
+
+kafka-sasl-password
+^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-sasl-password``
+:default: empty
+
+Password for SASL authentication to Kafka brokers.
+
+kafka-sasl-username
+^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instanceid>/export/kafka-sasl-username``
+:default: empty
+
+Username for SASL authentication to Kafka brokers.
+
+kafka-sasl-username
+^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instanceid>/statistics/kafka-sasl-username``
+:default: empty
+
+Username for SASL authentication to Kafka brokers.
+
+.. _kafka-topic:
+
+kafka-topic
+^^^^^^^^^^^
+
+:data-node: ``<instance-id>/export/kafka-topic``
+:default: ``dns-probe``
+
+Kafka topic to export DNS records to. Will be used if :ref:`location` is set to ``kafka``.
+
+.. _stats-kafka-topic:
+
+kafka-topic
+^^^^^^^^^^^
+
+:data-node: ``<instance-id>/statistics/kafka-topic``
+:default: ``dns-probe-stats``
+
+Kafka topic to export run-time statistics to. Will be used if :ref:`stats-location` is set to ``kafka``.
 
 key-path
 ^^^^^^^^

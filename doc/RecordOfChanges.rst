@@ -17,6 +17,12 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Change description
    * - **1.*.***
      - **1.0**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
+       :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Installation <Installation>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Add export of data and run-time statistics to Apache Kafka
+   * -
+     -
      - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
      - Add option to export full Authority RRs of responses to C-DNS files
    * -

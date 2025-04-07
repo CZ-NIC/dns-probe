@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2025-03-17
+  # Last revision: 2025-06-11
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -79,7 +79,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
     export:
 
       # Location for the storage of exported DNS records.
-      # Valid values are 'local' and 'remote'.
+      # Valid values are 'local', 'remote' and 'kafka'.
       location: 'local'
 
       # Directory for exported data.
@@ -102,6 +102,46 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # By default server's certificate will be authenticated against OpenSSL's default directory
       # with CA certificates.
       remote-ca-cert: ''
+
+      # Comma separated list of Kafka brokers (host or host:port) for export of DNS records
+      kafka-brokers: '127.0.0.1'
+
+      # Kafka topic for export of DNS records
+      kafka-topic: 'dns-probe'
+
+      # Kafka message key that will be used to assign all messages (DNS records) to specific
+      # partition within Kafka topic.
+      # By default no key is set (messages will be partitioned randomly).
+      kafka-partition: ''
+
+      # File or directory path to CA certificate(s) for verifying Kafka broker's key
+      # By default OpenSSL's default directory with CA certificates is used.
+      kafka-ca-location: ''
+
+      # Security protocol used to communicate with Kafka brokers.
+      # Valid values are 'plaintext', 'ssl', 'sasl_plaintext', 'sasl_ssl'.
+      kafka-security-protocol: 'plaintext'
+
+      # Path (including file's name) to public key (PEM) used for authentication to Kafka cluster
+      # when 'kafka-security-protocol' is set to 'ssl' or 'sasl_ssl'.
+      kafka-cert-location: ''
+
+      # Path (including file's name) to private key (PEM) used for authentication to Kafka cluster
+      # when 'kafka-security-protocol' is set to 'ssl' or 'sasl_ssl'
+      kafka-key-location: ''
+
+      # Private key passphrase for key set in 'kafka-key-location'
+      kafka-key-password: ''
+
+      # SASL mechanism to use for authentication to Kafka brokers.
+      # Valid values are 'plain', 'scram-sha-256', 'scram-sha-512'.
+      kafka-sasl-mechanism: 'plain'
+
+      # Username for SASL authentication to Kafka brokers.
+      kafka-sasl-username: ''
+
+      # Password for SASL authentication to Kafka brokers.
+      kafka-sasl-password: ''
 
       # Format of exported data.
       # Valid values are 'parquet' and 'cdns'.
@@ -254,7 +294,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       stats-timeout: 300
 
       # Location for the storage of exported run-time statistics in JSON.
-      # Valid values are 'local' and 'remote'.
+      # Valid values are 'local', 'remote' and 'kafka'.
       location: 'local'
 
       # Directory for exported run-time statistics.
@@ -277,6 +317,46 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # By default server's certificate will be authenticated against OpenSSL's default directory
       # with CA certificates.
       remote-ca-cert: ''
+
+      # Comma separated list of Kafka brokers (host or host:port) for export of run-time statistics
+      kafka-brokers: '127.0.0.1'
+
+      # Kafka topic for export of run-time statistics
+      kafka-topic: 'dns-probe-stats'
+
+      # Kafka message key that will be used to assign all messages (run-time statistics) to specific
+      # partition within Kafka topic.
+      # By default no key is set (messages will be partitioned randomly).
+      kafka-partition: ''
+
+      # File or directory path to CA certificate(s) for verifying Kafka broker's key
+      # By default OpenSSL's default directory with CA certificates is used.
+      kafka-ca-location: ''
+
+      # Security protocol used to communicate with Kafka brokers.
+      # Valid values are 'plaintext', 'ssl', 'sasl_plaintext', 'sasl_ssl'.
+      kafka-security-protocol: 'plaintext'
+
+      # Path (including file's name) to public key (PEM) used for authentication to Kafka cluster
+      # when 'kafka-security-protocol' is set to 'ssl' or 'sasl_ssl'.
+      kafka-cert-location: ''
+
+      # Path (including file's name) to private key (PEM) used for authentication to Kafka cluster
+      # when 'kafka-security-protocol' is set to 'ssl' or 'sasl_ssl'
+      kafka-key-location: ''
+
+      # Private key passphrase for key set in 'kafka-key-location'
+      kafka-key-password: ''
+
+      # SASL mechanism to use for authentication to Kafka brokers.
+      # Valid values are 'plain', 'scram-sha-256', 'scram-sha-512'.
+      kafka-sasl-mechanism: 'plain'
+
+      # Username for SASL authentication to Kafka brokers.
+      kafka-sasl-username: ''
+
+      # Password for SASL authentication to Kafka brokers.
+      kafka-sasl-password: ''
 
       # Time window in seconds for which to compute moving average of queries-per-second*
       # run-time statistics. Window can be set in interval from 1 second to 1 hour.
