@@ -667,6 +667,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
     // Parse L4 information
     switch (hdr.socket_protocol()) {
         case dnstap::SocketProtocol::UDP:
+        case dnstap::SocketProtocol::DOQ:
             record.m_proto = DnsRecord::Proto::UDP;
             break;
         case dnstap::SocketProtocol::TCP:
