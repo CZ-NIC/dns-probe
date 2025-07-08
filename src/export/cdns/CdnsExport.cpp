@@ -294,6 +294,9 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     if (m_fields[static_cast<uint32_t>(CDNSField::COUNTRY_CODE)] && !country.empty())
         qr.country_code = country;
 
+    if (m_fields[static_cast<uint32_t>(CDNSField::USER_ID)])
+        qr.user_id = std::string(record.m_uid, strnlen(record.m_uid, UUID_SIZE));
+
     // Add QueryResponseSignature to the QueryResponse
     if (qrs_filled)
         qr.qr_signature_index = m_block->add_qr_signature(qrs);
