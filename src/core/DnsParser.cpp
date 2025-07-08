@@ -23,7 +23,7 @@
 
 #include <exception>
 #include <cstring>
-
+#include <string>
 #include <cstdint>
 #include <arpa/inet.h>
 #include <net/ethernet.h>
@@ -611,13 +611,39 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
 {
     MemView<uint8_t> dns = MemView<uint8_t>();
 
-    // Check for RTT estimate in "extra" byte field as exported by Knot Resolver
-    if (msg.has_extra() && msg.extra().size() > 4 && msg.extra().compare(0,4, "rtt=") == 0) {
-        try {
-            record.m_tcp_rtt = static_cast<int64_t>(std::stoul(msg.extra().substr(4, msg.extra().size())));
-        }
-        catch (std::exception& e) {
-            Logger("DNSTAP").debug() << "Couldn't parse RTT from extra field";
+    if (msg.has_extra()) {
+        std::size_t start = 0;
+        std::size_t end;
+
+        while ((end = msg.extra().find('\n', start)) != std::string::npos) {
+            // Check for RTT estimate in "extra" byte field as exported by Knot Resolver
+            if (end - start > DNSTAP_RTT_KEY_SIZE && msg.extra().compare(start, DNSTAP_RTT_KEY_SIZE, DNSTAP_RTT_KEY) == 0) {
+                try {
+                    record.m_tcp_rtt = static_cast<int64_t> (std::stoul(msg.extra().substr(start + DNSTAP_RTT_KEY_SIZE,
+                        end - start - DNSTAP_RTT_KEY_SIZE)));
+                }
+                catch (std::exception& e) {
+                    Logger("DNSTAP").debug() << "Couldn't parse RTT from extra field";
+                }
+            }
+
+            // Check for User ID (UUID) in "extra" byte field as exported by Knot Resolver
+            if (end - start > DNSTAP_UID_KEY_SIZE && msg.extra().compare(start, DNSTAP_UID_KEY_SIZE, DNSTAP_UID_KEY) == 0) {
+                if (end - start - DNSTAP_UID_KEY_SIZE <= UUID_SIZE) {
+                    try {
+                        std::memcpy(record.m_uid, (msg.extra().data() + (start + DNSTAP_UID_KEY_SIZE)),
+                            end - start - DNSTAP_UID_KEY_SIZE);
+                    }
+                    catch (std::exception& e) {
+                        Logger("DNSTAP").debug() << "Couldn't parse User ID from extra field";
+                    }
+                }
+                else {
+                    Logger("DNSTAP").debug() << "Invalid User ID! UUID too long.";
+                }
+            }
+
+            start = end + 1;
         }
     }
 

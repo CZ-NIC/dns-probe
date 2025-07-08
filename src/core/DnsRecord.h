@@ -49,6 +49,11 @@ namespace DDP {
     static constexpr uint8_t DNS_QTYPE_AXFR = 252;
 
     /**
+     * @brief Size of standard UUID's textual representation
+     */
+    static constexpr uint8_t UUID_SIZE = 36;
+
+    /**
      * @brief Stores data of one DNS Resource Record
      */
     struct DnsRR
@@ -134,6 +139,7 @@ namespace DDP {
                       m_qname(),
                       m_qtype(0),
                       m_qclass(0),
+                      m_uid(),
                       m_ednsUDP(0),
                       m_ednsVersion(0),
                       m_ednsDO(0),
@@ -288,6 +294,9 @@ namespace DDP {
         char m_qname[QNAME_BUFFER_SIZE]; // wire format
         uint16_t m_qtype;
         uint16_t m_qclass;
+
+        // User ID (only from dnstap, UUID)
+        char m_uid[UUID_SIZE];
 
         // EDNS properties
         uint16_t m_ednsUDP; // EDNS header

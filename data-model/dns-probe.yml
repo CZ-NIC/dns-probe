@@ -1,4 +1,4 @@
-# Last revision: 2025-06-11
+# Last revision: 2025-07-08
 #
 # Default instance configuration.
 # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -168,6 +168,7 @@ default:
       - 'asn' # asn-maxmind-db configuration option also needs to be set
       - 'country_code' # country-maxmind-db configuration option also needs to be set
       - 'round_trip_time' # TCP RTT
+      - 'user_id' # Unique user ID (UUID), collected only from dnstap
 
     # Maximum number of DNS records in one exported C-DNS block.
     cdns-records-per-block: 10000
