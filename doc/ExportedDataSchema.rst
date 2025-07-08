@@ -213,6 +213,8 @@ configuration option.
     | tcp\_hs\_rtt                    | DOUBLE    | round-trip-time (implementation field)| TCP Round Trip Time (RTT) (milliseconds with up to 3 decimal|
     |                                 |           | (microsecond precision integer)       | digits precision)                                           |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
+    |                                 | STRING    | user-id (implementation field)        | Unique user ID (UUID) (currently no column in Parquet)      |
+    +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
 
 Storing exported run-time statistics
 ====================================
