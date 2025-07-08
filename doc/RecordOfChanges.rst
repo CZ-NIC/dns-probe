@@ -17,6 +17,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Change description
    * - **1.4.0**
      - **1.0**
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
+     - Add export of 'user-id' field in C-DNS output
+   * -
+     -
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Installation <Installation>`,
        :doc:`Default YAML file <YAMLfile>`
