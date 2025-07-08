@@ -23,7 +23,7 @@
 
 #include <exception>
 #include <cstring>
-
+#include <string>
 #include <cstdint>
 #include <arpa/inet.h>
 #include <net/ethernet.h>
@@ -611,13 +611,37 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
 {
     MemView<uint8_t> dns = MemView<uint8_t>();
 
-    // Check for RTT estimate in "extra" byte field as exported by Knot Resolver
-    if (msg.has_extra() && msg.extra().size() > 4 && msg.extra().compare(0,4, "rtt=") == 0) {
-        try {
-            record.m_tcp_rtt = static_cast<int64_t>(std::stoul(msg.extra().substr(4, msg.extra().size())));
-        }
-        catch (std::exception& e) {
-            Logger("DNSTAP").debug() << "Couldn't parse RTT from extra field";
+    if (msg.has_extra()) {
+        std::size_t start = 0;
+        std::size_t end;
+
+        while ((end = msg.extra().find('\n', start)) != std::string::npos) {
+            // Check for RTT estimate in "extra" byte field as exported by Knot Resolver
+            if (end - start > 4 && msg.extra().compare(start, start + 4, "rtt=") == 0) {
+                try {
+                    record.m_tcp_rtt = static_cast<int64_t> (std::stoul(msg.extra().substr(start + 4, end - start - 4)));
+                }
+                catch (std::exception& e) {
+                    Logger("DNSTAP").debug() << "Couldn't parse RTT from extra field";
+                }
+            }
+
+            // Check for User ID (UUID) in "extra" byte field as exported by Knot Resolver
+            if (end - start > 9 && msg.extra().compare(start, start + 9, "user_key=") == 0) {
+                if (end - start - 9 <= 36) {
+                    try {
+                        std::memcpy(record.m_uid, (msg.extra().data() + (start + 9)), end - start - 9);
+                    }
+                    catch (std::exception& e) {
+                        Logger("DNSTAP").debug() << "Couldn't parse User ID from extra field";
+                    }
+                }
+                else {
+                    Logger("DNSTAP").debug() << "Invalid User ID! UUID too long.";
+                }
+            }
+
+            start = end + 1;
         }
     }
 

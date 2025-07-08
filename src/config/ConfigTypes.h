@@ -199,6 +199,7 @@ namespace DDP {
         ASN,
         COUNTRY_CODE,
         ROUND_TRIP_TIME,
+        USER_ID,
 
         CDNS_FIELD_SIZE
     };
@@ -232,6 +233,7 @@ namespace DDP {
         {"asn",                             static_cast<uint32_t>(CDNSField::ASN)},
         {"country_code",                    static_cast<uint32_t>(CDNSField::COUNTRY_CODE)},
         {"round_trip_time",                 static_cast<uint32_t>(CDNSField::ROUND_TRIP_TIME)},
+        {"user_id",                         static_cast<uint32_t>(CDNSField::USER_ID)},
     };
 
     /**
