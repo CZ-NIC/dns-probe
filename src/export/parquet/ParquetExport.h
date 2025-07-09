@@ -70,7 +70,9 @@ namespace DDP {
             DNSSEC_DAU = 5,
             DNSSEC_DHU = 6,
             DNSSEC_N3U = 7,
-            ClientSubnet = 8
+            ClientSubnet = 8,
+
+            Other = UINT16_MAX
         };
 
         /**
@@ -139,6 +141,13 @@ namespace DDP {
          * @return List of comma separated values indicating supported DNSSEC algorithms
          */
         std::string parse_dnssec_list(const uint8_t* ptr, uint16_t opt_len);
+
+        /**
+         * @brief Add EDNS option code to a string list of option codes
+         * @param option_string String option list to add to
+         * @param option_code EDNS option code to add to the string list
+         */
+        void add_edns_option_code_to_string(std::string& option_string, uint16_t option_code);
 
         /**
         * @brief Convert number to C string

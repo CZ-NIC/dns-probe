@@ -30,6 +30,10 @@
 #include <unordered_set>
 #include <array>
 
+#ifdef PROBE_KAFKA
+#include <librdkafka/rdkafkacpp.h>
+#endif
+
 #include "config/Config.h"
 
 struct ssl_ctx_st;
@@ -78,6 +82,71 @@ namespace std {
 }
 
 namespace DDP {
+
+#ifdef PROBE_KAFKA
+    /**
+     * @brief Send local file to Kafka cluster
+     * @param config Kafka configuration
+     * @param filename Name of the file to send WITHOUT the ".part" sufix
+     * @param sufix Sufix of the file to send (usually ".part" sufix)
+     * @param fail_rename Indicate whether to rename the file on failure to send
+     * @return File context struct with info if file transfer was successful or not
+     */
+    FileCtx send_file_to_kafka(KafkaConfig config, std::string filename, std::string sufix, bool fail_rename);
+
+    /**
+     * @brief Send files given in flist to Kafka cluster
+     * @param config Kafka configuration
+     * @param flist List of files to send
+     * @return List of file context structs with info if file transfers were successful or not
+     */
+    std::unordered_set<FileCtx> send_files_to_kafka(KafkaConfig config, std::unordered_set<std::string> flist);
+
+    /**
+     * @brief RAII wrapper around Kafka producer using RdKafka library
+     */
+    class KafkaProducer {
+        public:
+        /**
+         * @brief Construct a new Kafka producer from given configuration
+         * @param config Kafka configuration
+         */
+        KafkaProducer(KafkaConfig& config);
+
+        /**
+         * @brief Destructor. Closes the producer and frees resources
+         */
+        ~KafkaProducer();
+
+        /**
+         * @brief Writes message (file) to Kafka cluster
+         * @param message Message (file) data
+         * @param filename Name of the file to write
+         * @return File context struct with info if file transfer was successful or not
+         */
+        FileCtx write(std::string&& message, std::string& filename);
+
+        private:
+        /**
+         * @brief Callback class for message (file) delivery status
+         */
+        class DeliveryReportCb : public RdKafka::DeliveryReportCb {
+            public:
+            /**
+             * @brief Callback for message (file) delivery status
+             * @param message Message from Kafka whether transfer was successful
+             */
+            void dr_cb(RdKafka::Message& message);
+        };
+
+        KafkaConfig m_config;
+        bool m_sent;
+        RdKafka::Conf* m_conf;
+        RdKafka::Producer* m_producer;
+        RdKafka::Topic* m_topic;
+        DeliveryReportCb m_delivery_cb;
+    };
+#endif
 
     /**
      * @brief Send local file to remote server via TLS connection
@@ -276,6 +345,11 @@ namespace DDP {
          * @brief Save list of currently unsent files to a file on disk.
          */
         void save_unsent_files_list();
+
+        /**
+         * @brief Send all files from list of currently unsent files
+         */
+        void send_unsent_files_list();
 
         /**
          * @brief Clean up all sending threads and save unsent files list to a file if it's not empty

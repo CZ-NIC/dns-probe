@@ -155,7 +155,7 @@ namespace DDP {
      */
     enum class ExportFormat : uint8_t {
         PARQUET, //!< Parquet export format.
-        CDNS //!< CDMS export format.
+        CDNS //!< C-DNS export format.
     };
 
     /**
@@ -163,7 +163,8 @@ namespace DDP {
      */
     enum class ExportLocation : uint8_t {
         LOCAL, //!< Store exported data to local files
-        REMOTE //!< Send exported data directly to remote location
+        REMOTE, //!< Send exported data directly to remote location
+        KAFKA //!< Send exported data to Apache Kafka cluster
     };
 
     /**
@@ -192,6 +193,7 @@ namespace DDP {
         QUERY_EDNS_UDP_SIZE,
         QUERY_OPT_RDATA,
         RESPONSE_ANSWER_SECTIONS,
+        RESPONSE_AUTHORITY_SECTIONS,
         RESPONSE_ADDITIONAL_SECTIONS,
         RESPONSE_SIZE,
         ASN,
@@ -224,6 +226,7 @@ namespace DDP {
         {"query_edns_udp_size",             static_cast<uint32_t>(CDNSField::QUERY_EDNS_UDP_SIZE)},
         {"query_opt_data",                  static_cast<uint32_t>(CDNSField::QUERY_OPT_RDATA)},
         {"response_answer_sections",        static_cast<uint32_t>(CDNSField::RESPONSE_ANSWER_SECTIONS)},
+        {"response_authority_sections",     static_cast<uint32_t>(CDNSField::RESPONSE_AUTHORITY_SECTIONS)},
         {"response_additional_sections",    static_cast<uint32_t>(CDNSField::RESPONSE_ADDITIONAL_SECTIONS)},
         {"response_size",                   static_cast<uint32_t>(CDNSField::RESPONSE_SIZE)},
         {"asn",                             static_cast<uint32_t>(CDNSField::ASN)},
@@ -311,5 +314,26 @@ namespace DDP {
         BLOWFISH = 0x02,
         AES = 0x03,
         SHA1 = 0x04
+    };
+
+    /**
+     * Kafka security protocols for export to Kafka cluster
+     */
+    enum class KafkaSecurityProtocol : uint8_t {
+        PLAINTEXT = 0,
+        SSL,
+        SASL_PLAINTEXT,
+        SASL_SSL,
+    };
+
+    /**
+     * Kafka SASL mechanisms for export to Kafka cluster
+     */
+    enum class KafkaSaslMechanism : uint8_t {
+        GSSAPI = 0,
+        PLAIN,
+        SCRAM_SHA_256,
+        SCRAM_SHA_512,
+        OAUTHBEARER
     };
 }

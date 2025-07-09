@@ -22,6 +22,8 @@ BuildRequires: protobuf-compiler
 BuildRequires: libmaxminddb-devel
 BuildRequires: knot-devel
 BuildRequires: libcdns-devel
+BuildRequires: systemd-devel
+BuildRequires: librdkafka-devel
 BuildRequires: dpdk-devel
 
 %if 0%{?fedora} > 35

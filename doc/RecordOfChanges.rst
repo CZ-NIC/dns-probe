@@ -15,6 +15,28 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **1.4.0**
+     - **1.0**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
+       :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Installation <Installation>`,
+       :doc:`Default YAML file <YAMLfile>`
+     - Add export of data and run-time statistics to Apache Kafka
+   * -
+     -
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
+     - Add option to export full Authority RRs of responses to C-DNS files
+   * -
+     -
+     - :doc:`Installation <Installation>`
+     - Add libsystemd as dependency
+   * -
+     -
+     - :doc:`Installation <Installation>`
+     - Update supported Linux distributions
+   * -
+     -
+     - :doc:`Exported Data Schema <ExportedDataSchema>`
+     - Fill "edns_other" field in Parquet export
    * - **1.3.0**
      - **1.0**
      - :doc:`Configuration <Configuration>`, :doc:`Exported Data Schema <ExportedDataSchema>`,

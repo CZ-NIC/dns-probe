@@ -358,7 +358,7 @@ namespace DDP {
             try {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
-                return str_value == "LOCAL" || str_value == "REMOTE";
+                return str_value == "LOCAL" || str_value == "REMOTE" || str_value == "KAFKA";
             } catch(...) {
                 return false;
             }
@@ -377,6 +377,8 @@ namespace DDP {
                 m_value = ExportLocation::LOCAL;
             else if (str_value == "REMOTE")
                 m_value = ExportLocation::REMOTE;
+            else if (str_value == "KAFKA")
+                m_value = ExportLocation::KAFKA;
             else
                 throw std::invalid_argument("Invalid argument for ExportLocation");
         }
@@ -395,6 +397,8 @@ namespace DDP {
         {
             if (m_value == ExportLocation::LOCAL)
                 return {"LOCAL"};
+            else if (m_value == ExportLocation::KAFKA)
+                return {"KAFKA"};
             else
                 return {"REMOTE"};
         }
@@ -982,7 +986,7 @@ namespace DDP {
                     mask = mask >= 8 ? mask - 8 : 0;
                 }
 
-                // mask the IP subnet so we don't have to do it for every comparision with packet IP
+                // mask the IP subnet so we don't have to do it for every comparison with packet IP
                 addr.ip.s6_addr32[0] &= addr.mask.s6_addr32[0];
                 addr.ip.s6_addr32[1] &= addr.mask.s6_addr32[1];
                 addr.ip.s6_addr32[2] &= addr.mask.s6_addr32[2];
@@ -1058,5 +1062,171 @@ namespace DDP {
         }
     protected:
         CList<std::string> m_value{}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::KafkaSecurityProtocol as config item.
+     */
+    template<>
+    class ConfigItem<KafkaSecurityProtocol>: public ConfigItemBase
+    {
+    public:
+        /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(KafkaSecurityProtocol value) : m_value(value) {};
+
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        KafkaSecurityProtocol value() const { return m_value; }
+
+        /**
+         * Check if given value from configuration file can be used in config.
+         * @param value Checked valued from configuration file.
+         * @return True if value is valid otherwise false.
+         */
+        bool validate(const boost::any& value) const override
+        {
+            try {
+                auto str_value = boost::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "PLAINTEXT" || str_value == "SSL" || str_value == "SASL_PLAINTEXT" || str_value == "SASL_SSL";
+            } catch (std::exception& e) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from configuration file.
+         * @param value Value from configuration file.
+         */
+        void add_value(const boost::any& value) override
+        {
+            auto str_value = boost::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if(str_value == "PLAINTEXT")
+                m_value = KafkaSecurityProtocol::PLAINTEXT;
+            else if(str_value == "SSL")
+                m_value = KafkaSecurityProtocol::SSL;
+            else if(str_value == "SASL_PLAINTEXT")
+                m_value = KafkaSecurityProtocol::SASL_PLAINTEXT;
+            else if(str_value == "SASL_SSL")
+                m_value = KafkaSecurityProtocol::SASL_SSL;
+            else
+                throw std::invalid_argument("Invalid argument for KafkaSecurityProtocol");
+        }
+
+        /**
+         * Implicit conversion to IpEncryption.
+         * @return Saved value.
+         */
+        operator KafkaSecurityProtocol() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == KafkaSecurityProtocol::PLAINTEXT)
+                return {"PLAINTEXT"};
+            else if (m_value == KafkaSecurityProtocol::SSL)
+                return {"SSL"};
+            else if (m_value == KafkaSecurityProtocol::SASL_PLAINTEXT)
+                return {"SASL_PLAINTEXT"};
+            else if (m_value == KafkaSecurityProtocol::SASL_SSL)
+                return {"SASL_SSL"};
+            else
+                return {"NONE"};
+        }
+
+
+    protected:
+        KafkaSecurityProtocol m_value{KafkaSecurityProtocol::PLAINTEXT}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::KafkaSaslMechanism as config item.
+     */
+    template<>
+    class ConfigItem<KafkaSaslMechanism>: public ConfigItemBase
+    {
+    public:
+        /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(KafkaSaslMechanism value) : m_value(value) {};
+
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        KafkaSaslMechanism value() const { return m_value; }
+
+        /**
+         * Check if given value from configuration file can be used in config.
+         * @param value Checked valued from configuration file.
+         * @return True if value is valid otherwise false.
+         */
+        bool validate(const boost::any& value) const override
+        {
+            try {
+                auto str_value = boost::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "PLAIN" || str_value == "SCRAM-SHA-256" || str_value == "SCRAM-SHA-512";
+            } catch (std::exception& e) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from configuration file.
+         * @param value Value from configuration file.
+         */
+        void add_value(const boost::any& value) override
+        {
+            auto str_value = boost::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if(str_value == "PLAIN")
+                m_value = KafkaSaslMechanism::PLAIN;
+            else if(str_value == "SCRAM-SHA-256")
+                m_value = KafkaSaslMechanism::SCRAM_SHA_256;
+            else if(str_value == "SCRAM-SHA-512")
+                m_value = KafkaSaslMechanism::SCRAM_SHA_512;
+            else
+                throw std::invalid_argument("Invalid argument for KafkaSaslMechanism");
+        }
+
+        /**
+         * Implicit conversion to IpEncryption.
+         * @return Saved value.
+         */
+        operator KafkaSaslMechanism() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == KafkaSaslMechanism::PLAIN)
+                return {"PLAIN"};
+            else if (m_value == KafkaSaslMechanism::SCRAM_SHA_256)
+                return {"SCRAM-SHA-256"};
+            else if (m_value == KafkaSaslMechanism::SCRAM_SHA_512)
+                return {"SCRAM-SHA-512"};
+            else
+                return {"NONE"};
+        }
+
+
+    protected:
+        KafkaSaslMechanism m_value{KafkaSaslMechanism::PLAIN}; //!< Saved value.
     };
 }

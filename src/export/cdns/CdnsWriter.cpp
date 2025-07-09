@@ -144,6 +144,15 @@ DDP::CdnsWriter::~CdnsWriter()
                     m_sending_files.insert(m_filename);
                 }
             }
+#ifdef PROBE_KAFKA
+            else if (m_cfg.export_location.value() == ExportLocation::KAFKA) {
+                if (!std::rename(m_filename.c_str(), (m_filename + ".part").c_str())) {
+                    m_threads.emplace_back(std::async(std::launch::async, send_file_to_kafka, m_cfg.kafka_export,
+                                                        m_filename, ".part", true));
+                    m_sending_files.insert(m_filename);
+                }
+            }
+#endif
         }
 
         cleanup();
@@ -163,7 +172,8 @@ void DDP::CdnsWriter::rotate_output()
     struct stat buffer;
     if (m_bytes_written == 0 && stat(rotated.c_str(), &buffer) == 0) {
         remove(rotated.c_str());
-        if (m_cfg.export_location.value() == ExportLocation::REMOTE)
+        if (m_cfg.export_location.value() == ExportLocation::REMOTE ||
+            m_cfg.export_location.value() == ExportLocation::KAFKA)
             check_file_transfer();
     }
     else {
@@ -178,6 +188,17 @@ void DDP::CdnsWriter::rotate_output()
                 m_cfg.backup_export_port.value(), rotated, ".part", DEFAULT_TRIES));
             m_sending_files.insert(rotated);
         }
+#ifdef PROBE_KAFKA
+        else if (m_cfg.export_location.value() == ExportLocation::KAFKA) {
+            if (std::rename(rotated.c_str(), (rotated + ".part").c_str()))
+                throw std::runtime_error("Couldn't rename the output file!");
+
+            check_file_transfer();
+            m_threads.emplace_back(std::async(std::launch::async, send_file_to_kafka, m_cfg.kafka_export,
+                rotated, ".part", true));
+            m_sending_files.insert(rotated);
+        }
+#endif
     }
 
     m_blocks_written = 0;

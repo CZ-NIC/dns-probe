@@ -122,8 +122,8 @@ Export thread
 =============
 
 The export thread handles export of DNS records to output. The probe
-supports export either to a local file or directly to a remote location
-via encrypted network transfer using TLS.
+supports export to a local file, directly to a remote location
+via encrypted network transfer using TLS or to Apache Kafka cluster.
 
 The export thread has a ring buffer for each of the worker threads.
 Through these ring buffers it accepts DNS records from worker threads

@@ -341,6 +341,18 @@ const uint8_t* DDP::DnsParser::parse_rr(const uint8_t* ptr, const uint8_t* pkt_s
                     record.m_last_soa = true;
                 record.m_resp_answer_rrs.emplace_back(rr);
                 break;
+            case DNSSectionType::AUTHORITY:
+                rr = get_empty_rr();
+                if (!rr)
+                    return nullptr;
+
+                ptr = fill_rr(ptr, pkt_start, pkt_end, rr);
+                if (!ptr) {
+                    m_rr_mempool.free(rr);
+                    return nullptr;
+                }
+                record.m_resp_authority_rrs.emplace_back(rr);
+                break;
             case DNSSectionType::ADDITIONAL:
                 rr = get_empty_rr();
                 if (!rr)
@@ -1356,6 +1368,7 @@ DDP::DnsRecord& DDP::DnsParser::merge_records(DDP::DnsRecord& request, DDP::DnsR
     request.m_resp_ednsRdata_size = response.m_resp_ednsRdata_size;
 
     request.m_resp_answer_rrs = std::move(response.m_resp_answer_rrs);
+    request.m_resp_authority_rrs = std::move(response.m_resp_authority_rrs);
     request.m_resp_additional_rrs = std::move(response.m_resp_additional_rrs);
 
     return request;
@@ -1368,7 +1381,7 @@ void DDP::DnsParser::merge_AXFR_record(DDP::DnsRecord& request, DDP::DnsRecord& 
     request.m_res_len += response.m_res_len;
     request.m_res_dns_len += response.m_res_dns_len;
     request.m_ancount += response.m_ancount;
-    /** @todo export Answer and Additional RRs when enabled */
+    /** @todo export Answer, Authority and Additional RRs when enabled */
 }
 
 uint8_t* DDP::DnsParser::copy_to_buffer(const uint8_t* msg, uint16_t size, std::size_t offset)

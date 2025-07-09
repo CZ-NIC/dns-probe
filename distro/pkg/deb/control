@@ -20,6 +20,8 @@ Build-Depends: debhelper (>= 9),
                protobuf-compiler,
                libmaxminddb-dev,
                libknot-dev (>= 3.0.6),
+               libsystemd-dev,
+               librdkafka-dev,
                dpdk-dev (>= 16.11)
 
 Package: dns-probe-af

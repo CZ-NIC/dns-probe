@@ -7,7 +7,7 @@ DNS Probe can be used on Linux with kernel version at least
 Installation packages are available from `OBS (openSUSE Build Service)
 <https://build.opensuse.org/project/show/home:CZ-NIC:dns-probe>`_.
 The following distributions are currently supported: Debian 12, 11, 10 and 9;
-Ubuntu 22.04, 20.04, 18.04; Fedora 38, 37, 36, Rawhide; EPEL 8 and Arch.
+Ubuntu 24.04, 22.04, 20.04, 18.04; Fedora 41, 40, 39, 38, 37, 36, Rawhide; EPEL 8 and Arch.
 
 The OBS repository also contains packages with several dependencies
 that are not provided by the distribution's standard
@@ -101,6 +101,8 @@ distribution repositories:
 - Protocol Buffers (libprotobuf-dev, protobuf-compiler)
 - libmaxminddb
 - libknot, version at least 3.0.6
+- libsystemd
+- librdkafka
 - DPDK (only for DPDK version)
 
 Optionally, to build this user documentation (``make doc``) or manual pages (``make man``)

@@ -142,6 +142,7 @@ namespace DDP {
                       m_resp_ednsRdata(nullptr),
                       m_resp_ednsRdata_size(0),
                       m_resp_answer_rrs(),
+                      m_resp_authority_rrs(),
                       m_resp_additional_rrs()
         {
         }
@@ -300,6 +301,7 @@ namespace DDP {
 
         // Optional list of response RRs from Answer and Additional sections
         std::vector<DnsRR*> m_resp_answer_rrs;
+        std::vector<DnsRR*> m_resp_authority_rrs;
         std::vector<DnsRR*> m_resp_additional_rrs;
     };
 

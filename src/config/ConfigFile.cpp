@@ -140,6 +140,39 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["export"]["remote-ca-cert"] && node["export"]["remote-ca-cert"].IsScalar())
         cfg.export_ca_cert.add_value(node["export"]["remote-ca-cert"].as<std::string>());
 
+    if (node["export"]["kafka-brokers"] && node["export"]["kafka-brokers"].IsScalar())
+        cfg.kafka_export.brokers.add_value(node["export"]["kafka-brokers"].as<std::string>());
+
+    if (node["export"]["kafka-topic"] && node["export"]["kafka-topic"].IsScalar())
+        cfg.kafka_export.topic.add_value(node["export"]["kafka-topic"].as<std::string>());
+
+    if (node["export"]["kafka-partition"] && node["export"]["kafka-partition"].IsScalar())
+        cfg.kafka_export.partition.add_value(node["export"]["kafka-partition"].as<std::string>());
+
+    if (node["export"]["kafka-ca-location"] && node["export"]["kafka-ca-location"].IsScalar())
+        cfg.kafka_export.ca_location.add_value(node["export"]["kafka-ca-location"].as<std::string>());
+
+    if (node["export"]["kafka-security-protocol"] && node["export"]["kafka-security-protocol"].IsScalar())
+        cfg.kafka_export.sec_protocol.add_value(node["export"]["kafka-security-protocol"].as<std::string>());
+
+    if (node["export"]["kafka-cert-location"] && node["export"]["kafka-cert-location"].IsScalar())
+        cfg.kafka_export.cert_location.add_value(node["export"]["kafka-cert-location"].as<std::string>());
+
+    if (node["export"]["kafka-key-location"] && node["export"]["kafka-key-location"].IsScalar())
+        cfg.kafka_export.key_location.add_value(node["export"]["kafka-key-location"].as<std::string>());
+
+    if (node["export"]["kafka-key-password"] && node["export"]["kafka-key-password"].IsScalar())
+        cfg.kafka_export.key_passwd.add_value(node["export"]["kafka-key-password"].as<std::string>());
+
+    if (node["export"]["kafka-sasl-mechanism"] && node["export"]["kafka-sasl-mechanism"].IsScalar())
+        cfg.kafka_export.sasl_mechanism.add_value(node["export"]["kafka-sasl-mechanism"].as<std::string>());
+
+    if (node["export"]["kafka-sasl-username"] && node["export"]["kafka-sasl-username"].IsScalar())
+        cfg.kafka_export.sasl_username.add_value(node["export"]["kafka-sasl-username"].as<std::string>());
+
+    if (node["export"]["kafka-sasl-password"] && node["export"]["kafka-sasl-password"].IsScalar())
+        cfg.kafka_export.sasl_password.add_value(node["export"]["kafka-sasl-password"].as<std::string>());
+
     if (node["export"]["export-format"] && node["export"]["export-format"].IsScalar())
         cfg.export_format.add_value(node["export"]["export-format"].as<std::string>());
 
@@ -246,6 +279,39 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
 
     if (node["statistics"]["remote-ca-cert"] && node["statistics"]["remote-ca-cert"].IsScalar())
         cfg.stats_ca_cert.add_value(node["statistics"]["remote-ca-cert"].as<std::string>());
+
+    if (node["statistics"]["kafka-brokers"] && node["statistics"]["kafka-brokers"].IsScalar())
+        cfg.stats_kafka_export.brokers.add_value(node["statistics"]["kafka-brokers"].as<std::string>());
+
+    if (node["statistics"]["kafka-topic"] && node["statistics"]["kafka-topic"].IsScalar())
+        cfg.stats_kafka_export.topic.add_value(node["statistics"]["kafka-topic"].as<std::string>());
+
+    if (node["statistics"]["kafka-partition"] && node["statistics"]["kafka-partition"].IsScalar())
+        cfg.stats_kafka_export.partition.add_value(node["statistics"]["kafka-partition"].as<std::string>());
+
+    if (node["statistics"]["kafka-ca-location"] && node["statistics"]["kafka-ca-location"].IsScalar())
+        cfg.stats_kafka_export.ca_location.add_value(node["statistics"]["kafka-ca-location"].as<std::string>());
+
+    if (node["statistics"]["kafka-security-protocol"] && node["statistics"]["kafka-security-protocol"].IsScalar())
+        cfg.stats_kafka_export.sec_protocol.add_value(node["statistics"]["kafka-security-protocol"].as<std::string>());
+
+    if (node["statistics"]["kafka-cert-location"] && node["statistics"]["kafka-cert-location"].IsScalar())
+        cfg.stats_kafka_export.cert_location.add_value(node["statistics"]["kafka-cert-location"].as<std::string>());
+
+    if (node["statistics"]["kafka-key-location"] && node["statistics"]["kafka-key-location"].IsScalar())
+        cfg.stats_kafka_export.key_location.add_value(node["statistics"]["kafka-key-location"].as<std::string>());
+
+    if (node["statistics"]["kafka-key-password"] && node["statistics"]["kafka-key-password"].IsScalar())
+        cfg.stats_kafka_export.key_passwd.add_value(node["statistics"]["kafka-key-password"].as<std::string>());
+
+    if (node["statistics"]["kafka-sasl-mechanism"] && node["statistics"]["kafka-sasl-mechanism"].IsScalar())
+        cfg.stats_kafka_export.sasl_mechanism.add_value(node["statistics"]["kafka-sasl-mechanism"].as<std::string>());
+
+    if (node["statistics"]["kafka-sasl-username"] && node["statistics"]["kafka-sasl-username"].IsScalar())
+        cfg.stats_kafka_export.sasl_username.add_value(node["statistics"]["kafka-sasl-username"].as<std::string>());
+
+    if (node["statistics"]["kafka-sasl-password"] && node["statistics"]["kafka-sasl-password"].IsScalar())
+        cfg.stats_kafka_export.sasl_password.add_value(node["statistics"]["kafka-sasl-password"].as<std::string>());
 
     if (node["statistics"]["moving-avg-window"] && node["statistics"]["moving-avg-window"].IsScalar())
         cfg.moving_avg_window.add_value(node["statistics"]["moving-avg-window"].as<uint16_t>());
