@@ -181,10 +181,11 @@ namespace DDP {
             buff << ifs.rdbuf();
             ret = producer.write(buff.str(), filename);
             ifs.close();
-            std::remove((filename + sufix).c_str());
 
             if (!ret.sent)
-                Logger("Writer").warning() << "Couldn't send output file to Kafka!";
+                throw std::runtime_error("Kafka transfer failed!");
+            else
+                std::remove((filename + sufix).c_str());
 
             return ret;
         }
