@@ -1324,6 +1324,20 @@ void DDP::DnsParser::put_back_record(DDP::DnsRecord& record)
         record.m_resp_answer_rrs.clear();
     }
 
+    if (!record.m_resp_authority_rrs.empty()) {
+        for (auto& rr : record.m_resp_authority_rrs) {
+            if (rr->rdata != nullptr) {
+                m_rdata_mempool.free(rr->rdata);
+                rr->rdata = nullptr;
+            }
+
+            m_rr_mempool.free(rr);
+            rr = nullptr;
+        }
+
+        record.m_resp_authority_rrs.clear();
+    }
+
     if (!record.m_resp_additional_rrs.empty()) {
         for (auto& rr : record.m_resp_additional_rrs) {
             if (rr->rdata != nullptr) {
