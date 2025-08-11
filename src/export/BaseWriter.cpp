@@ -85,22 +85,25 @@ namespace DDP {
             }
         }
 
-        if (m_conf->set("sasl.mechanisms", m_config.sasl_mechanism.string(), err) != RdKafka::Conf::CONF_OK) {
-            delete m_conf;
-            throw std::runtime_error("Couldn't set Kafka SASL mechanisms: " + err);
-        }
-
-        if (!m_config.sasl_username.value().empty()) {
-            if (m_conf->set("sasl.username", m_config.sasl_username.value(), err) != RdKafka::Conf::CONF_OK) {
+        if (m_config.sec_protocol.value() == KafkaSecurityProtocol::SASL_PLAINTEXT ||
+            m_config.sec_protocol.value() == KafkaSecurityProtocol::SASL_SSL) {
+            if (m_conf->set("sasl.mechanisms", m_config.sasl_mechanism.string(), err) != RdKafka::Conf::CONF_OK) {
                 delete m_conf;
-                throw std::runtime_error("Couldn't set Kafka username: " + err);
+                throw std::runtime_error("Couldn't set Kafka SASL mechanisms: " + err);
             }
-        }
 
-        if (!m_config.sasl_password.value().empty()) {
-            if (m_conf->set("sasl.password", m_config.sasl_password.value(), err) != RdKafka::Conf::CONF_OK) {
-                delete m_conf;
-                throw std::runtime_error("Couldn't set Kafka password: " + err);
+            if (!m_config.sasl_username.value().empty()) {
+                if (m_conf->set("sasl.username", m_config.sasl_username.value(), err) != RdKafka::Conf::CONF_OK) {
+                    delete m_conf;
+                    throw std::runtime_error("Couldn't set Kafka username: " + err);
+                }
+            }
+
+            if (!m_config.sasl_password.value().empty()) {
+                if (m_conf->set("sasl.password", m_config.sasl_password.value(), err) != RdKafka::Conf::CONF_OK) {
+                    delete m_conf;
+                    throw std::runtime_error("Couldn't set Kafka password: " + err);
+                }
             }
         }
 
