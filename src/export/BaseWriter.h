@@ -29,6 +29,7 @@
 #include <future>
 #include <unordered_set>
 #include <array>
+#include <regex>
 
 #ifdef PROBE_KAFKA
 #include <librdkafka/rdkafkacpp.h>
@@ -103,6 +104,11 @@ namespace DDP {
     std::unordered_set<FileCtx> send_files_to_kafka(KafkaConfig config, std::unordered_set<std::string> flist);
 
     /**
+     * @brief Regex to extract timestamp from filename of probe's exported file
+     */
+    static constexpr char timestamp_regex_str[] = "^.*((\\d{8}\\.\\d{6})\\.(\\d{6}))\\.(p\\d|stats)\\.(cdns|parquet|json)(\\.gz)?$";
+
+    /**
      * @brief RAII wrapper around Kafka producer using RdKafka library
      */
     class KafkaProducer {
@@ -139,11 +145,18 @@ namespace DDP {
             void dr_cb(RdKafka::Message& message);
         };
 
+        /**
+         * @brief Get unix timestamp in milliseconds from filename of probe's exported file
+         * @param filename Filename to extract timestamp from
+         * @return Millisecond unix timestamp
+         */
+        int64_t get_timestamp_from_filename(std::string& filename);
+
         KafkaConfig m_config;
         bool m_sent;
+        std::regex m_timestamp_regex;
         RdKafka::Conf* m_conf;
         RdKafka::Producer* m_producer;
-        RdKafka::Topic* m_topic;
         DeliveryReportCb m_delivery_cb;
     };
 #endif

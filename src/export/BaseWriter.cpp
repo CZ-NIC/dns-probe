@@ -30,6 +30,8 @@
 #include <sys/types.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <regex>
+#include <time.h>
 
 #ifdef PROBE_KAFKA
 #include <librdkafka/rdkafkacpp.h>
@@ -37,10 +39,12 @@
 
 #include "BaseWriter.h"
 #include "utils/Logger.h"
+#include "utils/Time.h"
 
 namespace DDP {
 #ifdef PROBE_KAFKA
-    KafkaProducer::KafkaProducer(KafkaConfig& config) : m_config(config), m_sent(false)
+    KafkaProducer::KafkaProducer(KafkaConfig& config)
+        : m_config(config), m_sent(false), m_timestamp_regex(timestamp_regex_str)
     {
         m_conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
         if (!m_conf)
@@ -117,19 +121,11 @@ namespace DDP {
             delete m_conf;
             throw std::runtime_error("Couldn't create Kafka producer: " + err);
         }
-
-        m_topic = RdKafka::Topic::create(m_producer, m_config.topic.value(), nullptr, err);
-        if (!m_topic) {
-            delete m_producer;
-            delete m_conf;
-            throw std::runtime_error("Couldn't create Kafka topic object: " + err);
-        }
     }
 
     KafkaProducer::~KafkaProducer()
     {
         m_producer->flush(10 * 1000); // wait max 10 seconds
-        delete m_topic;
         delete m_producer;
         delete m_conf;
     }
@@ -137,9 +133,10 @@ namespace DDP {
     FileCtx KafkaProducer::write(std::string&& message, std::string& filename)
     {
         std::string key = m_config.partition.value();
-        auto* key_ptr = key.empty() ? nullptr : &key;
-        auto err = m_producer->produce(m_topic, RdKafka::Topic::PARTITION_UA, RdKafka::Producer::RK_MSG_COPY,
-            const_cast<char*>(message.c_str()), message.size(), key_ptr, &m_sent);
+
+        auto err = m_producer->produce(m_config.topic.value(), RdKafka::Topic::PARTITION_UA,
+            RdKafka::Producer::RK_MSG_COPY, const_cast<char*>(message.c_str()), message.size(), key.c_str(),
+            key.size(), get_timestamp_from_filename(filename), &m_sent);
 
         if (err != RdKafka::ERR_NO_ERROR)
             return FileCtx{filename, false};
@@ -162,6 +159,22 @@ namespace DDP {
             *sent = false;
         else
             *sent = true;
+    }
+
+    int64_t KafkaProducer::get_timestamp_from_filename(std::string& filename)
+    {
+        std::smatch match;
+        if (std::regex_match(filename, match, m_timestamp_regex)) {
+            auto micros = std::stoul(match[3]);
+            tm t;
+            strptime(match[2].str().c_str(), "%Y%m%d.%H%M%S", &t);
+            auto res = timegm(&t);
+            return res * 1000 + micros / 1000;
+        }
+        else {
+            auto timestamp = Time(DDP::Time::Clock::REALTIME);
+            return timestamp.getMillis();
+        }
     }
 
     FileCtx send_file_to_kafka(KafkaConfig config, std::string filename, std::string sufix, bool fail_rename)
