@@ -19,12 +19,12 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - **1.0**
      - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
      - Add export of 'policy-action' and 'policy-rule' fields in C-DNS output
-   * - **1.4.0**
-     - **1.0**
-     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
-     - Add export of 'user-id' field in C-DNS output
    * -
      -
+     - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`
+     - Add export of 'user-id' field in C-DNS output
+   * - **1.4.0**
+     - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Installation <Installation>`,
        :doc:`Default YAML file <YAMLfile>`
