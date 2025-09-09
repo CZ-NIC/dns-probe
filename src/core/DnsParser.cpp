@@ -661,6 +661,52 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
     if (!hdr.has_socket_protocol() || !hdr.has_query_port() || !hdr.has_response_port())
         throw DnsParseException("Transport protocol or port missing in dnstap message");
 
+    // Parse Policy action and rule if present
+    if (hdr.has_policy()) {
+        auto& policy = hdr.policy();
+
+        if (policy.has_action()) {
+            switch (policy.action()) {
+                case dnstap::Policy_Action::Policy_Action_PASS:
+                    record.m_policy_action = DnsRecord::PolicyAction::ALLOW;
+                    break;
+                case dnstap::Policy_Action::Policy_Action_NXDOMAIN:
+                    record.m_policy_action = DnsRecord::PolicyAction::BLOCK;
+                    break;
+                default:
+                    record.m_policy_action = DnsRecord::PolicyAction::OTHER;
+                    break;
+            }
+        }
+        else {
+            record.m_policy_action = DnsRecord::PolicyAction::AUDIT;
+        }
+
+        if (policy.has_rule()) {
+            try {
+                if (policy.rule().empty()) {
+                    record.m_policy_rule = get_empty_rdata(1);
+                    if (!record.m_policy_rule)
+                        throw DnsParseException("Couldn't allocate memory from mempool for policy rule!");
+
+                    record.m_policy_rule[0] = '\0';
+                    record.m_policy_rule_size = 1;
+                }
+                else {
+                    record.m_policy_rule = get_empty_rdata(policy.rule().size() + 1);
+                    if (!record.m_policy_rule)
+                        throw DnsParseException("Couldn't allocate memory from mempool for policy rule!");
+
+                    std::memcpy(record.m_policy_rule, policy.rule().c_str(), policy.rule().size() + 1);
+                    record.m_policy_rule_size = policy.rule().size();
+                }
+            }
+            catch (std::exception& e) {
+                Logger("DNSTAP").debug() << "Couldn't parse policy rule! " << e.what();
+            }
+        }
+    }
+
     // Parse L3 information
     if (hdr.socket_family() == dnstap::SocketFamily::INET) {
         record.m_addr_family = DnsRecord::AddrFamily::IP4;
@@ -1337,6 +1383,11 @@ void DDP::DnsParser::put_back_record(DDP::DnsRecord& record)
         record.m_resp_ednsRdata = nullptr;
     }
 
+    if (record.m_policy_rule != nullptr) {
+        m_rdata_mempool.free(record.m_policy_rule);
+        record.m_policy_rule = nullptr;
+    }
+
     if (!record.m_resp_answer_rrs.empty()) {
         for (auto& rr : record.m_resp_answer_rrs) {
             if (rr->rdata != nullptr) {
@@ -1403,6 +1454,11 @@ DDP::DnsRecord& DDP::DnsParser::merge_records(DDP::DnsRecord& request, DDP::DnsR
 
     if (response.m_tcp_rtt > 0)
         request.m_tcp_rtt = response.m_tcp_rtt;
+
+    request.m_policy_action = response.m_policy_action;
+    request.m_policy_rule = response.m_policy_rule;
+    response.m_policy_rule = nullptr;
+    request.m_policy_rule_size = response.m_policy_rule_size;
 
     request.m_resp_ednsRdata = response.m_resp_ednsRdata;
     response.m_resp_ednsRdata = nullptr;

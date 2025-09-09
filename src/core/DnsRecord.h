@@ -104,6 +104,17 @@ namespace DDP {
             CLIENT_HIGH,
         };
 
+        /**
+         * Policy action applied to query (values MUST match C-DNS library!!!)
+         */
+        enum class PolicyAction : uint8_t {
+            NO_ACTION = 0,
+            ALLOW = 128,
+            BLOCK,
+            AUDIT,
+            OTHER = 255
+        };
+
         DnsRecord() : m_hash(0),
                       m_request(false),
                       m_response(false),
@@ -140,6 +151,9 @@ namespace DDP {
                       m_qtype(0),
                       m_qclass(0),
                       m_uid(),
+                      m_policy_action(PolicyAction::NO_ACTION),
+                      m_policy_rule(nullptr),
+                      m_policy_rule_size(0),
                       m_ednsUDP(0),
                       m_ednsVersion(0),
                       m_ednsDO(0),
@@ -297,6 +311,11 @@ namespace DDP {
 
         // User ID (only from dnstap, UUID)
         char m_uid[UUID_SIZE];
+
+        // Policy action and rule
+        PolicyAction m_policy_action;
+        uint8_t* m_policy_rule;
+        uint64_t m_policy_rule_size;
 
         // EDNS properties
         uint16_t m_ednsUDP; // EDNS header

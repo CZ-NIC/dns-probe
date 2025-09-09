@@ -297,6 +297,16 @@ boost::any DDP::CdnsExport::buffer_record(DnsRecord& record)
     if (m_fields[static_cast<uint32_t>(CDNSField::USER_ID)])
         qr.user_id = std::string(record.m_uid, strnlen(record.m_uid, UUID_SIZE));
 
+    if (m_fields[static_cast<uint32_t>(CDNSField::POLICY_ACTION)] && record.m_policy_action != DnsRecord::PolicyAction::NO_ACTION)
+        qr.policy_action = static_cast<CDNS::PolicyActionValues>(record.m_policy_action);
+
+    if (m_fields[static_cast<uint32_t>(CDNSField::POLICY_RULE)] && record.m_policy_rule) {
+        if (record.m_policy_rule[0] == '\0')
+            qr.policy_rule = std::string("");
+        else
+            qr.policy_rule = std::string(reinterpret_cast<char*>(record.m_policy_rule), record.m_policy_rule_size);
+    }
+
     // Add QueryResponseSignature to the QueryResponse
     if (qrs_filled)
         qr.qr_signature_index = m_block->add_qr_signature(qrs);
