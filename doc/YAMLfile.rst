@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2025-07-08
+  # Last revision: 2025-09-09
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -180,6 +180,8 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
         - 'country_code' # country-maxmind-db configuration option also needs to be set
         - 'round_trip_time' # TCP RTT
         - 'user_id' # Unique user ID (UUID), collected only from dnstap
+        - 'policy_action' # Policy applied to query, collected only from dnstap
+        - 'policy_rule' # Rule that triggered applied policy, collected only from dnstap
 
       # Maximum number of DNS records in one exported C-DNS block.
       cdns-records-per-block: 10000
