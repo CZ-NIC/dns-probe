@@ -21,7 +21,7 @@ BuildRequires: protobuf-devel
 BuildRequires: protobuf-compiler
 BuildRequires: libmaxminddb-devel
 BuildRequires: knot-devel
-BuildRequires: libcdns-devel
+BuildRequires: libcdns-devel >= 1.5.0
 BuildRequires: systemd-devel
 BuildRequires: librdkafka-devel
 BuildRequires: dpdk-devel

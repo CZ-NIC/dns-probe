@@ -72,6 +72,14 @@ namespace DDP {
     };
 
     /**
+     * @brief Keys parseable from Knot Resolver's dnstap message's extra field
+     */
+    static constexpr char DNSTAP_RTT_KEY[5] = "rtt=";
+    static constexpr uint8_t DNSTAP_RTT_KEY_SIZE = 4;
+    static constexpr char DNSTAP_UID_KEY[10] = "user_key=";
+    static constexpr uint8_t DNSTAP_UID_KEY_SIZE = 9;
+
+    /**
      * @brief This class performs parsing of incoming packets
      */
 

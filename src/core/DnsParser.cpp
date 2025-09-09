@@ -23,7 +23,7 @@
 
 #include <exception>
 #include <cstring>
-
+#include <string>
 #include <cstdint>
 #include <arpa/inet.h>
 #include <net/ethernet.h>
@@ -611,13 +611,39 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
 {
     MemView<uint8_t> dns = MemView<uint8_t>();
 
-    // Check for RTT estimate in "extra" byte field as exported by Knot Resolver
-    if (msg.has_extra() && msg.extra().size() > 4 && msg.extra().compare(0,4, "rtt=") == 0) {
-        try {
-            record.m_tcp_rtt = static_cast<int64_t>(std::stoul(msg.extra().substr(4, msg.extra().size())));
-        }
-        catch (std::exception& e) {
-            Logger("DNSTAP").debug() << "Couldn't parse RTT from extra field";
+    if (msg.has_extra()) {
+        std::size_t start = 0;
+        std::size_t end;
+
+        while ((end = msg.extra().find('\n', start)) != std::string::npos) {
+            // Check for RTT estimate in "extra" byte field as exported by Knot Resolver
+            if (end - start > DNSTAP_RTT_KEY_SIZE && msg.extra().compare(start, DNSTAP_RTT_KEY_SIZE, DNSTAP_RTT_KEY) == 0) {
+                try {
+                    record.m_tcp_rtt = static_cast<int64_t> (std::stoul(msg.extra().substr(start + DNSTAP_RTT_KEY_SIZE,
+                        end - start - DNSTAP_RTT_KEY_SIZE)));
+                }
+                catch (std::exception& e) {
+                    Logger("DNSTAP").debug() << "Couldn't parse RTT from extra field";
+                }
+            }
+
+            // Check for User ID (UUID) in "extra" byte field as exported by Knot Resolver
+            if (end - start > DNSTAP_UID_KEY_SIZE && msg.extra().compare(start, DNSTAP_UID_KEY_SIZE, DNSTAP_UID_KEY) == 0) {
+                if (end - start - DNSTAP_UID_KEY_SIZE <= UUID_SIZE) {
+                    try {
+                        std::memcpy(record.m_uid, (msg.extra().data() + (start + DNSTAP_UID_KEY_SIZE)),
+                            end - start - DNSTAP_UID_KEY_SIZE);
+                    }
+                    catch (std::exception& e) {
+                        Logger("DNSTAP").debug() << "Couldn't parse User ID from extra field";
+                    }
+                }
+                else {
+                    Logger("DNSTAP").debug() << "Invalid User ID! UUID too long.";
+                }
+            }
+
+            start = end + 1;
         }
     }
 
@@ -634,6 +660,52 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
 
     if (!hdr.has_socket_protocol() || !hdr.has_query_port() || !hdr.has_response_port())
         throw DnsParseException("Transport protocol or port missing in dnstap message");
+
+    // Parse Policy action and rule if present
+    if (hdr.has_policy()) {
+        auto& policy = hdr.policy();
+
+        if (policy.has_action()) {
+            switch (policy.action()) {
+                case dnstap::Policy_Action::Policy_Action_PASS:
+                    record.m_policy_action = DnsRecord::PolicyAction::ALLOW;
+                    break;
+                case dnstap::Policy_Action::Policy_Action_NXDOMAIN:
+                    record.m_policy_action = DnsRecord::PolicyAction::BLOCK;
+                    break;
+                default:
+                    record.m_policy_action = DnsRecord::PolicyAction::OTHER;
+                    break;
+            }
+        }
+        else {
+            record.m_policy_action = DnsRecord::PolicyAction::AUDIT;
+        }
+
+        if (policy.has_rule()) {
+            try {
+                if (policy.rule().empty()) {
+                    record.m_policy_rule = get_empty_rdata(1);
+                    if (!record.m_policy_rule)
+                        throw DnsParseException("Couldn't allocate memory from mempool for policy rule!");
+
+                    record.m_policy_rule[0] = '\0';
+                    record.m_policy_rule_size = 1;
+                }
+                else {
+                    record.m_policy_rule = get_empty_rdata(policy.rule().size() + 1);
+                    if (!record.m_policy_rule)
+                        throw DnsParseException("Couldn't allocate memory from mempool for policy rule!");
+
+                    std::memcpy(record.m_policy_rule, policy.rule().c_str(), policy.rule().size() + 1);
+                    record.m_policy_rule_size = policy.rule().size();
+                }
+            }
+            catch (std::exception& e) {
+                Logger("DNSTAP").debug() << "Couldn't parse policy rule! " << e.what();
+            }
+        }
+    }
 
     // Parse L3 information
     if (hdr.socket_family() == dnstap::SocketFamily::INET) {
@@ -667,6 +739,7 @@ DDP::MemView<uint8_t> DDP::DnsParser::parse_dnstap_header(const dnstap::Dnstap& 
     // Parse L4 information
     switch (hdr.socket_protocol()) {
         case dnstap::SocketProtocol::UDP:
+        case dnstap::SocketProtocol::DOQ:
             record.m_proto = DnsRecord::Proto::UDP;
             break;
         case dnstap::SocketProtocol::TCP:
@@ -1310,6 +1383,11 @@ void DDP::DnsParser::put_back_record(DDP::DnsRecord& record)
         record.m_resp_ednsRdata = nullptr;
     }
 
+    if (record.m_policy_rule != nullptr) {
+        m_rdata_mempool.free(record.m_policy_rule);
+        record.m_policy_rule = nullptr;
+    }
+
     if (!record.m_resp_answer_rrs.empty()) {
         for (auto& rr : record.m_resp_answer_rrs) {
             if (rr->rdata != nullptr) {
@@ -1376,6 +1454,11 @@ DDP::DnsRecord& DDP::DnsParser::merge_records(DDP::DnsRecord& request, DDP::DnsR
 
     if (response.m_tcp_rtt > 0)
         request.m_tcp_rtt = response.m_tcp_rtt;
+
+    request.m_policy_action = response.m_policy_action;
+    request.m_policy_rule = response.m_policy_rule;
+    response.m_policy_rule = nullptr;
+    request.m_policy_rule_size = response.m_policy_rule_size;
 
     request.m_resp_ednsRdata = response.m_resp_ednsRdata;
     response.m_resp_ednsRdata = nullptr;
