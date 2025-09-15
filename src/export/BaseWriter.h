@@ -113,6 +113,8 @@ namespace DDP {
      */
     class KafkaProducer {
         public:
+        static constexpr uint64_t KAFKA_MAX_MESSAGE_SIZE = 1000000000;
+
         /**
          * @brief Construct a new Kafka producer from given configuration
          * @param config Kafka configuration
