@@ -51,9 +51,14 @@ namespace DDP {
             throw std::runtime_error("Couldn't create Kafka config!");
 
         std::string err;
-        if  (m_conf->set("bootstrap.servers", m_config.brokers.value(), err) != RdKafka::Conf::CONF_OK) {
+        if (m_conf->set("bootstrap.servers", m_config.brokers.value(), err) != RdKafka::Conf::CONF_OK) {
             delete m_conf;
             throw std::runtime_error("Couldn't set Kafka brokers: " + err);
+        }
+
+        if (m_conf->set("message.max.bytes", std::to_string(KAFKA_MAX_MESSAGE_SIZE), err) != RdKafka::Conf::CONF_OK) {
+            delete m_conf;
+            throw std::runtime_error("Couldn't set maximum message size for Kafka: " + err);
         }
 
         if (!m_config.ca_location.value().empty()) {
