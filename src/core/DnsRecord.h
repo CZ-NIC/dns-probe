@@ -190,10 +190,10 @@ namespace DDP {
         bool match(DnsRecord& m, bool match_qname) const
         {
             if (match_qname) {
-                return m_hash == m.m_hash && !strcmp(m_qname, m.m_qname);
+                return m_hash == m.m_hash && m_qtype == m.m_qtype && !strcmp(m_qname, m.m_qname);
             }
             else {
-                return m_hash == m.m_hash;
+                return m_hash == m.m_hash && m_qtype == m.m_qtype;
             }
         }
 
