@@ -342,4 +342,13 @@ namespace DDP {
         SCRAM_SHA_512,
         OAUTHBEARER
     };
+
+    /**
+     * Kafka broker address family (IPv4/IPv6) to use for connection to Kafka cluster
+     */
+    enum class KafkaAddressFamily : uint8_t {
+        ANY = 0,
+        V4,
+        V6
+    };
 }

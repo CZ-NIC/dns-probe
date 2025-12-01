@@ -56,6 +56,11 @@ namespace DDP {
             throw std::runtime_error("Couldn't set Kafka brokers: " + err);
         }
 
+        if (m_conf->set("broker.address.family", m_config.address_family.string(), err) != RdKafka::Conf::CONF_OK) {
+            delete m_conf;
+            throw std::runtime_error("Couldn't set Kafka broker's address family: " + err);
+        }
+
         if (m_conf->set("message.max.bytes", std::to_string(KAFKA_MAX_MESSAGE_SIZE), err) != RdKafka::Conf::CONF_OK) {
             delete m_conf;
             throw std::runtime_error("Couldn't set maximum message size for Kafka: " + err);

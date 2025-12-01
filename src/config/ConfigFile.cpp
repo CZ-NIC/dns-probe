@@ -143,6 +143,9 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
     if (node["export"]["kafka-brokers"] && node["export"]["kafka-brokers"].IsScalar())
         cfg.kafka_export.brokers.add_value(node["export"]["kafka-brokers"].as<std::string>());
 
+    if (node["export"]["kafka-address-family"] && node["export"]["kafka-address-family"].IsScalar())
+        cfg.kafka_export.address_family.add_value(node["export"]["kafka-address-family"].as<std::string>());
+
     if (node["export"]["kafka-topic"] && node["export"]["kafka-topic"].IsScalar())
         cfg.kafka_export.topic.add_value(node["export"]["kafka-topic"].as<std::string>());
 
@@ -285,6 +288,9 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
 
     if (node["statistics"]["kafka-topic"] && node["statistics"]["kafka-topic"].IsScalar())
         cfg.stats_kafka_export.topic.add_value(node["statistics"]["kafka-topic"].as<std::string>());
+
+    if (node["statistics"]["kafka-address-family"] && node["statistics"]["kafka-address-family"].IsScalar())
+        cfg.stats_kafka_export.address_family.add_value(node["statistics"]["kafka-address-family"].as<std::string>());
 
     if (node["statistics"]["kafka-partition"] && node["statistics"]["kafka-partition"].IsScalar())
         cfg.stats_kafka_export.partition.add_value(node["statistics"]["kafka-partition"].as<std::string>());
