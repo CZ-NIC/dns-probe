@@ -15,6 +15,10 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
+   * - **1.x.x**
+     - **1.0**
+     - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`
+     - Add option to force IP address family for connections to Apache Kafka
    * - **1.5.0**
      - **1.0**
      - :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Default YAML file <YAMLfile>`

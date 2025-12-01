@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2025-09-09
+  # Last revision: 2025-12-01
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -105,6 +105,10 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
       # Comma separated list of Kafka brokers (host or host:port) for export of DNS records
       kafka-brokers: '127.0.0.1'
+
+      # Force IP address family for connection to Kafka brokers for export of DNS records
+      # Valid values are 'any', 'v4', 'v6'.
+      kafka-address-family: 'any'
 
       # Kafka topic for export of DNS records
       kafka-topic: 'dns-probe'
@@ -323,6 +327,10 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
       # Comma separated list of Kafka brokers (host or host:port) for export of run-time statistics
       kafka-brokers: '127.0.0.1'
+
+      # Force IP address family for connection to Kafka brokers for export of run-time statistics
+      # Valid values are 'any', 'v4', 'v6'.
+      kafka-address-family: 'any'
 
       # Kafka topic for export of run-time statistics
       kafka-topic: 'dns-probe-stats'
