@@ -33,15 +33,19 @@
 
 void DDP::ConfigFile::load_configuration(Config& cfg, std::string conf_file, std::string instance)
 {
+    Config loaded_cfg;
+
     try {
         YAML::Node config = YAML::LoadFile(conf_file);
 
         // Always load default configuration first and then load changes for given instance if present
         if (config["default"])
-            load_instance(cfg, config["default"]);
+            load_instance(loaded_cfg, config["default"]);
 
         if (instance != "default" && config[instance])
-            load_instance(cfg, config[instance]);
+            load_instance(loaded_cfg, config[instance]);
+
+        cfg = loaded_cfg;
     }
     catch (std::exception& e) {
         Logger("YAML").warning() << "Couldn't load configuration file " << conf_file
