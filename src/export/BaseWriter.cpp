@@ -44,7 +44,7 @@
 namespace DDP {
 #ifdef PROBE_KAFKA
     KafkaProducer::KafkaProducer(KafkaConfig& config)
-        : m_config(config), m_sent(false), m_timestamp_regex(timestamp_regex_str)
+        : m_config(config), m_timestamp_regex(timestamp_regex_str)
     {
         m_conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
         if (!m_conf)
@@ -143,32 +143,34 @@ namespace DDP {
     FileCtx KafkaProducer::write(std::string&& message, std::string& filename)
     {
         std::string key = m_config.partition.value();
+        auto sent = std::promise<bool>();
+        auto sent_future = sent.get_future();
 
         auto err = m_producer->produce(m_config.topic.value(), RdKafka::Topic::PARTITION_UA,
             RdKafka::Producer::RK_MSG_COPY, const_cast<char*>(message.c_str()), message.size(), key.c_str(),
-            key.size(), get_timestamp_from_filename(filename), &m_sent);
+            key.size(), get_timestamp_from_filename(filename), &sent);
 
         if (err != RdKafka::ERR_NO_ERROR)
             return FileCtx{filename, false};
 
-        m_producer->poll(-1);
-
-        if (m_sent) {
-            m_sent = false;
-            return FileCtx{filename, true};
+        while (sent_future.wait_for(std::chrono::milliseconds(0)) != std::future_status::ready) {
+            m_producer->poll(-1);
         }
-        else
-            return FileCtx{filename, false};
+
+        bool result = sent_future.get();
+        return FileCtx{filename, result};
     }
 
     void KafkaProducer::DeliveryReportCb::dr_cb(RdKafka::Message& message)
     {
-        bool* sent = reinterpret_cast<bool*>(message.msg_opaque());
+        std::promise<bool>* sent = static_cast<std::promise<bool>*>(message.msg_opaque());
+        if (!sent)
+            return;
 
         if (message.err())
-            *sent = false;
+            sent->set_value(false);
         else
-            *sent = true;
+            sent->set_value(true);
     }
 
     int64_t KafkaProducer::get_timestamp_from_filename(std::string& filename)
