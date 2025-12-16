@@ -155,7 +155,8 @@ namespace DDP {
      */
     enum class ExportFormat : uint8_t {
         PARQUET, //!< Parquet export format.
-        CDNS //!< C-DNS export format.
+        CDNS, //!< C-DNS export format.
+        JSON //!< JSON export format.
     };
 
     /**

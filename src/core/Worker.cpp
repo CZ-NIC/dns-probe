@@ -179,14 +179,18 @@ DDP::WorkerRetCode DDP::Worker::process_packet(const Packet& pkt)
                             enqueue(block);
                         }
 #endif
+#ifdef PROBE_JSON
+                        if (block.type() == typeid(std::shared_ptr<std::vector<rapidjson::StringBuffer>>) &&
+                                boost::any_cast<std::shared_ptr<std::vector<rapidjson::StringBuffer>>>(block) != nullptr) {
+                            enqueue(block);
+                        }
+#endif
                     }
                 }
-#ifdef PROBE_PARQUET
                 catch(EdnsParseException& e) {
                     Logger("Parse error").debug() << e.what();
                     m_parser.export_invalid(pkt);
                 }
-#endif
                 catch(std::exception& e) {
                     Logger("Export").warning() << "Buffering new DNS record failed: " << e.what();
                 }
@@ -245,13 +249,17 @@ DDP::WorkerRetCode DDP::Worker::process_knot_datagram(const Packet& dgram)
                     enqueue(block);
                 }
 #endif
+#ifdef PROBE_JSON
+                if (block.type() == typeid(std::shared_ptr<std::vector<rapidjson::StringBuffer>>) &&
+                        boost::any_cast<std::shared_ptr<std::vector<rapidjson::StringBuffer>>>(block) != nullptr) {
+                    enqueue(block);
+                }
+#endif
             }
         }
-#ifdef PROBE_PARQUET
         catch(EdnsParseException& e) {
             Logger("Parse error").debug() << e.what();
         }
-#endif
         catch (std::exception& e) {
             Logger("Export").warning() << "Buffering new DNS record failed: " << e.what();
         }
@@ -288,6 +296,12 @@ void DDP::Worker::rotate_output()
 #ifdef PROBE_CDNS
             if (block.type() == typeid(std::shared_ptr<CDNS::CdnsBlock>) &&
                      boost::any_cast<std::shared_ptr<CDNS::CdnsBlock>>(block) != nullptr) {
+                enqueue(block);
+            }
+#endif
+#ifdef PROBE_JSON
+            if (block.type() == typeid(std::shared_ptr<std::vector<rapidjson::StringBuffer>>) &&
+                    boost::any_cast<std::shared_ptr<std::vector<rapidjson::StringBuffer>>>(block) != nullptr) {
                 enqueue(block);
             }
 #endif

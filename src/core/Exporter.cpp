@@ -48,11 +48,18 @@ DDP::Exporter::Exporter(DDP::Config& cfg, DDP::Statistics& stats,
         throw std::runtime_error("DNS Probe was built without Parquet support!");
 #endif
     }
-    else {
+    else if (cfg.export_format.value() == ExportFormat::CDNS) {
 #ifdef PROBE_CDNS
         m_writer = std::make_unique<CdnsWriter>(cfg, process_id);
 #else
         throw std::runtime_error("DNS Probe was built without C-DNS support!");
+#endif
+    }
+    else {
+#ifdef PROBE_JSON
+        m_writer = std::make_unique<JsonWriter>(cfg, process_id);
+#else
+        throw std::runtime_error("DNS Probe was built without JSON support!");
 #endif
     }
 

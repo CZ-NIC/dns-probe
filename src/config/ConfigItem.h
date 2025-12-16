@@ -237,7 +237,7 @@ namespace DDP {
             try {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
-                return str_value == "PARQUET" || str_value == "CDNS";
+                return str_value == "PARQUET" || str_value == "CDNS" || str_value == "JSON";
             } catch (std::exception& e) {
                 return false;
             }
@@ -256,6 +256,8 @@ namespace DDP {
                 m_value = ExportFormat::PARQUET;
             else if(str_value == "CDNS")
                 m_value = ExportFormat::CDNS;
+            else if(str_value == "JSON")
+                m_value = ExportFormat::JSON;
             else
                 throw std::invalid_argument("Invalid argument for ExportFormat");
         }
@@ -274,8 +276,10 @@ namespace DDP {
         {
             if (m_value == ExportFormat::PARQUET)
                 return {"PARQUET"};
-            else
+            else if (m_value == ExportFormat::CDNS)
                 return {"CDNS"};
+            else
+                return {"JSON"};
         }
 
 

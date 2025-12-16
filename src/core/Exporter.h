@@ -40,6 +40,10 @@
 #include "export/cdns/CdnsWriter.h"
 #endif
 
+#ifdef PROBE_JSON
+#include "export/json/JsonWriter.h"
+#endif
+
 namespace DDP {
 
     /**
