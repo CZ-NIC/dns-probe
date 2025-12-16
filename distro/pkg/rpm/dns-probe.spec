@@ -24,6 +24,8 @@ BuildRequires: knot-devel
 BuildRequires: libcdns-devel >= 1.5.0
 BuildRequires: systemd-devel
 BuildRequires: librdkafka-devel
+BuildRequires: zlib-devel
+BuildRequires: rapidjson-devel
 BuildRequires: dpdk-devel
 
 %if 0%{?fedora} > 35
