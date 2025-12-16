@@ -133,13 +133,13 @@ since the start of the current output. These parameters can be
 configured by the user.
 
 Depending on the configuration, output data can be exported in one of
-two formats - `Parquet <https://parquet.apache.org/>`_ or C-DNS
-[RFC8618]_. Exported data can be optionally compressed with GZIP. As
-long as the current output file is open, its name has the ``.part``
-suffix, which is removed once the output file is closed. The Parquet
-and C-DNS output files have the sufix ``.parquet`` and ``.cdns``
-suffix, respectively. If GZIP compression is enabled, a C-DNS output
-file receives an additional suffix ``.gz``. However, this is not done
-for Parquet output files because the Parquet format doesn't compress
+three formats - `Parquet <https://parquet.apache.org/>`_, C-DNS
+[RFC8618]_ or JSON [RFC8259]_. Exported data can be optionally compressed
+with GZIP. As long as the current output file is open, its name has the
+``.part`` suffix, which is removed once the output file is closed. The
+Parquet, C-DNS and JSON output files have the ``.parquet``, ``.cdns``
+and ``.json`` suffix, respectively. If GZIP compression is enabled, a C-DNS
+or JSON output file receives an additional suffix ``.gz``. However, this is
+not done for Parquet output files because the Parquet format doesn't compress
 the whole file – the compression is used internally only on certain
 parts of it.

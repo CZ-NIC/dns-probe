@@ -361,13 +361,16 @@ export-format
 :default: ``parquet``
 
 This value indicates the format for exporting records about
-DNS transactions. Two options are currently supported:
+DNS transactions. Three options are currently supported:
 
 ``parquet``
    `Apache Parquet <https://parquet.apache.org/>`_ columnar format
 
 ``cdns``
    Compacted-DNS (C-DNS) [RFC8618]_.
+
+``json``
+   JSON [RFC8259]_
 
 .. _export-stats:
 

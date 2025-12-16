@@ -17,6 +17,12 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Change description
    * - **1.x.x**
      - **1.0**
+     - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
+       :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Installation <Installation>`,
+       :doc:`Overview <Overview>`, :doc:`Default YAML file <YAMLfile>`
+     - Add option to export DNS logs in JSON format
+   * -
+     -
      - :doc:`Configuration <Configuration>`, :doc:`Default YAML file <YAMLfile>`
      - Add option to force IP address family for connections to Apache Kafka
    * - **1.5.0**

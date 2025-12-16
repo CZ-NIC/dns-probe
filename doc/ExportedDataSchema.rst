@@ -22,8 +22,8 @@ specified by :ref:`export-dir` option. The names of these files will have the fo
 The *<prefix>* is determined by :ref:`file-name-prefix` option in YAML configuration file. The
 *yyyyMMdd.HHmmss.SSSSSS* represents a UTC timestamp (microsecond precision) from when the output file was
 first opened. *<proc_id>* is an internal identification of process (worker or export thread) which wrote
-the output file. *<sufix>* is one of ``parquet``, ``cdns`` or ``cdns.gz`` based on the export format and
-compression configured in YAML file.
+the output file. *<sufix>* is one of ``parquet``, ``cdns[.gz]`` or ``json[.gz]`` based on the export format
+and compression configured in YAML file.
 
 .. _export-to-remote-location:
 
@@ -82,25 +82,26 @@ Secure authentication to Kafka cluster can be configured with additional ``kafka
 Data schema
 ===========
 
-DNS Probe exports data in one of two formats -
-`Parquet <https://parquet.apache.org/>`_ or
-`C-DNS <https://tools.ietf.org/html/rfc8618>`_. The exported data tries
-to conform to the `Entrada
-schema <https://entrada.sidnlabs.nl/datamodel/>`_ for Hadoop. Parquet
-export simply copies the Entrada schema shown in the table below. C-DNS
+DNS Probe exports data in one of three formats -
+`Parquet <https://parquet.apache.org/>`_, 
+`C-DNS <https://tools.ietf.org/html/rfc8618>`_ or `JSON <https://datatracker.ietf.org/doc/html/rfc8259>`.
+The exported data tries to conform to the `Entrada
+schema <https://entrada.sidnlabs.nl/datamodel/>`_ for Hadoop. Parquet and JSON
+exports simply copy the Entrada schema shown in the table below. C-DNS
 format has its own schema defined in `RFC
 8616 <https://tools.ietf.org/html/rfc8618>`_. DNS Probe tries to fill
 this C-DNS schema with only the data needed for reconstructing the
 Entrada schema. As of DNS Probe release *1.4.0* export to C-DNS also has
 an option to export full resource records from *Answer*, *Authority* and
 *Additional* sections of responses by enabling :ref:`cdns-export-response-rr`
-configuration option.
+configuration option. As of *1.6.0* release, export to JSON also supports export
+of these resource records.
 
 .. table::
     :align: left
 
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
-    | Entrada (Parquet) fields        | type      | C-DNS schema field                    | Comment                                                     |
+    | Entrada (Parquet, JSON) fields  | type      | C-DNS schema field                    | Comment                                                     |
     +=================================+===========+=======================================+=============================================================+
     | id                              | INT32     | transaction-id                        | 16-bit DNS ID                                               |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
@@ -213,12 +214,18 @@ configuration option.
     | tcp\_hs\_rtt                    | DOUBLE    | round-trip-time (implementation field)| TCP Round Trip Time (RTT) (milliseconds with up to 3 decimal|
     |                                 |           | (microsecond precision integer)       | digits precision)                                           |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
-    |                                 | STRING    | user-id (implementation field)        | Unique user ID (UUID) (currently no column in Parquet)      |
+    | answer\_rrs (JSON only)         | ARRAY     | response-extended.answer-index        | Array of structs with answer section RRs                    |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
-    |                                 | INT32     | policy-action (implementation field)  | Policy action applied to query (currently no column in      |
+    | authority\_rrs (JSON only)      | ARRAY     | response-extended.authority-index     | Array of structs with authority section RRs                 |
+    +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
+    | additional\_rrs (JSON only)     | ARRAY     | response-extended.additional-index    | Array of structs with additional section RRs                |
+    +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
+    | user\_id (JSON only)            | STRING    | user-id (implementation field)        | Unique user ID (UUID) (currently no column in Parquet)      |
+    +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
+    | policy\_action (JSON only)      | INT32     | policy-action (implementation field)  | Policy action applied to query (currently no column in      |
     |                                 |           |                                       | Parquet)                                                    |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
-    |                                 | STRING    | policy-rule (implementation field)    | Rule that trigerred policy action (currently no column in   |
+    | policy\_rule (JSON only)        | STRING    | policy-rule (implementation field)    | Rule that trigerred policy action (currently no column in   |
     |                                 |           |                                       | Parquet)                                                    |
     +---------------------------------+-----------+---------------------------------------+-------------------------------------------------------------+
 
