@@ -43,6 +43,8 @@ RUN echo "deb http://archive.debian.org/debian buster main contrib non-free" > /
         libmaxminddb-dev \
         libknot-dev \
         librdkafka-dev \
+        zlib1g-dev \
+        rapidjson-dev \
         dpdk-dev \
         dns-probe-af \
         dns-probe-dpdk &&\
