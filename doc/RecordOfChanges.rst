@@ -15,7 +15,7 @@ For changes in software see `version descriptions <https://gitlab.nic.cz/adam/dn
      - Edition
      - Segment
      - Change description
-   * - **1.x.x**
+   * - **1.6.0**
      - **1.0**
      - :doc:`Architecture <Architecture>`, :doc:`Configuration <Configuration>`,
        :doc:`Exported Data Schema <ExportedDataSchema>`, :doc:`Installation <Installation>`,
