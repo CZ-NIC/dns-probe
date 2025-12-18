@@ -562,14 +562,13 @@ void DDP::JsonExport::write_rr_array(std::vector<DnsRR*>& rrs, DnsRecord* record
         m_writer.Null();
 
         m_writer.Key("rdata");
-        DnsRR edns = {
-            .dname = "\0",
-            .type = 41,
-            .class_ = record->m_ednsUDP,
-            .ttl = 0,
-            .rdlength = record->m_resp_ednsRdata_size,
-            .rdata = record->m_resp_ednsRdata
-        };
+        DnsRR edns;
+        edns.dname[0] = '\0';
+        edns.type = 41;
+        edns.class_ = record->m_ednsUDP;
+        edns.ttl = 0;
+        edns.rdlength = record->m_resp_ednsRdata_size;
+        edns.rdata = record->m_resp_ednsRdata;
         int ret = get_text_rdata(edns, m_rdata_buffer, UINT16_MAX);
         if (ret < 0)
             m_writer.Null();
