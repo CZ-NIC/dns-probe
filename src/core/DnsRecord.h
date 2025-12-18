@@ -323,9 +323,9 @@ namespace DDP {
         uint8_t m_ednsDO; // EDNS header
 
         uint8_t* m_req_ednsRdata;
-        uint64_t m_req_ednsRdata_size;
+        uint16_t m_req_ednsRdata_size;
         uint8_t* m_resp_ednsRdata;
-        uint64_t m_resp_ednsRdata_size;
+        uint16_t m_resp_ednsRdata_size;
 
         // Optional list of response RRs from Answer and Additional sections
         std::vector<DnsRR*> m_resp_answer_rrs;
