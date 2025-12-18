@@ -38,6 +38,7 @@ namespace DDP {
     struct KafkaConfig
     {
         KafkaConfig() : brokers("127.0.0.1"),
+                        address_family(KafkaAddressFamily::ANY),
                         topic("dns-probe"),
                         partition(""),
                         ca_location(""),
@@ -50,6 +51,7 @@ namespace DDP {
                         sasl_password("") {}
 
         ConfigItem<std::string> brokers; //!< Comma separated list of Kafka brokers (host or host:port)
+        ConfigItem<KafkaAddressFamily> address_family; //!< Brokers' address family (any/ipv4/ipv6)
         ConfigItem<std::string> topic; //!< Kafka topic
         ConfigItem<std::string> partition; //!< Kafka message key to assign messages to specific partition
 

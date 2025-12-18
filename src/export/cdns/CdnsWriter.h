@@ -93,12 +93,6 @@ namespace DDP {
         void rotate_output() override;
 
         private:
-
-        /**
-         * @brief Write filename size and filename to TLS connection
-         */
-        void write_filename();
-
         std::unique_ptr<CDNS::CdnsExporter> m_writer;
         uint64_t m_bytes_written;
         uint64_t m_blocks_written;

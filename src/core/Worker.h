@@ -54,6 +54,11 @@
 #include "export/cdns/CdnsWriter.h"
 #endif
 
+#ifdef PROBE_JSON
+#include "export/json/JsonExport.h"
+#include "export/json/JsonWriter.h"
+#endif
+
 namespace DDP {
     /**
      * @brief Return codes for packet processing
@@ -205,12 +210,20 @@ namespace DDP {
                 throw std::runtime_error("DNS Probe was built without Parquet support!");
 #endif
             }
-            else {
+            else if (cfg.export_format.value() == ExportFormat::CDNS) {
 #ifdef PROBE_CDNS
                 m_exporter = std::make_unique<CdnsExport>(cfg, country_db, asn_db);
                 m_writer = std::make_unique<CdnsWriter>(cfg, process_id);
 #else
                 throw std::runtime_error("DNS Probe was built without C-DNS support!");
+#endif
+            }
+            else {
+#ifdef PROBE_JSON
+                m_exporter = std::make_unique<JsonExport>(cfg, country_db, asn_db);
+                m_writer = std::make_unique<JsonWriter>(cfg, process_id);
+#else
+                throw std::runtime_error("DNS Probe was built without JSON support!");
 #endif
             }
         }

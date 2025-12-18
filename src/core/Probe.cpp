@@ -328,12 +328,17 @@ void DDP::Probe::init(const Arguments& args)
 
 #ifndef PROBE_PARQUET
         if (m_cfg.export_format.value() == ExportFormat::PARQUET)
-            throw std::runtime_error("DNS Probe was built without Parquet support! Use C-DNS as export format!");
+            throw std::runtime_error("DNS Probe was built without Parquet support! Use C-DNS or JSON as export format!");
 #endif
 
 #ifndef PROBE_CDNS
         if (m_cfg.export_format.value() == ExportFormat::CDNS)
-            throw std::runtime_error("DNS Probe was built without C-DNS support! Use Parquet as export format!");
+            throw std::runtime_error("DNS Probe was built without C-DNS support! Use Parquet or JSON as export format!");
+#endif
+
+#ifndef PROBE_JSON
+        if (m_cfg.export_format.value() == ExportFormat::JSON)
+            throw std::runtime_error("DNS Probe was built without JSON support! Use Parquet or C-DNS as export format!");
 #endif
 
         if (m_cfg.anonymize_ip) {

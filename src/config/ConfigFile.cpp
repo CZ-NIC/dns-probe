@@ -33,15 +33,19 @@
 
 void DDP::ConfigFile::load_configuration(Config& cfg, std::string conf_file, std::string instance)
 {
+    Config loaded_cfg;
+
     try {
         YAML::Node config = YAML::LoadFile(conf_file);
 
         // Always load default configuration first and then load changes for given instance if present
         if (config["default"])
-            load_instance(cfg, config["default"]);
+            load_instance(loaded_cfg, config["default"]);
 
         if (instance != "default" && config[instance])
-            load_instance(cfg, config[instance]);
+            load_instance(loaded_cfg, config[instance]);
+
+        cfg = loaded_cfg;
     }
     catch (std::exception& e) {
         Logger("YAML").warning() << "Couldn't load configuration file " << conf_file
@@ -142,6 +146,9 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
 
     if (node["export"]["kafka-brokers"] && node["export"]["kafka-brokers"].IsScalar())
         cfg.kafka_export.brokers.add_value(node["export"]["kafka-brokers"].as<std::string>());
+
+    if (node["export"]["kafka-address-family"] && node["export"]["kafka-address-family"].IsScalar())
+        cfg.kafka_export.address_family.add_value(node["export"]["kafka-address-family"].as<std::string>());
 
     if (node["export"]["kafka-topic"] && node["export"]["kafka-topic"].IsScalar())
         cfg.kafka_export.topic.add_value(node["export"]["kafka-topic"].as<std::string>());
@@ -285,6 +292,9 @@ void DDP::ConfigFile::load_instance(Config& cfg, YAML::Node node)
 
     if (node["statistics"]["kafka-topic"] && node["statistics"]["kafka-topic"].IsScalar())
         cfg.stats_kafka_export.topic.add_value(node["statistics"]["kafka-topic"].as<std::string>());
+
+    if (node["statistics"]["kafka-address-family"] && node["statistics"]["kafka-address-family"].IsScalar())
+        cfg.stats_kafka_export.address_family.add_value(node["statistics"]["kafka-address-family"].as<std::string>());
 
     if (node["statistics"]["kafka-partition"] && node["statistics"]["kafka-partition"].IsScalar())
         cfg.stats_kafka_export.partition.add_value(node["statistics"]["kafka-partition"].as<std::string>());

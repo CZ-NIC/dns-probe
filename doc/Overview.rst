@@ -17,7 +17,7 @@ Main features
 
 * DNS queries and responses are extracted from both UDP and TCP
 
-* configurable export of data about DNS transactions in C-DNS [RFC8618]_ or `Apache Parquet <https://parquet.apache.org>`_ formats
+* configurable export of data about DNS transactions in C-DNS [RFC8618]_, `Apache Parquet <https://parquet.apache.org>`_ or JSON [RFC8259]_ formats
 
 * optional configurable export of run-time statistics in JSON format [RFC8259]_
 

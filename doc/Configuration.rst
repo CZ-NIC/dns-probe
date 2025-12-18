@@ -41,6 +41,7 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       |  +--rw file-compression? <boolean>
       |  +--rw file-name-prefix? <string>
       |  +--rw file-size-limit? <uint64>
+      |  +--rw kafka-address-family? <enumeration>
       |  +--rw kafka-brokers? <string>
       |  +--rw kafka-ca-location? <string>
       |  +--rw kafka-cert-location? <string>
@@ -78,6 +79,7 @@ DNS Probe uses local file in YAML format to load configuration at startup. Its s
       |  +--rw backup_remote-port? <uint16>
       |  +--rw export-dir? <string>
       |  +--rw export-stats? <boolean>
+      |  +--rw kafka-address-family? <enumeration>
       |  +--rw kafka-brokers? <string>
       |  +--rw kafka-ca-location? <string>
       |  +--rw kafka-cert-location? <string>
@@ -359,13 +361,16 @@ export-format
 :default: ``parquet``
 
 This value indicates the format for exporting records about
-DNS transactions. Two options are currently supported:
+DNS transactions. Three options are currently supported:
 
 ``parquet``
    `Apache Parquet <https://parquet.apache.org/>`_ columnar format
 
 ``cdns``
    Compacted-DNS (C-DNS) [RFC8618]_.
+
+``json``
+   JSON [RFC8259]_
 
 .. _export-stats:
 
@@ -471,6 +476,26 @@ List of IPv6 addresses and prefixes from which to NOT process traffic.
 By default all IPv6 addresses are allowed.
 
 If :ref:`ipv6-allowlist` is not empty this configuration item doesn't have any effect.
+
+kafka-address-family
+^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/export/kafka-address-family``
+:default: ``any``
+
+Force IP address family for connection to Kafka brokers for export of DNS records
+
+Valid values are ``any``, ``v4``, ``v6``.
+
+kafka-address-family
+^^^^^^^^^^^^^^^^^^^^
+
+:data node: ``<instance-id>/statistics/kafka-address-family``
+:default: ``any``
+
+Force IP address family for connection to Kafka brokers for export of run-time statistics.
+
+Valid values are ``any``, ``v4``, ``v6``.
 
 .. _kafka-brokers:
 

@@ -103,6 +103,8 @@ distribution repositories:
 - libknot, version at least 3.0.6
 - libsystemd
 - librdkafka
+- RapidJSON
+- zlib
 - DPDK (only for DPDK version)
 
 Optionally, to build this user documentation (``make doc``) or manual pages (``make man``)
@@ -185,7 +187,7 @@ DNS Probe
    # Replace <GIT_REPO> with path to this repository
    # For disabling DPDK BACKEND remove `-DDPDK_BACKEND=On`
    # For building without IP anonymization support add `-DPROBE_CRYPTOPANT=Off`
-   # For building without support for one of the export formats add `-DPROBE_PARQUET=Off` or `-DPROBE_CDNS=Off`
+   # For building without support for one of the export formats add `-DPROBE_PARQUET=Off` or `-DPROBE_CDNS=Off` or `-DPROBE_JSON=Off`
    # For building without support for dnstap input add `-DPROBE_DNSTAP=Off`
    # For building without support for Knot interface input add `-DPROBE_KNOT=Off`
    cmake <GIT_REPO> -DCMAKE_INSTALL_PREFIX="$DEP_DIR" -DCMAKE_BUILD_TYPE=Release -DAF_PACKET_BACKEND=On -DDPDK_BACKEND=On -DBUILD_COLLECTOR=On

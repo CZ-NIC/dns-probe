@@ -6,7 +6,7 @@ arch=('x86_64')
 url='https://gitlab.nic.cz/adam/dns-probe'
 license=('GPL3')
 makedepends=('make' 'cmake')
-depends=('boost' 'openssl' 'python-sphinx' 'python-pandas' 'python-pyarrow' 'libpcap' 'arrow' 'yaml-cpp' 'fstrm' 'protobuf' 'libmaxminddb' 'knot' 'dpdk' 'c-dns' 'cryptopant' 'systemd-libs' 'librdkafka')
+depends=('boost' 'openssl' 'python-sphinx' 'python-pandas' 'python-pyarrow' 'libpcap' 'arrow' 'yaml-cpp' 'fstrm' 'protobuf' 'libmaxminddb' 'knot' 'dpdk' 'c-dns' 'cryptopant' 'systemd-libs' 'librdkafka' 'zlib' 'rapidjson')
 source=('https://gitlab.nic.cz/adam/dns-probe/-/archive/{{ version }}/dns-probe-{{ version }}.tar.gz')
 sha256sums=('SKIP')
 

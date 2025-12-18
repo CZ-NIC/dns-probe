@@ -144,7 +144,7 @@ namespace DDP {
              * @brief Callback for message (file) delivery status
              * @param message Message from Kafka whether transfer was successful
              */
-            void dr_cb(RdKafka::Message& message);
+            void dr_cb(RdKafka::Message& message) override;
         };
 
         /**
@@ -155,7 +155,6 @@ namespace DDP {
         int64_t get_timestamp_from_filename(std::string& filename);
 
         KafkaConfig m_config;
-        bool m_sent;
         std::regex m_timestamp_regex;
         RdKafka::Conf* m_conf;
         RdKafka::Producer* m_producer;

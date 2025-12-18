@@ -155,7 +155,8 @@ namespace DDP {
      */
     enum class ExportFormat : uint8_t {
         PARQUET, //!< Parquet export format.
-        CDNS //!< C-DNS export format.
+        CDNS, //!< C-DNS export format.
+        JSON //!< JSON export format.
     };
 
     /**
@@ -341,5 +342,14 @@ namespace DDP {
         SCRAM_SHA_256,
         SCRAM_SHA_512,
         OAUTHBEARER
+    };
+
+    /**
+     * Kafka broker address family (IPv4/IPv6) to use for connection to Kafka cluster
+     */
+    enum class KafkaAddressFamily : uint8_t {
+        ANY = 0,
+        V4,
+        V6
     };
 }

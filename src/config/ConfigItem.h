@@ -237,7 +237,7 @@ namespace DDP {
             try {
                 auto str_value = boost::any_cast<std::string>(value);
                 std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
-                return str_value == "PARQUET" || str_value == "CDNS";
+                return str_value == "PARQUET" || str_value == "CDNS" || str_value == "JSON";
             } catch (std::exception& e) {
                 return false;
             }
@@ -256,6 +256,8 @@ namespace DDP {
                 m_value = ExportFormat::PARQUET;
             else if(str_value == "CDNS")
                 m_value = ExportFormat::CDNS;
+            else if(str_value == "JSON")
+                m_value = ExportFormat::JSON;
             else
                 throw std::invalid_argument("Invalid argument for ExportFormat");
         }
@@ -274,8 +276,10 @@ namespace DDP {
         {
             if (m_value == ExportFormat::PARQUET)
                 return {"PARQUET"};
-            else
+            else if (m_value == ExportFormat::CDNS)
                 return {"CDNS"};
+            else
+                return {"JSON"};
         }
 
 
@@ -1121,7 +1125,7 @@ namespace DDP {
         }
 
         /**
-         * Implicit conversion to IpEncryption.
+         * Implicit conversion to KafkaSecurityProtocol.
          * @return Saved value.
          */
         operator KafkaSecurityProtocol() { return m_value; }
@@ -1204,7 +1208,7 @@ namespace DDP {
         }
 
         /**
-         * Implicit conversion to IpEncryption.
+         * Implicit conversion to KafkaSaslMechanism.
          * @return Saved value.
          */
         operator KafkaSaslMechanism() { return m_value; }
@@ -1228,5 +1232,86 @@ namespace DDP {
 
     protected:
         KafkaSaslMechanism m_value{KafkaSaslMechanism::PLAIN}; //!< Saved value.
+    };
+
+    /**
+     * Specialized implementation for DDP::KafkaAddressFamily as config item.
+     */
+    template<>
+    class ConfigItem<KafkaAddressFamily>: public ConfigItemBase
+    {
+    public:
+        /**
+         * @brief Constructors
+         */
+        ConfigItem(){};
+        ConfigItem(KafkaAddressFamily value) : m_value(value) {};
+
+        /**
+         * Access saved value.
+         * @return Value inside config item.
+         */
+        KafkaAddressFamily value() const { return m_value; }
+
+        /**
+         * Check if given value from configuration file can be used in config.
+         * @param value Checked valued from configuration file.
+         * @return True if value is valid otherwise false.
+         */
+        bool validate(const boost::any& value) const override
+        {
+            try {
+                auto str_value = boost::any_cast<std::string>(value);
+                std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+                return str_value == "ANY" || str_value == "V4" || str_value == "V6";
+            } catch (std::exception& e) {
+                return false;
+            }
+        }
+
+        /**
+         * Save value from configuration file.
+         * @param value Value from configuration file.
+         */
+        void add_value(const boost::any& value) override
+        {
+            auto str_value = boost::any_cast<std::string>(value);
+            std::transform(str_value.begin(), str_value.end(), str_value.begin(), toupper);
+
+            if(str_value == "ANY")
+                m_value = KafkaAddressFamily::ANY;
+            else if(str_value == "V4")
+                m_value = KafkaAddressFamily::V4;
+            else if(str_value == "V6")
+                m_value = KafkaAddressFamily::V6;
+            else
+                throw std::invalid_argument("Invalid argument for KafkaAddressFamily");
+        }
+
+        /**
+         * Implicit conversion to KafkaAddressFamily.
+         * @return Saved value.
+         */
+        operator KafkaAddressFamily() { return m_value; }
+
+        /**
+         * Provides text representation of the saved value.
+         * @return String containing text representation of the value.
+         */
+        std::string string() const override
+        {
+            if (m_value == KafkaAddressFamily::ANY)
+                return {"any"};
+            else if (m_value == KafkaAddressFamily::V4)
+                return {"v4"};
+            else if (m_value == KafkaAddressFamily::V6)
+                return {"v6"};
+            else
+                return {"NONE"};
+        }
+
+
+    protected:
+        KafkaAddressFamily m_value{KafkaAddressFamily::ANY}; //!< Saved value.
     };
 }

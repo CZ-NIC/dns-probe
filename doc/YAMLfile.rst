@@ -9,7 +9,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
 .. code-block:: yaml
 
-  # Last revision: 2025-09-09
+  # Last revision: 2025-12-16
   #
   # Default instance configuration.
   # This configuration is always loaded before other configuration specified by given instance's ID.
@@ -106,6 +106,10 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # Comma separated list of Kafka brokers (host or host:port) for export of DNS records
       kafka-brokers: '127.0.0.1'
 
+      # Force IP address family for connection to Kafka brokers for export of DNS records
+      # Valid values are 'any', 'v4', 'v6'.
+      kafka-address-family: 'any'
+
       # Kafka topic for export of DNS records
       kafka-topic: 'dns-probe'
 
@@ -144,7 +148,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       kafka-sasl-password: ''
 
       # Format of exported data.
-      # Valid values are 'parquet' and 'cdns'.
+      # Valid values are 'parquet', 'cdns' and 'json'.
       export-format: 'parquet'
 
       # This sequence indicates which fields from the C-DNS standard schema are included in exported data.
@@ -189,7 +193,7 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
       # Maximum number of C-DNS blocks in one exported C-DNS file.
       cdns-blocks-per-file: 0
 
-      # If this flag is set to true, exported C-DNS files will contain full Answer, Authority and
+      # If this flag is set to true, exported C-DNS or JSON files will contain full Answer, Authority and
       # Additional RRs from responses in each record.
       # NOTE: Won't work for traffic captured via Knot interface as this data doesn't contain full RRs.
       cdns-export-response-rr: false
@@ -323,6 +327,10 @@ It is also included in the project repository (`data-model/dns-probe.yml <https:
 
       # Comma separated list of Kafka brokers (host or host:port) for export of run-time statistics
       kafka-brokers: '127.0.0.1'
+
+      # Force IP address family for connection to Kafka brokers for export of run-time statistics
+      # Valid values are 'any', 'v4', 'v6'.
+      kafka-address-family: 'any'
 
       # Kafka topic for export of run-time statistics
       kafka-topic: 'dns-probe-stats'
