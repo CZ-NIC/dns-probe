@@ -88,10 +88,12 @@
 
         private:
         /**
-         * @brief Write array of DNS resource records to internal JSON buffer
+         * @brief Write array of DNS resource records and an individual EDNS record
+         * to internal JSON buffer
          * @param rrs Array of DNS resource records to buffer
+         * @param record Full DNS record to pull response EDNS record from
          */
-        void write_rr_array(std::vector<DnsRR*>& rrs);
+        void write_rr_array(std::vector<DnsRR*>& rrs, DnsRecord* record = nullptr);
 
         rapidjson::StringBuffer m_buffer;
         rapidjson::Writer<rapidjson::StringBuffer> m_writer;

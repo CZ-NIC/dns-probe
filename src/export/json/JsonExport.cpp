@@ -482,8 +482,8 @@ boost::any DDP::JsonExport::buffer_record(DnsRecord& record)
 
     // additional_rrs
     m_writer.Key("additional_rrs");
-    if (m_export_resp_rr && record.m_resp_additional_rrs.size() > 0)
-        write_rr_array(record.m_resp_additional_rrs);
+    if (m_export_resp_rr && (record.m_resp_additional_rrs.size() > 0 || record.m_resp_ednsRdata))
+        write_rr_array(record.m_resp_additional_rrs, &record);
     else
         m_writer.Null();
 
@@ -540,12 +540,45 @@ void DDP::JsonExport::write_leftovers(JsonWriter& writer, Statistics& stats)
     m_chunk = std::make_shared<std::vector<rapidjson::StringBuffer>>();
 }
 
-void DDP::JsonExport::write_rr_array(std::vector<DnsRR*>& rrs)
+void DDP::JsonExport::write_rr_array(std::vector<DnsRR*>& rrs, DnsRecord* record)
 {
-    if (rrs.size() == 0)
+    if (rrs.size() == 0 && record == nullptr)
         return;
 
     m_writer.StartArray();
+    if (record && record->m_resp_ednsRdata) {
+        m_writer.StartObject();
+
+        m_writer.Key("name");
+        m_writer.String("");
+
+        m_writer.Key("type");
+        m_writer.Uint(41);
+
+        m_writer.Key("class");
+        m_writer.Uint(record->m_ednsUDP);
+
+        m_writer.Key("ttl");
+        m_writer.Null();
+
+        m_writer.Key("rdata");
+        DnsRR edns = {
+            .dname = "\0",
+            .type = 41,
+            .class_ = record->m_ednsUDP,
+            .ttl = 0,
+            .rdlength = record->m_resp_ednsRdata_size,
+            .rdata = record->m_resp_ednsRdata
+        };
+        int ret = get_text_rdata(edns, m_rdata_buffer, UINT16_MAX);
+        if (ret < 0)
+            m_writer.Null();
+        else
+            m_writer.String(m_rdata_buffer, ret);
+
+        m_writer.EndObject();
+    }
+
     for (DnsRR* rr : rrs) {
         m_writer.StartObject();
 
