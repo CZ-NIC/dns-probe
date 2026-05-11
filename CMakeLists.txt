@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project("DNS Probe" VERSION 1.6.1)
+project("DNS Probe" VERSION 1.6.2)
 
 set(AF_PACKET_BACKEND ON CACHE BOOL "Define backend for packet processing")
 set(DPDK_BACKEND OFF CACHE BOOL "Define backend for packet processing")
@@ -76,7 +76,9 @@ if (PROBE_PARQUET)
     find_package(Arrow REQUIRED)
     find_package(Parquet REQUIRED)
 
-    if (${arrow_VERSION} VERSION_GREATER "9.0.0")
+    if (${arrow_VERSION} VERSION_GREATER "22.0.0")
+        set(CMAKE_CXX_STANDARD 20)
+    elseif (${arrow_VERSION} VERSION_GREATER "9.0.0")
         set(CMAKE_CXX_STANDARD 17)
     endif()
 
